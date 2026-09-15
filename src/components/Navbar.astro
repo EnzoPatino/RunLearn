@@ -1,0 +1,330 @@
+---
+// src/components/Navbar.astro
+---
+
+<header class="navbar">
+  <!-- Left: Brand & Identity -->
+  <div class="navbar__left">
+    <div class="navbar__avatar" title="Perfil de Desarrollador">
+      <svg class="avatar-svg" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="14" r="7" fill="#0c1015" />
+        <path d="M10 32C10 26.4772 14.4772 22 20 22C25.5228 22 30 26.4772 30 32H10Z" fill="#0c1015" />
+      </svg>
+      <span class="avatar-status" title="En línea"></span>
+    </div>
+
+    <div class="navbar__meta">
+      <span class="navbar__welcome">Espacio de Trabajo</span>
+      <span class="navbar__user-title">DevMaster Pro</span>
+    </div>
+  </div>
+
+  <!-- Center: Main Navigation Tabs -->
+  <nav class="navbar__nav" aria-label="Navegación principal">
+    <ul class="navbar__pills" role="list">
+      <li>
+        <a href="#inicio" class="nav-pill is-active" aria-current="page">
+          <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          </svg>
+          <span>Inicio</span>
+        </a>
+      </li>
+      <li>
+        <a href="#clases" class="nav-pill">
+          <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+          </svg>
+          <span>Clases</span>
+          <span class="pill-badge">8</span>
+        </a>
+      </li>
+      <li>
+        <a href="#crear" class="nav-pill nav-pill--action">
+          <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          <span>Crear Clase</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Right: Utility Controls & Menu -->
+  <div class="navbar__right">
+    <div class="navbar__search-hint" title="Búsqueda rápida">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="8.5" cy="8.5" r="5.5" />
+        <line x1="12.5" y1="12.5" x2="17" y2="17" stroke-linecap="round" />
+      </svg>
+      <kbd class="kbd-shortcut">⌘K</kbd>
+    </div>
+
+    <button class="navbar__menu-btn" type="button" aria-label="Abrir panel de opciones" aria-expanded="false">
+      <span class="line line--top"></span>
+      <span class="line line--mid"></span>
+      <span class="line line--bot"></span>
+    </button>
+  </div>
+</header>
+
+<style>
+  .navbar {
+    background: rgba(18, 22, 29, 0.85);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    gap: 1.5rem;
+    box-shadow: var(--glass-highlight);
+  }
+
+  .navbar__left {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .navbar__avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #60a5fa 0%, var(--brand-blue) 60%, #1d4ed8 100%);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    transition: transform var(--ease-spring), box-shadow var(--ease-spring);
+  }
+
+  .navbar__avatar:hover {
+    transform: scale(1.06);
+    box-shadow: 0 6px 22px rgba(59, 130, 246, 0.6);
+  }
+
+  .avatar-svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .avatar-status {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--color-success);
+    border: 2px solid #0d1015;
+    box-shadow: 0 0 6px var(--color-success);
+  }
+
+  .navbar__meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+
+  .navbar__welcome {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .navbar__user-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-white);
+    letter-spacing: -0.01em;
+  }
+
+  .navbar__nav {
+    display: flex;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .navbar__pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(10, 13, 17, 0.6);
+    padding: 0.3rem 0.4rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-hairline);
+    list-style: none;
+  }
+
+  .nav-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all var(--ease-fast);
+    outline: none;
+  }
+
+  .pill-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.8;
+    transition: opacity var(--ease-fast);
+  }
+
+  .nav-pill:hover {
+    color: var(--text-white);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-pill:hover .pill-icon {
+    opacity: 1;
+  }
+
+  .nav-pill.is-active {
+    color: var(--text-white);
+    background: rgba(59, 130, 246, 0.18);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);
+  }
+
+  .nav-pill.is-active .pill-icon {
+    color: #60a5fa;
+    opacity: 1;
+  }
+
+  .pill-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.6875rem;
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  .nav-pill--action {
+    color: #60a5fa;
+  }
+
+  .nav-pill--action:hover {
+    background: rgba(59, 130, 246, 0.15);
+  }
+
+  .navbar__right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .navbar__search-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-hairline);
+    padding: 0.4rem 0.65rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all var(--ease-fast);
+  }
+
+  .navbar__search-hint:hover {
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .search-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .kbd-shortcut {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    padding: 0.1rem 0.35rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: var(--text-secondary);
+  }
+
+  .navbar__menu-btn {
+    width: 44px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4.5px;
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--ease-fast);
+  }
+
+  .navbar__menu-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-hover);
+  }
+
+  .line {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: var(--text-secondary);
+    border-radius: 2px;
+    transition: transform var(--ease-spring), width var(--ease-spring), background-color var(--ease-fast);
+  }
+
+  .line--mid { width: 15px; align-self: flex-start; margin-left: 12px; }
+
+  .navbar__menu-btn:hover .line {
+    background-color: var(--text-white);
+  }
+
+  .navbar__menu-btn:hover .line--mid {
+    width: 20px;
+    margin-left: 0;
+  }
+
+  @media (max-width: 960px) {
+    .navbar__search-hint {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .navbar {
+      height: auto;
+      padding: 0.85rem 1rem;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+    }
+
+    .navbar__nav {
+      order: 3;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .nav-pill {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+  }
+</style>

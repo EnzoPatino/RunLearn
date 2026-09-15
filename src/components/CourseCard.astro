@@ -1,0 +1,226 @@
+---
+// src/components/CourseCard.astro
+interface Props {
+  id: string;
+  name: string;
+  status: string;
+  statusType?: 'default' | 'ready' | 'action';
+  progress?: number;
+  moduleInfo?: string;
+  customDescription?: string;
+  themeColor: string;
+  themeGlow: string;
+  isAction?: boolean;
+}
+
+const {
+  id,
+  name,
+  status,
+  statusType = 'default',
+  progress,
+  moduleInfo,
+  customDescription,
+  themeColor,
+  themeGlow,
+  isAction = false
+} = Astro.props;
+---
+
+<div 
+  class={`course-card course-card--${id} ${isAction ? 'is-action' : ''}`}
+  tabindex="0" 
+  role="button"
+  style={`--course-color: ${themeColor}; --course-glow: ${themeGlow};`}
+>
+  <div class="course-card__glow" aria-hidden="true"></div>
+
+  <div class="course-card__header">
+    <div class={`course-icon-badge ${isAction ? 'course-icon-badge--plus' : ''}`}>
+      <slot name="icon" />
+    </div>
+    <span class={`course-status-pill course-status-pill--${statusType}`}>
+      {status}
+    </span>
+  </div>
+
+  <div class="course-card__body">
+    <h4 class="course-name">{name}</h4>
+    
+    {progress !== undefined && (
+      <div class="course-progress-bar">
+        <div 
+          class={`course-progress-fill ${progress === 100 ? 'course-progress-fill--done' : ''}`} 
+          style={`width: ${progress}%;`}
+        ></div>
+      </div>
+      <div class="course-sub">
+        <span>{moduleInfo}</span>
+        <span class="course-pct">{progress}%</span>
+      </div>
+    )}
+
+    {customDescription && (
+      <p class="course-custom-desc">{customDescription}</p>
+    )}
+  </div>
+</div>
+
+<style>
+  .course-card {
+    position: relative;
+    background-color: var(--surface-inset);
+    border: 1px solid var(--border-hairline);
+    border-radius: 14px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 108px;
+    cursor: pointer;
+    outline: none;
+    overflow: hidden;
+    transition: all var(--ease-spring);
+  }
+
+  .course-card.is-action {
+    border-style: dashed;
+  }
+
+  .course-card__glow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 90px;
+    height: 90px;
+    background: radial-gradient(circle, var(--course-glow, rgba(255, 255, 255, 0.05)) 0%, transparent 70%);
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .course-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--course-color, var(--border-hover));
+    background-color: #11161d;
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.5);
+  }
+
+  .course-card:hover .course-card__glow {
+    opacity: 0.8;
+  }
+
+  .course-card:focus-visible {
+    outline: 2px solid var(--course-color, var(--brand-blue));
+    outline-offset: 2px;
+  }
+
+  .course-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .course-icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: grid;
+    place-items: center;
+    color: var(--course-color, var(--text-white));
+    transition: transform var(--ease-spring);
+  }
+
+  .course-card:hover .course-icon-badge {
+    transform: scale(1.1);
+  }
+
+  .course-icon-badge--plus {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+  }
+
+  :global(.course-svg) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .course-status-pill {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .course-status-pill--ready {
+    color: var(--color-success);
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.25);
+  }
+
+  .course-status-pill--action {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .course-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .course-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  .course-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .course-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand-blue) 0%, #60a5fa 100%);
+    border-radius: 4px;
+  }
+
+  .course-progress-fill--done {
+    background: linear-gradient(90deg, #059669 0%, var(--color-success) 100%);
+  }
+
+  .course-sub {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .course-pct {
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+  }
+
+  .course-custom-desc {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+  }
+</style>

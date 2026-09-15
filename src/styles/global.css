@@ -1,0 +1,153 @@
+/* ============================================================
+   DevPlatform UI System – Global Styles & Tokens
+   Astro Architecture
+   ============================================================ */
+
+:root {
+  /* Lienzo & Capas */
+  --canvas-bg: #07080b;
+  --surface-panel: #0d1015;
+  --surface-card: #12161d;
+  --surface-card-hover: #181e28;
+  --surface-inset: #0a0d11;
+
+  /* Bordes & Resplandores */
+  --border-hairline: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+
+  /* Tipografía */
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --text-white: #ffffff;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Colores de Marca y Tecnologías */
+  --brand-blue: #3b82f6;
+  --brand-blue-glow: rgba(59, 130, 246, 0.2);
+  --color-docker: #0ea5e9;
+  --color-docker-glow: rgba(14, 165, 233, 0.2);
+  --color-html: #f97316;
+  --color-html-glow: rgba(249, 115, 22, 0.2);
+  --color-ubuntu: #ea580c;
+  --color-ubuntu-glow: rgba(234, 88, 12, 0.2);
+  --color-github: #e2e8f0;
+  --color-github-glow: rgba(226, 232, 240, 0.15);
+  --color-gitlab: #f43f5e;
+  --color-gitlab-glow: rgba(244, 63, 94, 0.2);
+  --color-http: #06b6d4;
+  --color-http-glow: rgba(6, 182, 212, 0.2);
+  --color-db: #a855f7;
+  --color-db-glow: rgba(168, 85, 247, 0.2);
+  --color-success: #10b981;
+
+  /* Radios */
+  --radius-dashboard: 28px;
+  --radius-card: 18px;
+  --radius-pill: 9999px;
+
+  /* Sombras */
+  --shadow-dashboard: 0 35px 90px -20px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+
+  /* Curvas de Animación */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-fast: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  color-scheme: dark;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-main);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Luces ambientales difusas */
+.ambient-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.45;
+}
+
+.ambient-glow--top {
+  width: 800px;
+  height: 400px;
+  background: radial-gradient(circle, var(--brand-blue) 0%, rgba(59, 130, 246, 0) 70%);
+  top: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ambient-glow--bottom {
+  width: 650px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+  bottom: -100px;
+  right: 10%;
+}
+
+.app-viewport {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard {
+  width: 100%;
+  min-height: 100vh;
+  flex: 1;
+  background: rgba(13, 16, 21, 0.94);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: none;
+  border-radius: 0;
+  padding: 1.5rem 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 0;
+  }
+  .dashboard {
+    padding: 1rem 1rem 1.5rem;
+    gap: 1rem;
+    border-radius: 0;
+  }
+}

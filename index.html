@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevPlatform – Dashboard & Aula Virtual</title>
+
+  <!-- Google Fonts: Inter Display & Text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Ambient Lighting Effects -->
+  <div class="ambient-glow ambient-glow--top" aria-hidden="true"></div>
+  <div class="ambient-glow ambient-glow--bottom" aria-hidden="true"></div>
+
+  <!-- Main App Shell -->
+  <div class="app-viewport">
+    
+    <main class="dashboard" role="main">
+
+      <!-- ========================================================
+           1. TOP NAVIGATION BAR
+      ========================================================= -->
+      <header class="navbar">
+        
+        <!-- Left: Brand & Identity -->
+        <div class="navbar__left">
+          <div class="navbar__avatar" title="Perfil de Desarrollador">
+            <div class="avatar-ring"></div>
+            <!-- Isotipo original de Figma refinado: Círculo y prisma en vector -->
+            <svg class="avatar-svg" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="14" r="7" fill="#0c1015" />
+              <path d="M10 32C10 26.4772 14.4772 22 20 22C25.5228 22 30 26.4772 30 32H10Z" fill="#0c1015" />
+            </svg>
+            <span class="avatar-status" title="En línea"></span>
+          </div>
+
+          <div class="navbar__meta">
+            <span class="navbar__welcome">Espacio de Trabajo</span>
+            <span class="navbar__user-title">DevMaster Pro</span>
+          </div>
+        </div>
+
+        <!-- Center: Main Navigation Tabs -->
+        <nav class="navbar__nav" aria-label="Navegación principal">
+          <ul class="navbar__pills" role="list">
+            <li>
+              <a href="#inicio" class="nav-pill is-active" aria-current="page">
+                <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                <span>Inicio</span>
+              </a>
+            </li>
+            <li>
+              <a href="#clases" class="nav-pill">
+                <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                </svg>
+                <span>Clases</span>
+                <span class="pill-badge">8</span>
+              </a>
+            </li>
+            <li>
+              <a href="#crear" class="nav-pill nav-pill--action">
+                <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                <span>Crear Clase</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Right: Utility Controls & Menu -->
+        <div class="navbar__right">
+          <!-- Command search hint -->
+          <div class="navbar__search-hint" title="Búsqueda rápida">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="8.5" cy="8.5" r="5.5" />
+              <line x1="12.5" y1="12.5" x2="17" y2="17" stroke-linecap="round" />
+            </svg>
+            <kbd class="kbd-shortcut">⌘K</kbd>
+          </div>
+
+          <!-- Refined Hamburger Button -->
+          <button class="navbar__menu-btn" type="button" aria-label="Abrir panel de opciones" aria-expanded="false">
+            <span class="line line--top"></span>
+            <span class="line line--mid"></span>
+            <span class="line line--bot"></span>
+          </button>
+        </div>
+
+      </header>
+
+
+      <!-- ========================================================
+           2. TECHNOLOGIES BENTO GRID (2x4)
+      ========================================================= -->
+      <section class="bento-section" aria-label="Módulos de Tecnologías">
+
+        <div class="tech-grid">
+
+          <!-- 1. API -->
+          <article class="tech-card tech-card--api" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">Backend</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <!-- Exact Figma Icon Style: High-definition API icon -->
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="8" rx="2" />
+                  <rect x="2" y="14" width="20" height="8" rx="2" />
+                  <line x1="6" y1="6" x2="6.01" y2="6" stroke-width="2.5" />
+                  <line x1="6" y1="18" x2="6.01" y2="18" stroke-width="2.5" />
+                  <path d="M14 6h4" />
+                  <path d="M14 18h4" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">API</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">REST & GraphQL</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 2. Docker -->
+          <article class="tech-card tech-card--docker" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">DevOps</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 13.5c0 4.5-4 7.5-9.5 7.5S3 17.5 3 13.5c0-1.8 1-3.5 2-4.5 1 .5 2 1 3.5 0 1.5 1.5 3 1.5 5 1s3.5-.5 4.5-2c1.5 1 3 1 4 2z" />
+                  <rect x="4" y="10" width="2.5" height="2.5" rx="0.4" />
+                  <rect x="7.5" y="10" width="2.5" height="2.5" rx="0.4" />
+                  <rect x="11" y="10" width="2.5" height="2.5" rx="0.4" />
+                  <rect x="7.5" y="6.5" width="2.5" height="2.5" rx="0.4" />
+                  <rect x="11" y="6.5" width="2.5" height="2.5" rx="0.4" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">Docker</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">Contenedores</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 3. HTML / CSS -->
+          <article class="tech-card tech-card--html" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">Frontend</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                  <line x1="14" y1="4" x2="10" y2="20" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">HTML / CSS</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">Layout & UI</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 4. Ubuntu -->
+          <article class="tech-card tech-card--ubuntu" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">Sistema</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="2.8" />
+                  <circle cx="5" cy="12" r="1.4" fill="currentColor" />
+                  <circle cx="15.5" cy="6" r="1.4" fill="currentColor" />
+                  <circle cx="15.5" cy="18" r="1.4" fill="currentColor" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">Ubuntu</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">Linux Shell</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 5. GitHub -->
+          <article class="tech-card tech-card--github" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">Control</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">GitHub</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">Repositorios</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 6. GitLab -->
+          <article class="tech-card tech-card--gitlab" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">CI / CD</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 5.48 2h.06a.42.42 0 0 1 .4.28l2.45 7.51h7.22l2.45-7.51a.42.42 0 0 1 .4-.28h.06a.42.42 0 0 1 .41.16l2.44 7.51 1.22 3.78a.84.84 0 0 1-.29.94z" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">GitLab</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">Pipelines</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 7. HTTP/HTTPS -->
+          <article class="tech-card tech-card--http" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">Redes</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">HTTP/HTTPS</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">Protocolos</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+          <!-- 8. Base de datos -->
+          <article class="tech-card tech-card--database" tabindex="0" role="button">
+            <div class="tech-card__top">
+              <span class="tech-badge">Almacén</span>
+              <span class="tech-indicator">●</span>
+            </div>
+            <div class="tech-card__center">
+              <div class="tech-card__icon-box">
+                <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                </svg>
+              </div>
+              <h3 class="tech-card__title">Base de datos</h3>
+            </div>
+            <div class="tech-card__footer">
+              <span class="tech-meta">SQL & NoSQL</span>
+              <span class="arrow-arrow">→</span>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+
+      <!-- ========================================================
+           3. SECTION HEADER WITH CLEAN GLOW DIVIDER
+      ========================================================= -->
+      <div class="section-divider">
+        <div class="section-divider__title-wrap">
+          <span class="status-dot"></span>
+          <h2 class="section-divider__title">Tus apuntes / Cursos asignados</h2>
+        </div>
+        <div class="section-divider__line"></div>
+        <div class="section-divider__count">4 Activos</div>
+      </div>
+
+
+      <!-- ========================================================
+           4. ASSIGNED COURSES & NOTES PANEL
+      ========================================================= -->
+      <section class="courses-tray" aria-label="Cursos en progreso">
+
+        <div class="courses-grid">
+
+          <!-- 1. GitLab Course -->
+          <div class="course-card course-card--gitlab" tabindex="0" role="button">
+            <div class="course-card__glow" aria-hidden="true"></div>
+            <div class="course-card__header">
+              <div class="course-icon-badge">
+                <svg class="course-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 5.48 2h.06a.42.42 0 0 1 .4.28l2.45 7.51h7.22l2.45-7.51a.42.42 0 0 1 .4-.28h.06a.42.42 0 0 1 .41.16l2.44 7.51 1.22 3.78a.84.84 0 0 1-.29.94z" />
+                </svg>
+              </div>
+              <span class="course-status-pill">En curso</span>
+            </div>
+            <div class="course-card__body">
+              <h4 class="course-name">GitLab</h4>
+              <div class="course-progress-bar">
+                <div class="course-progress-fill" style="width: 72%;"></div>
+              </div>
+              <div class="course-sub">
+                <span>Módulo 3 de 5</span>
+                <span class="course-pct">72%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Docker Course -->
+          <div class="course-card course-card--docker" tabindex="0" role="button">
+            <div class="course-card__glow" aria-hidden="true"></div>
+            <div class="course-card__header">
+              <div class="course-icon-badge">
+                <svg class="course-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 13.5c0 4.5-4 7.5-9.5 7.5S3 17.5 3 13.5c0-1.8 1-3.5 2-4.5 1 .5 2 1 3.5 0 1.5 1.5 3 1.5 5 1s3.5-.5 4.5-2c1.5 1 3 1 4 2z" />
+                  <rect x="4" y="10" width="2.5" height="2.5" rx="0.4" />
+                  <rect x="8" y="10" width="2.5" height="2.5" rx="0.4" />
+                </svg>
+              </div>
+              <span class="course-status-pill">En curso</span>
+            </div>
+            <div class="course-card__body">
+              <h4 class="course-name">Docker</h4>
+              <div class="course-progress-bar">
+                <div class="course-progress-fill" style="width: 45%;"></div>
+              </div>
+              <div class="course-sub">
+                <span>Módulo 2 de 6</span>
+                <span class="course-pct">45%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. DNS Course -->
+          <div class="course-card course-card--dns" tabindex="0" role="button">
+            <div class="course-card__glow" aria-hidden="true"></div>
+            <div class="course-card__header">
+              <div class="course-icon-badge">
+                <svg class="course-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="7" rx="2" />
+                  <rect x="2" y="14" width="20" height="7" rx="2" />
+                  <line x1="6" y1="6.5" x2="6.01" y2="6.5" stroke-width="2.5" />
+                  <line x1="6" y1="17.5" x2="6.01" y2="17.5" stroke-width="2.5" />
+                </svg>
+              </div>
+              <span class="course-status-pill course-status-pill--ready">Completado</span>
+            </div>
+            <div class="course-card__body">
+              <h4 class="course-name">DNS</h4>
+              <div class="course-progress-bar">
+                <div class="course-progress-fill course-progress-fill--done" style="width: 100%;"></div>
+              </div>
+              <div class="course-sub">
+                <span>Finalizado</span>
+                <span class="course-pct">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Clase Personalizada -->
+          <div class="course-card course-card--custom" tabindex="0" role="button">
+            <div class="course-card__glow" aria-hidden="true"></div>
+            <div class="course-card__header">
+              <div class="course-icon-badge course-icon-badge--plus">
+                <svg class="course-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" stroke-linecap="round" />
+                  <line x1="5" y1="12" x2="19" y2="12" stroke-linecap="round" />
+                </svg>
+              </div>
+              <span class="course-status-pill course-status-pill--action">Nuevo</span>
+            </div>
+            <div class="course-card__body">
+              <h4 class="course-name">Clase personalizada</h4>
+              <p class="course-custom-desc">Crea un temario a medida con IA</p>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+</body>
+</html>

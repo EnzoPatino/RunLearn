@@ -1,0 +1,76 @@
+---
+// src/components/SectionDivider.astro
+interface Props {
+  title?: string;
+  count?: string;
+}
+
+const { 
+  title = "Tus apuntes / Cursos asignados", 
+  count = "4 Activos" 
+} = Astro.props;
+---
+
+<div class="section-divider">
+  <div class="section-divider__title-wrap">
+    <span class="status-dot"></span>
+    <h2 class="section-divider__title">{title}</h2>
+  </div>
+  <div class="section-divider__line"></div>
+  <div class="section-divider__count">{count}</div>
+</div>
+
+<style>
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 0.25rem;
+  }
+
+  .section-divider__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brand-blue);
+    box-shadow: 0 0 10px var(--brand-blue);
+  }
+
+  .section-divider__title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .section-divider__line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  .section-divider__count {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--brand-blue);
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+  }
+
+  @media (max-width: 640px) {
+    .section-divider__title {
+      font-size: 0.75rem;
+    }
+  }
+</style>
