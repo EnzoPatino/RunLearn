@@ -1,0 +1,721 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — Cómo funciona una API">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="crumbs">
+        <a href="/">RunLearn</a>
+        <span class="sep">/</span>
+        <span class="current">People API</span>
+      </div>
+      <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+    </div>
+
+    <h1>Cómo funciona una API</h1>
+    <p class="lede">
+      No es una animación de relleno: cada paso de este diagrama corresponde a una línea real de código. Tocá <strong>Simular funcionamiento</strong> y seguí el recorrido completo de una petición — desde el clic del usuario hasta la respuesta que llega de vuelta.
+    </p>
+
+    <div class="diagram-card">
+      <div class="diagram" id="diagram">
+        <svg class="lines">
+          <line x1="9%" y1="50%" x2="91%" y2="50%" stroke="var(--api-line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <div class="node" id="node-usuario" style="left:9%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3.4"/>
+              <path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4"/>
+            </svg>
+          </div>
+          <div class="label">Usuario</div>
+        </div>
+
+        <div class="node" id="node-api" style="left:36.3%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3 3 8v8l9 5 9-5V8z"/>
+              <path d="M8.2 9.6 12 11.7l3.8-2.1M12 11.7v5.4"/>
+            </svg>
+          </div>
+          <div class="label">API</div>
+        </div>
+
+        <div class="node" id="node-server" style="left:63.7%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4.5" y="3.5" width="15" height="17" rx="1.6"/>
+              <line x1="7.5" y1="8" x2="16.5" y2="8"/>
+              <line x1="7.5" y1="12" x2="16.5" y2="12"/>
+              <line x1="7.5" y1="16" x2="12.5" y2="16"/>
+            </svg>
+          </div>
+          <div class="label">Server</div>
+        </div>
+
+        <div class="node" id="node-db" style="left:91%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="6" rx="7" ry="2.6"/>
+              <path d="M5 6v12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/>
+              <path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/>
+            </svg>
+          </div>
+          <div class="label">Database</div>
+        </div>
+
+        <div class="packet" id="packet"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-run">Simular funcionamiento</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+      </div>
+      <div class="controls-left">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 6</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código</span>
+          <span class="filename" id="code-filename">cliente.js</span>
+        </div>
+        <pre class="code" id="code-client"><span class="line" data-key="fetch">fetch(<span class="fn">"/getUserData"</span>)</span>
+<span class="line" data-key="fetch">  .then(res =&gt; res.json())</span>
+<span class="line" data-key="render">  .then(user =&gt; render(user))</span></pre>
+        <div class="code-divider"></div>
+        <pre class="code" id="code-server"><span class="line" data-key="route"><span class="kw">app</span>.get(<span class="fn">"/getUserData"</span>, (req, res) =&gt; {</span>
+<span class="line" data-key="auth">  checkAuth(req.token)</span>
+<span class="line" data-key="dbfind">  <span class="kw">const</span> user = db.find(req.userId)</span>
+<span class="line" data-key="return">  <span class="kw">return</span> res.json(user)</span>
+<span class="line" data-key="route">})</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Tocá «Simular funcionamiento» para arrancar. Vas a ver el pedido viajar de un extremo al otro, y en el panel de código se va a marcar exactamente qué línea se está ejecutando en cada instante.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">petición</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+(function () {
+  const steps = [
+    {
+      from: 'usuario', to: 'api', dir: 'request',
+      code: 'fetch', panel: 'client', file: 'cliente.js',
+      text: 'El usuario hace clic y el navegador ejecuta <strong>fetch("/getUserData")</strong>. Esto es un pedido HTTP real viajando por la red — texto plano, nada mágico.'
+    },
+    {
+      from: 'api', to: 'server', dir: 'request',
+      code: 'auth', panel: 'server', file: 'servidor.js',
+      text: 'La API recibe la petición y, antes de tocar cualquier dato, llama a <strong>checkAuth(req.token)</strong>. Si el token no es válido, el flujo se corta acá mismo.'
+    },
+    {
+      from: 'server', to: 'db', dir: 'request',
+      code: 'dbfind', panel: 'server', file: 'servidor.js',
+      text: 'El servidor le pide los datos a la base de datos con <strong>db.find(req.userId)</strong>. Es la única parte del sistema que sabe cómo están guardados.'
+    },
+    {
+      from: 'db', to: 'server', dir: 'response',
+      code: 'dbfind', panel: 'server', file: 'servidor.js',
+      text: 'La base de datos devuelve una fila cruda de datos — todavía no es JSON, es solo el registro tal como vive en la tabla.'
+    },
+    {
+      from: 'server', to: 'api', dir: 'response',
+      code: 'return', panel: 'server', file: 'servidor.js',
+      text: 'El servidor arma el objeto <strong>user</strong> y lo devuelve con <strong>res.json(user)</strong>, ya convertido al formato que la API puede reenviar.'
+    },
+    {
+      from: 'api', to: 'usuario', dir: 'response',
+      code: 'render', panel: 'client', file: 'cliente.js',
+      text: 'La respuesta llega al navegador, <strong>res.json()</strong> la convierte en un objeto JS y <strong>render(user)</strong> finalmente la pinta en pantalla.',
+      finalJson: true
+    }
+  ];
+
+  const nodePos = { usuario: 9, api: 36.3, server: 63.7, db: 91 };
+
+  const packet = document.getElementById('packet');
+  const btnRun = document.getElementById('btn-run');
+  const btnReset = document.getElementById('btn-reset');
+  const stepTrack = document.getElementById('step-track');
+  const stepCount = document.getElementById('step-count');
+  const codeFilename = document.getElementById('code-filename');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+
+  const allNodes = ['usuario', 'api', 'server', 'db'].map(id => document.getElementById('node-' + id));
+  const allCodeLines = document.querySelectorAll('.line');
+
+  // build step track
+  steps.forEach((s, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.index = i;
+    seg.dataset.dir = s.dir;
+    stepTrack.appendChild(seg);
+  });
+  const segs = stepTrack.querySelectorAll('.seg');
+
+  let running = false;
+  let currentStep = -1;
+
+  function clearHighlights() {
+    allNodes.forEach(n => n.classList.remove('active'));
+    allCodeLines.forEach(l => l.classList.remove('active', 'response'));
+  }
+
+  function setNodeActive(id, color) {
+    const node = document.getElementById('node-' + id);
+    node.classList.add('active');
+    node.style.setProperty('--node-color', color);
+  }
+
+  function renderStep(i) {
+    const s = steps[i];
+    const color = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+
+    clearHighlights();
+    setNodeActive(s.from, color);
+    setNodeActive(s.to, color);
+
+    // move packet
+    packet.classList.add('visible');
+    packet.style.background = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+    packet.style.left = nodePos[s.from] + '%';
+    // force reflow so the transition triggers from the correct start point
+    void packet.offsetWidth;
+    packet.style.left = nodePos[s.to] + '%';
+
+    // highlight code line + switch panel emphasis
+    document.querySelectorAll('.line[data-key="' + s.code + '"]').forEach(l => {
+      l.classList.add('active');
+      if (s.dir === 'response') l.classList.add('response');
+    });
+    codeFilename.textContent = s.file;
+
+    // explain panel
+    explainIdle.style.display = 'none';
+    explainActive.style.display = 'block';
+    explainTag.textContent = s.dir === 'request' ? 'petición →' : '← respuesta';
+    explainTag.className = 'explain-tag' + (s.dir === 'response' ? ' response' : '');
+    explainText.innerHTML = s.text;
+
+    if (s.finalJson) {
+      consoleLine.style.display = 'block';
+      consoleLine.innerHTML = '{ <span class="json-key">"id"</span>: 42, <span class="json-key">"nombre"</span>: <span class="json-str">"Enzo"</span>, <span class="json-key">"rol"</span>: <span class="json-str">"estudiante"</span> }';
+    } else {
+      consoleLine.style.display = 'none';
+    }
+
+    // step track
+    segs.forEach((seg, idx) => {
+      seg.classList.toggle('done', idx <= i);
+      seg.classList.toggle('response', seg.dataset.dir === 'response');
+    });
+    stepCount.textContent = (i + 1) + ' / ' + steps.length;
+  }
+
+  function runNext() {
+    currentStep++;
+    if (currentStep >= steps.length) {
+      running = false;
+      btnRun.disabled = false;
+      btnRun.textContent = 'Simular de nuevo';
+      return;
+    }
+    renderStep(currentStep);
+    setTimeout(runNext, 1500);
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    btnRun.disabled = true;
+    reset(false);
+    setTimeout(runNext, 250);
+  }
+
+  function reset(clearButton = true) {
+    running = false;
+    currentStep = -1;
+    clearHighlights();
+    packet.classList.remove('visible');
+    explainIdle.style.display = 'block';
+    explainActive.style.display = 'none';
+    consoleLine.style.display = 'none';
+    codeFilename.textContent = 'cliente.js';
+    segs.forEach(seg => seg.classList.remove('done'));
+    stepCount.textContent = '0 / ' + steps.length;
+    if (clearButton) {
+      btnRun.disabled = false;
+      btnRun.textContent = 'Simular funcionamiento';
+    }
+  }
+
+  btnRun.addEventListener('click', start);
+  btnReset.addEventListener('click', () => reset(true));
+
+  reset(true);
+})();
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --amber: var(--color-html);
+    --amber-soft: var(--color-html-glow);
+    --blue: var(--brand-blue);
+    --blue-soft: var(--brand-blue-glow);
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--api-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .crumbs .sep {
+    color: var(--api-muted-2);
+  }
+
+  .crumbs .current {
+    color: var(--text-primary);
+  }
+
+  .crumbs a {
+    color: var(--api-muted);
+    text-decoration: none;
+  }
+
+  .crumbs a:hover {
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+  }
+
+  .lede {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--api-muted);
+    max-width: 62ch;
+    margin: 0 0 40px;
+  }
+
+  .lede strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    padding: 34px 28px 26px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .diagram {
+    position: relative;
+    height: 108px;
+    margin: 0 6px 4px;
+  }
+
+  .diagram svg.lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .node {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .node .icon-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 13px;
+    background: var(--api-panel-2);
+    border: 1px solid var(--api-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--api-muted);
+    transition: border-color .25s, color .25s, box-shadow .25s;
+  }
+
+  .node.active .icon-ring {
+    color: var(--text-primary);
+    border-color: var(--node-color, var(--amber));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--node-color, var(--amber)) 16%, transparent);
+  }
+
+  .node .icon-ring svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .node .label {
+    font-size: 12.5px;
+    color: var(--api-muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .node.active .label {
+    color: var(--text-primary);
+  }
+
+  .packet {
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--amber);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--amber) 20%, transparent);
+    transition: left .85s cubic-bezier(.62,.04,.38,.96), background-color .2s, box-shadow .2s;
+    opacity: 0;
+  }
+
+  .packet.visible {
+    opacity: 1;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 26px;
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  button.primary {
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+  }
+
+  button.primary:hover {
+    filter: brightness(1.08);
+  }
+
+  button.primary:active {
+    transform: scale(.97);
+  }
+
+  button.primary:disabled {
+    opacity: .4;
+    cursor: default;
+    transform: none;
+  }
+
+  button.ghost {
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--api-muted);
+    background: transparent;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+
+  button.ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+
+  .step-track {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .step-track .seg {
+    width: 22px;
+    height: 4px;
+    border-radius: 3px;
+    background: var(--api-border);
+    transition: background .25s;
+  }
+
+  .step-track .seg.done {
+    background: var(--amber);
+  }
+
+  .step-track .seg.done.response {
+    background: var(--blue);
+  }
+
+  .step-count {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--api-muted-2);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+  }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .panel-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--api-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-head .title {
+    font-size: 12.5px;
+    color: var(--api-muted);
+    font-weight: 500;
+  }
+
+  .panel-head .filename {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+  }
+
+  pre.code {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--api-muted);
+    overflow-x: auto;
+  }
+
+  pre.code .kw {
+    color: var(--text-secondary);
+  }
+
+  pre.code .fn {
+    color: var(--text-secondary);
+  }
+
+  pre.code .line {
+    display: block;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    transition: background .3s, color .3s;
+  }
+
+  pre.code .line.active {
+    background: var(--amber-soft);
+    color: var(--text-primary);
+  }
+
+  pre.code .line.active.response {
+    background: var(--blue-soft);
+  }
+
+  pre.code .line.active .fn {
+    color: var(--amber);
+  }
+
+  pre.code .line.active.response .fn {
+    color: var(--blue);
+  }
+
+  .code-divider {
+    border-top: 1px solid var(--api-border-soft);
+  }
+
+  .explain-body {
+    padding: 20px;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .explain-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+
+  .explain-idle {
+    color: var(--api-muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .explain-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-bottom: 14px;
+  }
+
+  .explain-tag.response {
+    color: var(--blue);
+    background: var(--blue-soft);
+  }
+
+  .console-line {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+    padding-top: 14px;
+    border-top: 1px dashed var(--api-border);
+    margin-top: 16px;
+  }
+
+  .console-line .json-key {
+    color: var(--brand-blue);
+  }
+
+  .console-line .json-str {
+    color: var(--color-html);
+  }
+
+  @media (max-width: 780px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .api-page {
+      padding: 0.1rem 0 0.75rem;
+    }
+
+    .topbar {
+      align-items: flex-start;
+      gap: 12px;
+      flex-direction: column;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 26px;
+    }
+
+    .diagram-card {
+      padding: 28px 16px 22px;
+    }
+
+    .controls {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>
