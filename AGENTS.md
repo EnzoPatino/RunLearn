@@ -44,7 +44,6 @@ El objetivo de la interfaz es presentar de manera limpia y visual:
 │   │   └── index.astro            # Punto de entrada de la página
 │   └── styles/
 │       └── global.css             # Tokens (:root), reset, body y ambient glow
-├── index.html & style.css         # Versión estática pura en la raíz (mantener en sincronía si se editan estilos críticos)
 ├── astro.config.mjs
 └── package.json
 ```
@@ -69,7 +68,7 @@ El objetivo de la interfaz es presentar de manera limpia y visual:
 
 ## 5. Directrices para agentes al realizar cambios
 
-- **Fuente de la verdad:** La aplicación activa se desarrolla en `src/`. Al editar estilos estructurales globales en `src/styles/global.css`, reflejar los cambios pertinentes también en `style.css` de la raíz si se requiere que la versión estática independiente siga funcionando idénticamente.
+- **Fuente de la verdad:** La aplicación activa se desarrolla exclusivamente en `src/`.
 - **Validación de cambios:** Tras realizar modificaciones de código en `src/`, ejecutar siempre:
   ```bash
   npm run build

@@ -63,8 +63,6 @@ RunLearn/
 └── .gitignore
 ```
 
-> **Nota:** En la raíz del repositorio se encuentran también `index.html` y `style.css` como versión estática directa, mientras que el código fuente activo y mantenible vive en `src/` bajo Astro.
-
 ---
 
 ## Sistema de diseño y estilos
