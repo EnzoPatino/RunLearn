@@ -1,0 +1,884 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — HTTP vs HTTPS">
+  <div class="http-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">HTTP / HTTPS</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>doble animación</div>
+      </div>
+    </div>
+
+    <h1>HTTP vs HTTPS</h1>
+    <p class="lede">
+      Los dos protocolos transportan pedidos y respuestas web. La diferencia crítica es qué pasa en el medio: con <strong>HTTP</strong> el contenido viaja legible; con <strong>HTTPS</strong> primero se negocia una conexión segura y después los datos viajan cifrados.
+    </p>
+
+    <div class="compare-grid">
+      <section class="protocol-card protocol-card--http" data-sim="http">
+        <div class="protocol-head">
+          <div>
+            <span class="eyebrow">puerto 80</span>
+            <h2>HTTP: texto legible</h2>
+          </div>
+          <span class="state-pill state-pill--warn">sin cifrado</span>
+        </div>
+
+        <div class="diagram">
+          <svg class="lines">
+            <line x1="12%" y1="50%" x2="88%" y2="50%" stroke="var(--line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+          </svg>
+
+          <div class="node" data-node="client" style="left:12%">
+            <div class="icon-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="11" rx="1.7"/>
+                <path d="M8 20h8"/>
+                <path d="M12 16v4"/>
+              </svg>
+            </div>
+            <div class="label">Navegador</div>
+          </div>
+
+          <div class="node middle" data-node="network" style="left:50%">
+            <div class="icon-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 3v3"/>
+                <path d="M12 18v3"/>
+                <path d="M3 12h3"/>
+                <path d="M18 12h3"/>
+                <path d="m5.6 5.6 2.1 2.1"/>
+                <path d="m16.3 16.3 2.1 2.1"/>
+              </svg>
+            </div>
+            <div class="label">Red</div>
+          </div>
+
+          <div class="node" data-node="server" style="left:88%">
+            <div class="icon-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="4" width="14" height="16" rx="1.8"/>
+                <path d="M8 8h8"/>
+                <path d="M8 12h8"/>
+                <path d="M8 16h5"/>
+              </svg>
+            </div>
+            <div class="label">Servidor</div>
+          </div>
+
+          <div class="packet packet--plain">GET /login</div>
+          <div class="sniff-card">GET /login?token=123</div>
+        </div>
+
+        <div class="controls">
+          <button class="primary" type="button" data-run>Animar HTTP</button>
+          <button class="ghost" type="button" data-reset>Reiniciar</button>
+          <span class="step-count" data-count>0 / 3</span>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="title">Qué se ve en la red</span>
+            <span class="filename">request.http</span>
+          </div>
+          <pre class="code"><span class="line" data-step="0">GET /login HTTP/1.1</span>
+<span class="line" data-step="1">Host: runlearn.dev</span>
+<span class="line" data-step="2">Cookie: session=abc123</span></pre>
+          <div class="explain-body">
+            <div class="explain-text" data-explain>Tocá “Animar HTTP”. El pedido va directo al servidor y cualquier punto intermedio puede leer método, ruta, headers y datos sensibles si viajan en claro.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="protocol-card protocol-card--https" data-sim="https">
+        <div class="protocol-head">
+          <div>
+            <span class="eyebrow">puerto 443</span>
+            <h2>HTTPS: canal cifrado</h2>
+          </div>
+          <span class="state-pill state-pill--ok">TLS activo</span>
+        </div>
+
+        <div class="diagram">
+          <svg class="lines">
+            <line x1="12%" y1="50%" x2="88%" y2="50%" stroke="var(--line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+          </svg>
+
+          <div class="node" data-node="client" style="left:12%">
+            <div class="icon-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="11" rx="1.7"/>
+                <path d="M8 20h8"/>
+                <path d="M12 16v4"/>
+              </svg>
+            </div>
+            <div class="label">Navegador</div>
+          </div>
+
+          <div class="node middle" data-node="tls" style="left:50%">
+            <div class="icon-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="10" width="12" height="10" rx="1.8"/>
+                <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10"/>
+                <path d="M12 14v2"/>
+              </svg>
+            </div>
+            <div class="label">TLS</div>
+          </div>
+
+          <div class="node" data-node="server" style="left:88%">
+            <div class="icon-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="4" width="14" height="16" rx="1.8"/>
+                <path d="M8 8h8"/>
+                <path d="M8 12h8"/>
+                <path d="M8 16h5"/>
+              </svg>
+            </div>
+            <div class="label">Servidor</div>
+          </div>
+
+          <div class="packet packet--secure">TLS hello</div>
+          <div class="lock-burst">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="primary" type="button" data-run>Animar HTTPS</button>
+          <button class="ghost" type="button" data-reset>Reiniciar</button>
+          <span class="step-count" data-count>0 / 4</span>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="title">Qué se ve en la red</span>
+            <span class="filename">request.tls</span>
+          </div>
+          <pre class="code"><span class="line" data-step="0">ClientHello + versión TLS</span>
+<span class="line" data-step="1">Certificado del servidor</span>
+<span class="line" data-step="2">Clave de sesión acordada</span>
+<span class="line" data-step="3">datos cifrados: 8f3a...c91</span></pre>
+          <div class="explain-body">
+            <div class="explain-text" data-explain>Tocá “Animar HTTPS”. Antes del pedido real, navegador y servidor negocian TLS. La red puede ver que existe una conexión, pero no leer el contenido útil.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</Layout>
+
+<script>
+(function () {
+  const flows = {
+    http: [
+      {
+        from: 12,
+        to: 50,
+        nodes: ['client', 'network'],
+        label: 'GET /login',
+        text: 'El navegador envía un pedido HTTP común. La ruta y los headers viajan como texto legible.',
+        leak: true
+      },
+      {
+        from: 50,
+        to: 88,
+        nodes: ['network', 'server'],
+        label: 'Cookie visible',
+        text: 'Un punto intermedio de la red puede inspeccionar el pedido: método, ruta, host y cookies quedan expuestos.',
+        leak: true
+      },
+      {
+        from: 88,
+        to: 12,
+        nodes: ['server', 'client'],
+        label: '200 OK',
+        text: 'El servidor responde, pero la respuesta también vuelve sin cifrado. HTTP no protege confidencialidad ni integridad por sí solo.'
+      }
+    ],
+    https: [
+      {
+        from: 12,
+        to: 88,
+        nodes: ['client', 'server'],
+        label: 'ClientHello',
+        text: 'El navegador inicia TLS y propone parámetros criptográficos. Todavía no envía el pedido real de la app.'
+      },
+      {
+        from: 88,
+        to: 12,
+        nodes: ['server', 'tls'],
+        label: 'Certificado',
+        text: 'El servidor responde con su certificado. El navegador valida identidad y dominio antes de confiar en la conexión.'
+      },
+      {
+        from: 12,
+        to: 50,
+        nodes: ['client', 'tls'],
+        label: 'clave segura',
+        text: 'Ambos acuerdan una clave de sesión. Desde acá el canal queda cifrado para esta conexión.',
+        secure: true
+      },
+      {
+        from: 12,
+        to: 88,
+        nodes: ['client', 'server', 'tls'],
+        label: '8f3a...c91',
+        text: 'El pedido HTTP real viaja dentro de TLS. La red puede transportar bytes, pero no leer credenciales, cookies ni cuerpo del mensaje.',
+        secure: true
+      }
+    ]
+  };
+
+  const timers = new WeakMap();
+
+  function clearTimer(card) {
+    const timer = timers.get(card);
+    if (timer) window.clearTimeout(timer);
+    timers.delete(card);
+  }
+
+  function reset(card) {
+    clearTimer(card);
+    card.querySelectorAll('.node').forEach(node => node.classList.remove('active'));
+    card.querySelectorAll('.line').forEach(line => line.classList.remove('active'));
+
+    const packet = card.querySelector('.packet');
+    packet.classList.remove('visible', 'secure');
+    packet.style.left = '';
+
+    const sniffCard = card.querySelector('.sniff-card');
+    if (sniffCard) sniffCard.classList.remove('visible');
+
+    const burst = card.querySelector('.lock-burst');
+    if (burst) burst.classList.remove('visible');
+
+    const key = card.dataset.sim;
+    const explain = card.querySelector('[data-explain]');
+    explain.textContent = key === 'http'
+      ? 'Tocá “Animar HTTP”. El pedido va directo al servidor y cualquier punto intermedio puede leer método, ruta, headers y datos sensibles si viajan en claro.'
+      : 'Tocá “Animar HTTPS”. Antes del pedido real, navegador y servidor negocian TLS. La red puede ver que existe una conexión, pero no leer el contenido útil.';
+
+    card.querySelector('[data-count]').textContent = '0 / ' + flows[key].length;
+    card.querySelector('[data-run]').disabled = false;
+  }
+
+  function renderStep(card, step, index, total) {
+    const packet = card.querySelector('.packet');
+    const explain = card.querySelector('[data-explain]');
+    const count = card.querySelector('[data-count]');
+
+    card.querySelectorAll('.node').forEach(node => {
+      node.classList.toggle('active', step.nodes.includes(node.dataset.node));
+    });
+    card.querySelectorAll('.line').forEach((line, lineIndex) => {
+      line.classList.toggle('active', lineIndex === index);
+    });
+
+    packet.textContent = step.label;
+    packet.classList.toggle('secure', Boolean(step.secure));
+    packet.classList.add('visible');
+    packet.style.left = step.from + '%';
+    void packet.offsetWidth;
+    packet.style.left = step.to + '%';
+
+    const sniffCard = card.querySelector('.sniff-card');
+    if (sniffCard) sniffCard.classList.toggle('visible', Boolean(step.leak));
+
+    const burst = card.querySelector('.lock-burst');
+    if (burst) burst.classList.toggle('visible', Boolean(step.secure));
+
+    explain.textContent = step.text;
+    count.textContent = (index + 1) + ' / ' + total;
+  }
+
+  function run(card) {
+    const key = card.dataset.sim;
+    const steps = flows[key];
+    const button = card.querySelector('[data-run]');
+    let index = 0;
+
+    reset(card);
+    button.disabled = true;
+
+    function next() {
+      if (index >= steps.length) {
+        button.disabled = false;
+        button.textContent = key === 'http' ? 'Animar HTTP de nuevo' : 'Animar HTTPS de nuevo';
+        return;
+      }
+
+      renderStep(card, steps[index], index, steps.length);
+      index += 1;
+      timers.set(card, window.setTimeout(next, 1500));
+    }
+
+    timers.set(card, window.setTimeout(next, 220));
+  }
+
+  document.querySelectorAll('[data-sim]').forEach(card => {
+    card.querySelector('[data-run]').addEventListener('click', () => run(card));
+    card.querySelector('[data-reset]').addEventListener('click', () => {
+      const key = card.dataset.sim;
+      card.querySelector('[data-run]').textContent = key === 'http' ? 'Animar HTTP' : 'Animar HTTPS';
+      reset(card);
+    });
+    reset(card);
+  });
+})();
+</script>
+
+<style>
+  .http-page {
+    --http-panel: var(--surface-panel);
+    --http-panel-2: var(--surface-card);
+    --http-border: var(--border-subtle);
+    --http-border-soft: var(--border-hairline);
+    --http-muted: var(--text-secondary);
+    --http-muted-2: var(--text-muted);
+    --http-warn: var(--color-html);
+    --http-warn-soft: var(--color-html-glow);
+    --http-secure: var(--color-success);
+    --http-secure-soft: rgba(16, 185, 129, 0.18);
+    --http-blue: var(--color-http);
+    --http-blue-soft: var(--color-http-glow);
+
+    width: min(100%, 1180px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--http-border-soft);
+    margin-bottom: 34px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--canvas-bg);
+    background: var(--http-blue);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--http-blue-soft);
+  }
+
+  .topbar-actions,
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--http-border);
+    border-radius: 10px;
+    color: var(--http-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-action:hover,
+  .brand-link:hover,
+  .crumbs a:hover {
+    color: var(--text-primary);
+  }
+
+  .home-action:hover {
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .brand-link:focus-visible,
+  .home-action:focus-visible,
+  .crumbs a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--http-blue);
+    outline-offset: 4px;
+  }
+
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--http-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .crumbs a {
+    color: var(--http-muted);
+    text-decoration: none;
+  }
+
+  .crumbs .sep,
+  .crumbs .current {
+    color: var(--http-muted-2);
+  }
+
+  .crumbs .current {
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--http-blue);
+    background: var(--http-blue-soft);
+    border: 1px solid color-mix(in srgb, var(--http-blue) 28%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--http-blue);
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+  }
+
+  .lede {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--http-muted);
+    max-width: 78ch;
+    margin: 0 0 34px;
+  }
+
+  .lede strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .protocol-card {
+    --accent: var(--http-blue);
+    --accent-soft: var(--http-blue-soft);
+    --line: rgba(255, 255, 255, 0.14);
+    background: var(--http-panel);
+    border: 1px solid var(--http-border);
+    border-radius: var(--radius-card);
+    padding: 20px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+    overflow: hidden;
+  }
+
+  .protocol-card--http {
+    --accent: var(--http-warn);
+    --accent-soft: var(--http-warn-soft);
+  }
+
+  .protocol-card--https {
+    --accent: var(--http-secure);
+    --accent-soft: var(--http-secure-soft);
+  }
+
+  .protocol-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--http-muted-2);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 19px;
+    color: var(--text-primary);
+  }
+
+  .state-pill {
+    border-radius: var(--radius-pill);
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    white-space: nowrap;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .diagram {
+    position: relative;
+    height: 142px;
+    margin: 0 4px 18px;
+  }
+
+  .diagram svg.lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .node {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    z-index: 2;
+  }
+
+  .node.middle {
+    top: 34%;
+  }
+
+  .icon-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 13px;
+    background: var(--http-panel-2);
+    border: 1px solid var(--http-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--http-muted);
+    transition: border-color .25s, color .25s, box-shadow .25s;
+  }
+
+  .node.active .icon-ring {
+    color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  .icon-ring svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .label {
+    font-size: 12.5px;
+    color: var(--http-muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .node.active .label {
+    color: var(--text-primary);
+  }
+
+  .packet {
+    position: absolute;
+    top: 50%;
+    left: 12%;
+    transform: translate(-50%, -50%);
+    min-width: 74px;
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--canvas-bg);
+    background: var(--accent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent);
+    opacity: 0;
+    z-index: 3;
+    transition: left .85s cubic-bezier(.62,.04,.38,.96), opacity .2s, background .2s, color .2s;
+  }
+
+  .packet.visible {
+    opacity: 1;
+  }
+
+  .packet.secure {
+    color: var(--text-primary);
+    background: var(--http-panel-2);
+    border: 1px solid var(--http-secure);
+  }
+
+  .sniff-card {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%) translateY(8px);
+    opacity: 0;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: rgba(249, 115, 22, 0.12);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    transition: opacity .25s, transform .25s;
+  }
+
+  .sniff-card.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .lock-burst {
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .lock-burst.visible {
+    opacity: 1;
+  }
+
+  .lock-burst span {
+    width: 34px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--http-secure);
+    box-shadow: 0 0 12px var(--http-secure-soft);
+  }
+
+  .controls {
+    margin-bottom: 18px;
+  }
+
+  button.primary,
+  button.ghost {
+    font-family: var(--font-main);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  button.primary {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--canvas-bg);
+    background: var(--accent);
+    border: none;
+    padding: 10px 16px;
+    transition: transform .15s, filter .15s, opacity .15s;
+  }
+
+  button.primary:hover {
+    filter: brightness(1.08);
+  }
+
+  button.primary:active {
+    transform: scale(.97);
+  }
+
+  button.primary:disabled {
+    opacity: .45;
+    cursor: default;
+  }
+
+  button.ghost {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--http-muted);
+    background: transparent;
+    border: 1px solid var(--http-border);
+    padding: 9px 14px;
+    transition: color .15s, border-color .15s;
+  }
+
+  button.ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+
+  .step-count {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--http-muted-2);
+  }
+
+  .panel {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--http-border-soft);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--http-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .panel-head .title {
+    font-size: 12.5px;
+    color: var(--http-muted);
+    font-weight: 500;
+  }
+
+  .panel-head .filename {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--http-muted-2);
+  }
+
+  pre.code {
+    margin: 0;
+    padding: 16px 18px 18px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--http-muted);
+    overflow-x: auto;
+    border-bottom: 1px solid var(--http-border-soft);
+  }
+
+  pre.code .line {
+    display: block;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    transition: background .25s, color .25s;
+  }
+
+  pre.code .line.active {
+    background: var(--accent-soft);
+    color: var(--text-primary);
+  }
+
+  .explain-body {
+    padding: 16px 18px 18px;
+    min-height: 104px;
+  }
+
+  .explain-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  @media (max-width: 960px) {
+    .compare-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .topbar {
+      align-items: flex-start;
+      flex-direction: column;
+      margin-bottom: 26px;
+    }
+
+    .protocol-card {
+      padding: 16px;
+    }
+
+    .protocol-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .diagram {
+      height: 156px;
+      margin-inline: 0;
+    }
+
+    .node .icon-ring {
+      width: 46px;
+      height: 46px;
+    }
+
+    .packet {
+      min-width: 62px;
+      font-size: 10px;
+    }
+  }
+</style>

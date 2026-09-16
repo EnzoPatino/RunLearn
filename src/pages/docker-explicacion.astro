@@ -5,12 +5,28 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="RunLearn — Cómo funciona Docker">
   <div class="api-page">
     <div class="topbar">
-      <div class="crumbs">
-        <a href="/">RunLearn</a>
-        <span class="sep">/</span>
-        <span class="current">Docker</span>
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Docker</span>
+        </div>
       </div>
-      <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      <div class="topbar-actions">
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
     </div>
 
     <h1>Cómo funciona Docker</h1>
@@ -309,9 +325,91 @@ import Layout from '../layouts/Layout.astro';
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 18px;
     padding: 4px 2px 26px;
     border-bottom: 1px solid var(--api-border-soft);
     margin-bottom: 34px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-link:hover {
+    color: var(--text-white);
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-action:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .home-action:active {
+    transform: scale(.98);
+  }
+
+  .home-action:focus-visible,
+  .brand-link:focus-visible,
+  .crumbs a:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 4px;
   }
 
   .crumbs {
@@ -705,6 +803,11 @@ import Layout from '../layouts/Layout.astro';
       flex-direction: column;
       margin-bottom: 28px;
       padding-bottom: 20px;
+    }
+
+    .topbar-actions {
+      width: 100%;
+      justify-content: space-between;
     }
 
     h1 {

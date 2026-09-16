@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="RunLearn — Cómo funciona una API">
+<Layout title="RunLearn — Cómo funciona una base de datos">
   <div class="api-page">
     <div class="topbar">
       <div class="topbar-main">
@@ -13,7 +13,7 @@ import Layout from '../layouts/Layout.astro';
         <div class="crumbs" aria-label="Ruta actual">
           <a href="/">Inicio</a>
           <span class="sep">/</span>
-          <span class="current">People API</span>
+          <span class="current">Base de datos</span>
         </div>
       </div>
       <div class="topbar-actions">
@@ -29,9 +29,9 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </div>
 
-    <h1>Cómo funciona una API</h1>
+    <h1>Cómo funciona una base de datos</h1>
     <p class="lede">
-      No es una animación de relleno: cada paso de este diagrama corresponde a una línea real de código. Tocá <strong>Simular funcionamiento</strong> y seguí el recorrido completo de una petición — desde el clic del usuario hasta la respuesta que llega de vuelta.
+      Cada paso del diagrama corresponde a una acción real dentro de una base de datos. Tocá <strong>Simular funcionamiento</strong> y seguí el recorrido completo: desde una consulta <strong>SQL</strong> hasta las filas que vuelven listas para usar.
     </p>
 
     <div class="diagram-card">
@@ -40,39 +40,43 @@ import Layout from '../layouts/Layout.astro';
           <line x1="9%" y1="50%" x2="91%" y2="50%" stroke="var(--api-line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
         </svg>
 
-        <div class="node" id="node-usuario" style="left:9%">
+        <div class="node" id="node-app" style="left:9%">
           <div class="icon-ring">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="3.4"/>
-              <path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4"/>
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <path d="M8 9h8"/>
+              <path d="M8 13h5"/>
+              <path d="M8 17h3"/>
             </svg>
           </div>
-          <div class="label">Usuario</div>
+          <div class="label">Aplicación</div>
         </div>
 
-        <div class="node" id="node-api" style="left:36.3%">
+        <div class="node" id="node-query" style="left:36.3%">
           <div class="icon-ring">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3 3 8v8l9 5 9-5V8z"/>
-              <path d="M8.2 9.6 12 11.7l3.8-2.1M12 11.7v5.4"/>
+              <path d="M8 9 4 12l4 3"/>
+              <path d="m16 9 4 3-4 3"/>
+              <path d="M10 5h4"/>
+              <path d="M9 19h6"/>
             </svg>
           </div>
-          <div class="label">API</div>
+          <div class="label">Consulta SQL</div>
         </div>
 
-        <div class="node" id="node-server" style="left:63.7%">
+        <div class="node" id="node-index" style="left:63.7%">
           <div class="icon-ring">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4.5" y="3.5" width="15" height="17" rx="1.6"/>
-              <line x1="7.5" y1="8" x2="16.5" y2="8"/>
-              <line x1="7.5" y1="12" x2="16.5" y2="12"/>
-              <line x1="7.5" y1="16" x2="12.5" y2="16"/>
+              <circle cx="10.5" cy="10.5" r="5.5"/>
+              <path d="m15 15 4 4"/>
+              <path d="M8 10.5h5"/>
+              <path d="M10.5 8v5"/>
             </svg>
           </div>
-          <div class="label">Server</div>
+          <div class="label">Índice</div>
         </div>
 
-        <div class="node" id="node-db" style="left:91%">
+        <div class="node" id="node-table" style="left:91%">
           <div class="icon-ring">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
               <ellipse cx="12" cy="6" rx="7" ry="2.6"/>
@@ -80,7 +84,7 @@ import Layout from '../layouts/Layout.astro';
               <path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/>
             </svg>
           </div>
-          <div class="label">Database</div>
+          <div class="label">Tabla</div>
         </div>
 
         <div class="packet" id="packet"></div>
@@ -102,17 +106,17 @@ import Layout from '../layouts/Layout.astro';
       <div class="panel">
         <div class="panel-head">
           <span class="title">Código</span>
-          <span class="filename" id="code-filename">cliente.js</span>
+          <span class="filename" id="code-filename">consulta.sql</span>
         </div>
-        <pre class="code" id="code-client"><span class="line" data-key="fetch">fetch(<span class="fn">"/getUserData"</span>)</span>
-<span class="line" data-key="fetch">  .then(res =&gt; res.json())</span>
-<span class="line" data-key="render">  .then(user =&gt; render(user))</span></pre>
+        <pre class="code" id="code-client"><span class="line" data-key="select"><span class="kw">SELECT</span> id, nombre, progreso</span>
+<span class="line" data-key="from"><span class="kw">FROM</span> cursos</span>
+<span class="line" data-key="where"><span class="kw">WHERE</span> usuario_id = 42</span>
+<span class="line" data-key="order"><span class="kw">ORDER BY</span> actualizado_en <span class="kw">DESC</span></span></pre>
         <div class="code-divider"></div>
-        <pre class="code" id="code-server"><span class="line" data-key="route"><span class="kw">app</span>.get(<span class="fn">"/getUserData"</span>, (req, res) =&gt; {</span>
-<span class="line" data-key="auth">  checkAuth(req.token)</span>
-<span class="line" data-key="dbfind">  <span class="kw">const</span> user = db.find(req.userId)</span>
-<span class="line" data-key="return">  <span class="kw">return</span> res.json(user)</span>
-<span class="line" data-key="route">})</span></pre>
+        <pre class="code" id="code-server"><span class="line" data-key="index"><span class="kw">CREATE INDEX</span> idx_cursos_usuario</span>
+<span class="line" data-key="index">  <span class="kw">ON</span> cursos(usuario_id)</span>
+<span class="line" data-key="rows">rows = engine.scan(index)</span>
+<span class="line" data-key="return"><span class="kw">return</span> rows.toJSON()</span></pre>
       </div>
 
       <div class="panel">
@@ -121,7 +125,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
         <div class="explain-body">
           <div id="explain-idle" class="explain-idle">
-            Tocá «Simular funcionamiento» para arrancar. Vas a ver el pedido viajar de un extremo al otro, y en el panel de código se va a marcar exactamente qué línea se está ejecutando en cada instante.
+            Tocá «Simular funcionamiento» para arrancar. Vas a ver cómo la base de datos interpreta una consulta, usa un índice, lee la tabla y devuelve solo las filas que la aplicación necesita.
           </div>
           <div id="explain-active" style="display:none">
             <div class="explain-tag" id="explain-tag">petición</div>
@@ -138,39 +142,39 @@ import Layout from '../layouts/Layout.astro';
 (function () {
   const steps = [
     {
-      from: 'usuario', to: 'api', dir: 'request',
-      code: 'fetch', panel: 'client', file: 'cliente.js',
-      text: 'El usuario hace clic y el navegador ejecuta <strong>fetch("/getUserData")</strong>. Esto es un pedido HTTP real viajando por la red — texto plano, nada mágico.'
+      from: 'app', to: 'query', dir: 'request',
+      code: 'select', panel: 'client', file: 'consulta.sql',
+      text: 'La aplicación necesita información y arma una consulta. Con <strong>SELECT id, nombre, progreso</strong> pide columnas concretas, en vez de traer todo el registro.'
     },
     {
-      from: 'api', to: 'server', dir: 'request',
-      code: 'auth', panel: 'server', file: 'servidor.js',
-      text: 'La API recibe la petición y, antes de tocar cualquier dato, llama a <strong>checkAuth(req.token)</strong>. Si el token no es válido, el flujo se corta acá mismo.'
+      from: 'query', to: 'query', dir: 'request',
+      code: 'where', panel: 'client', file: 'consulta.sql',
+      text: 'La condición <strong>WHERE usuario_id = 42</strong> filtra el conjunto de datos. Sin este filtro, la base tendría que revisar muchos más registros.'
     },
     {
-      from: 'server', to: 'db', dir: 'request',
-      code: 'dbfind', panel: 'server', file: 'servidor.js',
-      text: 'El servidor le pide los datos a la base de datos con <strong>db.find(req.userId)</strong>. Es la única parte del sistema que sabe cómo están guardados.'
+      from: 'query', to: 'index', dir: 'request',
+      code: 'index', panel: 'server', file: 'estructura.sql',
+      text: 'El motor mira si existe un índice útil. <strong>idx_cursos_usuario</strong> funciona como un atajo: permite encontrar los cursos del usuario sin recorrer toda la tabla.'
     },
     {
-      from: 'db', to: 'server', dir: 'response',
-      code: 'dbfind', panel: 'server', file: 'servidor.js',
-      text: 'La base de datos devuelve una fila cruda de datos — todavía no es JSON, es solo el registro tal como vive en la tabla.'
+      from: 'index', to: 'table', dir: 'request',
+      code: 'rows', panel: 'server', file: 'motor-db',
+      text: 'Con el índice resuelto, el motor lee las filas reales en la tabla <strong>cursos</strong>. Ahí viven los datos persistidos: nombres, progreso y fechas.'
     },
     {
-      from: 'server', to: 'api', dir: 'response',
-      code: 'return', panel: 'server', file: 'servidor.js',
-      text: 'El servidor arma el objeto <strong>user</strong> y lo devuelve con <strong>res.json(user)</strong>, ya convertido al formato que la API puede reenviar.'
+      from: 'table', to: 'query', dir: 'response',
+      code: 'order', panel: 'client', file: 'consulta.sql',
+      text: 'Antes de responder, la base aplica <strong>ORDER BY actualizado_en DESC</strong>. El resultado queda ordenado para que la aplicación reciba primero lo más reciente.'
     },
     {
-      from: 'api', to: 'usuario', dir: 'response',
-      code: 'render', panel: 'client', file: 'cliente.js',
-      text: 'La respuesta llega al navegador, <strong>res.json()</strong> la convierte en un objeto JS y <strong>render(user)</strong> finalmente la pinta en pantalla.',
+      from: 'query', to: 'app', dir: 'response',
+      code: 'return', panel: 'server', file: 'motor-db',
+      text: 'La base devuelve un conjunto de filas. El backend puede convertirlo con <strong>rows.toJSON()</strong> y enviarlo a la interfaz sin exponer cómo está guardada la tabla.',
       finalJson: true
     }
   ];
 
-  const nodePos = { usuario: 9, api: 36.3, server: 63.7, db: 91 };
+  const nodePos = { app: 9, query: 36.3, index: 63.7, table: 91 };
 
   const packet = document.getElementById('packet');
   const btnRun = document.getElementById('btn-run');
@@ -184,7 +188,7 @@ import Layout from '../layouts/Layout.astro';
   const explainText = document.getElementById('explain-text');
   const consoleLine = document.getElementById('console-line');
 
-  const allNodes = ['usuario', 'api', 'server', 'db'].map(id => document.getElementById('node-' + id));
+  const allNodes = ['app', 'query', 'index', 'table'].map(id => document.getElementById('node-' + id));
   const allCodeLines = document.querySelectorAll('.line');
 
   // build step track
@@ -243,7 +247,7 @@ import Layout from '../layouts/Layout.astro';
 
     if (s.finalJson) {
       consoleLine.style.display = 'block';
-      consoleLine.innerHTML = '{ <span class="json-key">"id"</span>: 42, <span class="json-key">"nombre"</span>: <span class="json-str">"Enzo"</span>, <span class="json-key">"rol"</span>: <span class="json-str">"estudiante"</span> }';
+      consoleLine.innerHTML = '[{ <span class="json-key">"id"</span>: 7, <span class="json-key">"nombre"</span>: <span class="json-str">"SQL básico"</span>, <span class="json-key">"progreso"</span>: 68 }]';
     } else {
       consoleLine.style.display = 'none';
     }
@@ -284,7 +288,7 @@ import Layout from '../layouts/Layout.astro';
     explainIdle.style.display = 'block';
     explainActive.style.display = 'none';
     consoleLine.style.display = 'none';
-    codeFilename.textContent = 'cliente.js';
+    codeFilename.textContent = 'consulta.sql';
     segs.forEach(seg => seg.classList.remove('done'));
     stepCount.textContent = '0 / ' + steps.length;
     if (clearButton) {
@@ -309,8 +313,8 @@ import Layout from '../layouts/Layout.astro';
     --api-line: rgba(255, 255, 255, 0.14);
     --api-muted: var(--text-secondary);
     --api-muted-2: var(--text-muted);
-    --amber: var(--color-html);
-    --amber-soft: var(--color-html-glow);
+    --amber: var(--color-db);
+    --amber-soft: var(--color-db-glow);
     --blue: var(--brand-blue);
     --blue-soft: var(--brand-blue-glow);
 
