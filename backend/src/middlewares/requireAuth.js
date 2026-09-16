@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-function getJwtSecret() {
+export function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
 
   if (secret) {
@@ -14,11 +14,13 @@ function getJwtSecret() {
   return 'runlearn-dev-secret';
 }
 
-export default function requireAuth(req, res, next) {
+export function requireAuth(req, res, next) {
   const authorization = req.headers.authorization || '';
-  const [scheme, token] = authorization.split(' ');
+  const parts = authorization.trim().split(/\s+/);
+  const scheme = parts[0];
+  const token = parts[1];
 
-  if (scheme !== 'Bearer' || !token) {
+  if (!scheme || !/^Bearer$/i.test(scheme) || !token) {
     return res.status(401).json({ error: 'Token de autenticación requerido' });
   }
 
@@ -29,3 +31,5 @@ export default function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
 }
+
+export default requireAuth;

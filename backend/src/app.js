@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
       auth: {
         register: '/api/auth/register',
         login: '/api/auth/login',
+        me: '/api/auth/me',
       },
       health: '/api/health',
     },

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { query } from '../db/index.js';
+import requireAuth from '../middlewares/requireAuth.js';
 
 const router = Router();
 const SALT_ROUNDS = 12;
@@ -31,7 +32,7 @@ function isValidEmail(email) {
 }
 
 function isValidPassword(password) {
-  return typeof password === 'string' && password.length >= 8;
+  return typeof password === 'string' && password.length >= 6;
 }
 
 function buildAuthPayload(user) {
@@ -39,6 +40,7 @@ function buildAuthPayload(user) {
     id: user.id,
     email: user.email,
     rol: user.rol,
+    ...(user.created_at ? { created_at: user.created_at } : {}),
   };
 }
 
@@ -119,6 +121,40 @@ router.post('/login', async (req, res, next) => {
         created_at: user.created_at,
       },
       token: signToken(user),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/me', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id ?? req.user.sub;
+
+    const user = {
+      id: userId,
+      email: req.user.email,
+      rol: req.user.rol,
+    };
+
+    if (req.user.created_at) {
+      user.created_at = req.user.created_at;
+    } else {
+      try {
+        const result = await query(
+          'SELECT created_at FROM users WHERE id = $1',
+          [userId],
+        );
+        if (result.rows.length > 0 && result.rows[0].created_at) {
+          user.created_at = result.rows[0].created_at;
+        }
+      } catch (_) {
+        // En caso de que la BD no esté disponible, se devuelven los datos del JWT
+      }
+    }
+
+    return res.json({
+      user,
     });
   } catch (error) {
     return next(error);
