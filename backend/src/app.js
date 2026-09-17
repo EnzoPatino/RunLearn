@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRouter from './routes/auth.routes.js';
 import healthRouter from './routes/health.routes.js';
+import peopleRouter from './routes/people.js';
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 // Rutas
 app.use('/api/auth', authRouter);
 app.use('/api/health', healthRouter);
+app.use('/api/people', peopleRouter);
 
 app.get('/', (req, res) => {
   res.json({
@@ -22,6 +24,13 @@ app.get('/', (req, res) => {
         register: '/api/auth/register',
         login: '/api/auth/login',
         me: '/api/auth/me',
+      },
+      people: {
+        list: 'GET /api/people',
+        get: 'GET /api/people/:id',
+        create: 'POST /api/people',
+        update: 'PUT /api/people/:id',
+        delete: 'DELETE /api/people/:id',
       },
       health: '/api/health',
     },

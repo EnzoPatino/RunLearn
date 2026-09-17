@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PeopleApiModule from '../components/modules/PeopleApiModule.jsx';
 ---
 
 <Layout title="RunLearn — Cómo funciona una API">
@@ -131,6 +132,9 @@ import Layout from '../layouts/Layout.astro';
         </div>
       </div>
     </div>
+
+    {/* Consola interactiva de CRUD y visualizador de HTTP en tiempo real */}
+    <PeopleApiModule client:load />
   </div>
 </Layout>
 
