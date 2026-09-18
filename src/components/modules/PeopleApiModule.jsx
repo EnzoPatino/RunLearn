@@ -246,7 +246,7 @@ export default function PeopleApiModule() {
         <div style={styles.headerLeft}>
           <div style={styles.titleRow}>
             <span style={styles.badgeResource}>RECURSO</span>
-            <h2 style={styles.title}>People API Explorer</h2>
+            <h2 style={styles.title}>API Explorer</h2>
             <span style={styles.endpointPill}>/api/people</span>
           </div>
           <p style={styles.subtitle}>

@@ -1,0 +1,1347 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const defaultArray = [7, 2, 9, 1, 5, 11, 3, 8, 4, 6, 10];
+const maxVal = Math.max(...defaultArray);
+---
+
+<Layout title="RunLearn — Algoritmo de número: Selection Sort">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Algoritmo de número</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>Algoritmo de número: Selection Sort</h1>
+    <p class="lede">
+      Visualizá cómo opera el algoritmo de ordenamiento por selección (<strong>Selection Sort</strong>) paso a paso. En cada iteración, el algoritmo recorre el resto de la lista buscando el <strong>número más chico restante</strong> y lo intercambia con la posición correspondiente, consolidando los valores ordenados de menor a mayor de izquierda a derecha.
+    </p>
+
+    <!-- Visualizer Card -->
+    <div class="diagram-card">
+      <div class="diagram-meta">
+        <div class="meta-left">
+          <span class="status-pill" id="status-pill">Listo para simular</span>
+          <span class="pass-pill" id="pass-pill">Pasada: 0</span>
+        </div>
+        <div class="meta-right">
+          <span class="legend-item"><span class="legend-dot target"></span>Posición i</span>
+          <span class="legend-item"><span class="legend-dot comparing"></span>Comparando (j)</span>
+          <span class="legend-item"><span class="legend-dot min-cand"></span>Mínimo</span>
+          <span class="legend-item"><span class="legend-dot swapping"></span>Swap</span>
+          <span class="legend-item"><span class="legend-dot sorted"></span>Ordenado</span>
+        </div>
+      </div>
+
+      <!-- Bars Container: Pre-rendered statically in the DOM at initial load -->
+      <div class="bars-wrapper">
+        <div class="bars-container" id="bars-container">
+          {defaultArray.map((val, idx) => {
+            const heightPx = Math.round((val / maxVal) * 135) + 38;
+            return (
+              <div class="bar-col">
+                <div class="bar-item" style={`height: ${heightPx}px`}>
+                  <span class="bar-val">{val}</span>
+                </div>
+                <span class="bar-idx">[{idx}]</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Pointers Row -->
+      <div class="pointers-row" id="pointers-row">
+        {defaultArray.map(() => (
+          <div class="pointer-cell"></div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Interactive Controls -->
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-run">Simular funcionamiento</button>
+        <button class="ghost" id="btn-step" title="Avanzar un solo paso">Paso a paso</button>
+        <button class="ghost" id="btn-random" title="Generar nuevo conjunto de números aleatorios">Nuevos números</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+      </div>
+      <div class="controls-right">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 0</span>
+      </div>
+    </div>
+
+    <!-- Code & Explanation Split Panel -->
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código del algoritmo</span>
+          <span class="filename" id="code-filename">selectionSort.js</span>
+        </div>
+        <pre class="code" id="code-block"><span class="line" data-key="fn"><span class="kw">function</span> <span class="fn">selectionSort</span>(arr) &#123;</span>
+<span class="line" data-key="len">  <span class="kw">const</span> n = arr.length;</span>
+<span class="line" data-key="outer">  <span class="kw">for</span> (<span class="kw">let</span> i = 0; i &lt; n - 1; i++) &#123;</span>
+<span class="line" data-key="init-min">    <span class="kw">let</span> minIdx = i;</span>
+<span class="line" data-key="inner">    <span class="kw">for</span> (<span class="kw">let</span> j = i + 1; j &lt; n; j++) &#123;</span>
+<span class="line" data-key="compare">      <span class="kw">if</span> (arr[j] &lt; arr[minIdx]) &#123;</span>
+<span class="line" data-key="new-min">        minIdx = j;</span>
+<span class="line" data-key="close-if">      &#125;</span>
+<span class="line" data-key="close-inner">    &#125;</span>
+<span class="line" data-key="check-swap">    <span class="kw">if</span> (minIdx !== i) &#123;</span>
+<span class="line" data-key="swap">      <span class="kw">const</span> temp = arr[i];</span>
+<span class="line" data-key="swap2">      arr[i] = arr[minIdx];</span>
+<span class="line" data-key="swap3">      arr[minIdx] = temp;</span>
+<span class="line" data-key="close-swap">    &#125;</span>
+<span class="line" data-key="close-outer">  &#125;</span>
+<span class="line" data-key="return">  <span class="kw">return</span> arr;</span>
+<span class="line" data-key="close-fn">&#125;</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando en este paso</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Tocá <strong>«Simular funcionamiento»</strong> para observar cómo Selection Sort busca el número menor restante en cada iteración y lo ubica en su posición de izquierda a derecha. Podés usar <strong>«Paso a paso»</strong> para analizar cada comparación individualmente.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">comparación</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  function setupSelectionSort() {
+    const btnRun = document.getElementById('btn-run');
+    const barsContainer = document.getElementById('bars-container');
+    if (!btnRun || !barsContainer) return;
+    if (btnRun.dataset.initialized === 'true') return;
+    btnRun.dataset.initialized = 'true';
+
+    const pointersRow = document.getElementById('pointers-row');
+    const btnStep = document.getElementById('btn-step');
+    const btnRandom = document.getElementById('btn-random');
+    const btnReset = document.getElementById('btn-reset');
+    const stepTrack = document.getElementById('step-track');
+    const stepCount = document.getElementById('step-count');
+    const statusPill = document.getElementById('status-pill');
+    const passPill = document.getElementById('pass-pill');
+    const explainIdle = document.getElementById('explain-idle');
+    const explainActive = document.getElementById('explain-active');
+    const explainTag = document.getElementById('explain-tag');
+    const explainText = document.getElementById('explain-text');
+    const consoleLine = document.getElementById('console-line');
+    const allCodeLines = document.querySelectorAll('.line');
+
+    // Initial unsorted array specified by requirements
+    const DEFAULT_ARRAY = [7, 2, 9, 1, 5, 11, 3, 8, 4, 6, 10];
+
+    let currentArray = [...DEFAULT_ARRAY];
+    let initialArray = [...DEFAULT_ARRAY];
+    let steps = [];
+    let currentStep = -1;
+    let timer = null;
+    let isRunning = false;
+    const SPEED_MS = 650;
+
+    // Generate a randomized set of 11 distinct numbers
+    function generateRandomArray(count = 11) {
+      const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+      for (let i = numbers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+      }
+      return numbers.slice(0, count);
+    }
+
+    // Precompute all Selection Sort steps
+    function buildSteps(arrOrig) {
+      const arr = [...arrOrig];
+      const n = arr.length;
+      const computed = [];
+      const sortedIndices = new Set();
+
+      for (let i = 0; i < n - 1; i++) {
+        let minIdx = i;
+
+        // Paso 1: Inicio de la pasada i. Se asume arr[i] como mínimo provisional.
+        computed.push({
+          type: 'init-pass',
+          arr: [...arr],
+          i,
+          minIdx,
+          j: -1,
+          codeKeys: ['outer', 'init-min'],
+          tag: `pasada ${i + 1} de ${n - 1}`,
+          tagType: 'init-pass',
+          text: `Iniciamos la pasada para la posición <strong>[${i}]</strong>. Asumimos provisionalmente que el número más chico restante es <strong>arr[${i}] = ${arr[i]}</strong>.`,
+          sortedIndices: new Set(sortedIndices),
+        });
+
+        for (let j = i + 1; j < n; j++) {
+          const valJ = arr[j];
+          const valMin = arr[minIdx];
+          const isSmaller = valJ < valMin;
+
+          // Paso 2: Comparación entre arr[j] y el mínimo actual arr[minIdx]
+          computed.push({
+            type: 'compare',
+            arr: [...arr],
+            i,
+            minIdx,
+            j,
+            valJ,
+            valMin,
+            isSmaller,
+            codeKeys: ['inner', 'compare'],
+            tag: 'comparación',
+            tagType: 'compare',
+            text: `Recorremos el resto buscando el más chico: comparamos <strong>arr[${j}] = ${valJ}</strong> con el mínimo actual <strong>arr[${minIdx}] = ${valMin}</strong>. ${
+              isSmaller
+                ? `¡<strong>${valJ} &lt; ${valMin}</strong>! Encontramos un valor menor.`
+                : `Como <strong>${valJ} &ge; ${valMin}</strong>, no es menor; el mínimo continúa siendo <strong>${valMin}</strong>.`
+            }`,
+            sortedIndices: new Set(sortedIndices),
+          });
+
+          if (isSmaller) {
+            minIdx = j;
+            // Paso 3: Nuevo mínimo encontrado
+            computed.push({
+              type: 'new-min',
+              arr: [...arr],
+              i,
+              minIdx,
+              j,
+              valMin: arr[minIdx],
+              codeKeys: ['new-min'],
+              tag: 'nuevo mínimo',
+              tagType: 'new-min',
+              text: `Actualizamos el candidato a mínimo: ahora es <strong>arr[${minIdx}] = ${arr[minIdx]}</strong> en la posición <strong>[${minIdx}]</strong>.`,
+              sortedIndices: new Set(sortedIndices),
+            });
+          }
+        }
+
+        // Finalizó la búsqueda del mínimo para la posición i
+        if (minIdx !== i) {
+          const valTarget = arr[i];
+          const valSmallest = arr[minIdx];
+
+          // Paso 4a: Intercambio (swap) hacia la posición i
+          arr[i] = valSmallest;
+          arr[minIdx] = valTarget;
+
+          computed.push({
+            type: 'swap',
+            arr: [...arr],
+            i,
+            minIdx,
+            j: -1,
+            valA: valSmallest,
+            valB: valTarget,
+            codeKeys: ['check-swap', 'swap', 'swap2', 'swap3'],
+            tag: 'intercambio (swap)',
+            tagType: 'swap',
+            text: `El número más chico de los restantes es <strong>${valSmallest}</strong> (encontrado en [${minIdx}]). Lo intercambiamos con <strong>arr[${i}] (${valTarget})</strong> para ubicarlo en su posición correspondiente <strong>[${i}]</strong>.`,
+            sortedIndices: new Set(sortedIndices),
+          });
+        } else {
+          // Paso 4b: Ya estaba en la posición correcta
+          computed.push({
+            type: 'no-swap',
+            arr: [...arr],
+            i,
+            minIdx,
+            j: -1,
+            codeKeys: ['check-swap'],
+            tag: 'sin intercambio',
+            tagType: 'no-swap',
+            text: `El valor <strong>arr[${i}] = ${arr[i]}</strong> ya era el más chico restante. Permanece en su lugar sin necesidad de moverlo.`,
+            sortedIndices: new Set(sortedIndices),
+          });
+        }
+
+        // Paso 5: Posición i asegurada (ordenada)
+        sortedIndices.add(i);
+        computed.push({
+          type: 'locked',
+          arr: [...arr],
+          i,
+          minIdx: -1,
+          j: -1,
+          lockedIndex: i,
+          lockedValue: arr[i],
+          codeKeys: ['outer'],
+          tag: 'posición asegurada',
+          tagType: 'locked',
+          text: `La posición <strong>[${i}]</strong> queda fijada con <strong>${arr[i]}</strong>. La lista ordenada avanza de izquierda a derecha.`,
+          sortedIndices: new Set(sortedIndices),
+        });
+      }
+
+      // El último elemento restante queda automáticamente ordenado
+      sortedIndices.add(n - 1);
+      computed.push({
+        type: 'done',
+        arr: [...arr],
+        i: n - 1,
+        minIdx: -1,
+        j: -1,
+        codeKeys: ['return'],
+        tag: '¡ordenado!',
+        tagType: 'done',
+        text: `¡Algoritmo finalizado! El array está completamente ordenado de menor a mayor de izquierda a derecha: <strong>[${arr.join(', ')}]</strong>.`,
+        sortedIndices: new Set(sortedIndices),
+      });
+
+      return computed;
+    }
+
+    // Render bars in the visualizer
+    function renderBars(arr, activeI = -1, minIdx = -1, activeJ = -1, type = 'normal', sortedSet = new Set()) {
+      barsContainer.innerHTML = '';
+      if (pointersRow) pointersRow.innerHTML = '';
+
+      const maxVal = Math.max(...arr, 1);
+
+      arr.forEach((val, idx) => {
+        // Column wrapper
+        const col = document.createElement('div');
+        col.className = 'bar-col';
+
+        // Bar element
+        const bar = document.createElement('div');
+        bar.className = 'bar-item';
+        const heightPx = Math.round((val / maxVal) * 135) + 38;
+        bar.style.height = `${heightPx}px`;
+
+        // Status classes
+        if (sortedSet.has(idx)) {
+          bar.classList.add('sorted');
+        } else if (type === 'swap' && (idx === activeI || idx === minIdx)) {
+          bar.classList.add('swapping');
+        } else {
+          if (idx === activeJ) {
+            bar.classList.add('comparing');
+          } else if (idx === minIdx) {
+            bar.classList.add('min-cand');
+          } else if (idx === activeI) {
+            bar.classList.add('target-pos');
+          }
+        }
+
+        // Bar content (value badge)
+        const valLabel = document.createElement('span');
+        valLabel.className = 'bar-val';
+        valLabel.textContent = val;
+        bar.appendChild(valLabel);
+
+        // Index label
+        const idxLabel = document.createElement('span');
+        idxLabel.className = 'bar-idx';
+        idxLabel.textContent = `[${idx}]`;
+
+        col.appendChild(bar);
+        col.appendChild(idxLabel);
+        barsContainer.appendChild(col);
+
+        // Pointer under column
+        if (pointersRow) {
+          const pointer = document.createElement('div');
+          pointer.className = 'pointer-cell';
+
+          const tags = [];
+          if (idx === activeI && !sortedSet.has(idx)) {
+            tags.push('<span class="pointer-tag i">i</span>');
+          }
+          if (idx === minIdx && !sortedSet.has(idx)) {
+            tags.push('<span class="pointer-tag min">mín</span>');
+          }
+          if (idx === activeJ) {
+            tags.push('<span class="pointer-tag j">j</span>');
+          }
+
+          pointer.innerHTML = tags.join('');
+          pointersRow.appendChild(pointer);
+        }
+      });
+    }
+
+    // Update track segments
+    function buildStepTrack(count) {
+      if (!stepTrack) return;
+      stepTrack.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'seg';
+        stepTrack.appendChild(seg);
+      }
+    }
+
+    function highlightCodeLines(keys = []) {
+      allCodeLines.forEach(line => {
+        const key = line.getAttribute('data-key');
+        if (keys.includes(key)) {
+          line.classList.add('active');
+        } else {
+          line.classList.remove('active');
+        }
+      });
+    }
+
+    // Render a specific step
+    function applyStep(index) {
+      if (index < 0 || index >= steps.length) return;
+      const s = steps[index];
+
+      // Update bars
+      renderBars(s.arr, s.i, s.minIdx, s.j, s.type, s.sortedIndices);
+
+      // Update track
+      if (stepTrack) {
+        const segs = stepTrack.querySelectorAll('.seg');
+        segs.forEach((seg, i) => {
+          seg.classList.toggle('done', i <= index);
+        });
+      }
+      if (stepCount) {
+        stepCount.textContent = `${index + 1} / ${steps.length}`;
+      }
+
+      // Update status pills
+      if (statusPill) {
+        if (s.type === 'init-pass') {
+          statusPill.textContent = `Buscando menor para [${s.i}]`;
+          statusPill.style.color = '#c4b5fd';
+          statusPill.style.borderColor = 'rgba(167, 139, 250, 0.3)';
+        } else if (s.type === 'compare') {
+          statusPill.textContent = `Comparando [${s.j}] con mín [${s.minIdx}]`;
+          statusPill.style.color = 'var(--amber)';
+          statusPill.style.borderColor = 'rgba(251, 146, 60, 0.3)';
+        } else if (s.type === 'new-min') {
+          statusPill.textContent = `Nuevo mínimo: ${s.valMin} en [${s.minIdx}]`;
+          statusPill.style.color = '#38bdf8';
+          statusPill.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+        } else if (s.type === 'swap') {
+          statusPill.textContent = `Swap: ${s.valB} ⇄ ${s.valA}`;
+          statusPill.style.color = '#f472b6';
+          statusPill.style.borderColor = 'rgba(244, 114, 182, 0.3)';
+        } else if (s.type === 'no-swap') {
+          statusPill.textContent = `Posición [${s.i}] ya era el mínimo`;
+          statusPill.style.color = 'var(--text-secondary)';
+          statusPill.style.borderColor = 'var(--border-subtle)';
+        } else if (s.type === 'locked') {
+          statusPill.textContent = `Posición [${s.lockedIndex}] asegurada (${s.lockedValue})`;
+          statusPill.style.color = '#10b981';
+          statusPill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        } else if (s.type === 'done') {
+          statusPill.textContent = '¡Completamente ordenado!';
+          statusPill.style.color = '#10b981';
+          statusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+      }
+
+      if (passPill) {
+        passPill.textContent = s.type === 'done' ? 'Finalizado' : `Pasada i: ${s.i}`;
+      }
+
+      // Highlight code
+      highlightCodeLines(s.codeKeys);
+
+      // Explanation panel
+      if (explainIdle && explainActive && explainTag && explainText) {
+        explainIdle.style.display = 'none';
+        explainActive.style.display = 'block';
+        explainTag.textContent = s.tag;
+        explainTag.className = `explain-tag ${s.tagType}`;
+        explainText.innerHTML = s.text;
+      }
+
+      // Console representation
+      if (consoleLine) {
+        consoleLine.style.display = 'block';
+        const formattedArr = s.arr.map((num, idx) => {
+          if (s.sortedIndices && s.sortedIndices.has(idx)) {
+            return `<span class="sorted-num">${num}</span>`;
+          }
+          if (idx === s.minIdx && idx === s.j) {
+            return `<span class="min-num">${num}</span>`;
+          }
+          if (idx === s.minIdx) {
+            return `<span class="min-num">${num}</span>`;
+          }
+          if (idx === s.j) {
+            return `<span class="hl-num">${num}</span>`;
+          }
+          if (idx === s.i) {
+            return `<span class="target-num">${num}</span>`;
+          }
+          return num;
+        }).join(', ');
+        consoleLine.innerHTML = `arr = [ ${formattedArr} ]`;
+      }
+    }
+
+    // Animation Loop
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        applyStep(currentStep);
+
+        if (currentStep === steps.length - 1) {
+          stopRunning();
+          btnRun.textContent = 'Simular de nuevo';
+        } else if (isRunning) {
+          timer = setTimeout(nextStep, SPEED_MS);
+        }
+      } else {
+        stopRunning();
+        btnRun.textContent = 'Simular de nuevo';
+      }
+    }
+
+    function startRunning() {
+      if (currentStep >= steps.length - 1) {
+        currentStep = -1;
+      }
+      isRunning = true;
+      btnRun.textContent = 'Pausar';
+      if (btnStep) btnStep.disabled = true;
+      nextStep();
+    }
+
+    function stopRunning() {
+      isRunning = false;
+      clearTimeout(timer);
+      timer = null;
+      btnRun.textContent = currentStep >= steps.length - 1 ? 'Simular de nuevo' : 'Reanudar';
+      if (btnStep) btnStep.disabled = false;
+    }
+
+    function init(newArray = null) {
+      stopRunning();
+      if (newArray) {
+        initialArray = [...newArray];
+      } else if (initialArray.length === 0) {
+        initialArray = [...DEFAULT_ARRAY];
+      }
+      currentArray = [...initialArray];
+      steps = buildSteps(currentArray);
+      currentStep = -1;
+
+      buildStepTrack(steps.length);
+      if (stepCount) stepCount.textContent = `0 / ${steps.length}`;
+      if (statusPill) {
+        statusPill.textContent = 'Listo para simular';
+        statusPill.style.color = 'var(--text-secondary)';
+        statusPill.style.borderColor = 'var(--border-subtle)';
+      }
+      if (passPill) passPill.textContent = 'Pasada: 0';
+
+      highlightCodeLines([]);
+      renderBars(currentArray);
+
+      if (explainIdle) explainIdle.style.display = 'block';
+      if (explainActive) explainActive.style.display = 'none';
+      if (consoleLine) consoleLine.style.display = 'none';
+      btnRun.textContent = 'Simular funcionamiento';
+      if (btnStep) btnStep.disabled = false;
+    }
+
+    // Event Listeners
+    btnRun.addEventListener('click', () => {
+      if (isRunning) {
+        stopRunning();
+      } else {
+        startRunning();
+      }
+    });
+
+    if (btnStep) {
+      btnStep.addEventListener('click', () => {
+        stopRunning();
+        if (currentStep < steps.length - 1) {
+          currentStep++;
+          applyStep(currentStep);
+        }
+      });
+    }
+
+    if (btnRandom) {
+      btnRandom.addEventListener('click', () => {
+        init(generateRandomArray(11));
+      });
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        init(initialArray);
+      });
+    }
+
+    // Initialize state
+    init(initialArray);
+  }
+
+  // Handle immediate execution or DOMContentLoaded, plus astro:page-load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupSelectionSort);
+  } else {
+    setupSelectionSort();
+  }
+
+  document.addEventListener('astro:page-load', setupSelectionSort);
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --amber: #fb923c;
+    --amber-soft: rgba(251, 146, 60, 0.15);
+    --blue: var(--brand-blue);
+    --blue-soft: var(--brand-blue-glow);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.16);
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-link:hover {
+    color: var(--text-white);
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-action:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--api-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .crumbs .sep {
+    color: var(--api-muted-2);
+  }
+
+  .crumbs .current {
+    color: var(--text-primary);
+  }
+
+  .crumbs a {
+    color: var(--api-muted);
+    text-decoration: none;
+  }
+
+  .crumbs a:hover {
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+  }
+
+  .lede {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--api-muted);
+    max-width: 65ch;
+    margin: 0 0 36px;
+  }
+
+  .lede strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* Diagram Card */
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    padding: 24px 28px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .diagram-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+
+  .meta-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-pill, .pass-pill {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--api-border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+  }
+
+  .meta-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--api-muted);
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.target {
+    background: #a78bfa;
+    box-shadow: 0 0 6px #a78bfa;
+  }
+
+  .legend-dot.comparing {
+    background: var(--amber);
+    box-shadow: 0 0 6px var(--amber);
+  }
+
+  .legend-dot.min-cand {
+    background: #38bdf8;
+    box-shadow: 0 0 6px #38bdf8;
+  }
+
+  .legend-dot.swapping {
+    background: #f472b6;
+    box-shadow: 0 0 6px #f472b6;
+  }
+
+  .legend-dot.sorted {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  /* Bars Display */
+  .bars-wrapper {
+    min-height: 200px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 10px 0 16px;
+  }
+
+  .bars-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 740px;
+  }
+
+  .bar-col, :global(.bar-col) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 58px;
+    min-width: 0;
+  }
+
+  .bar-item, :global(.bar-item) {
+    width: 100%;
+    border-radius: 10px 10px 4px 4px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%);
+    border: 1px solid var(--api-border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 8px;
+    transition: all 0.26s cubic-bezier(0.2, 0.9, 0.3, 1);
+    position: relative;
+  }
+
+  .bar-item.target-pos, :global(.bar-item.target-pos) {
+    border-color: #a78bfa;
+    background: linear-gradient(180deg, rgba(167, 139, 250, 0.28) 0%, rgba(167, 139, 250, 0.06) 100%);
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.25);
+  }
+
+  .bar-item.min-cand, :global(.bar-item.min-cand) {
+    border-color: #38bdf8;
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.35) 0%, rgba(56, 189, 248, 0.1) 100%);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+    transform: translateY(-4px);
+  }
+
+  .bar-item.comparing, :global(.bar-item.comparing) {
+    border-color: var(--amber);
+    background: linear-gradient(180deg, rgba(251, 146, 60, 0.35) 0%, rgba(251, 146, 60, 0.1) 100%);
+    box-shadow: 0 0 14px rgba(251, 146, 60, 0.3);
+    transform: translateY(-4px);
+  }
+
+  .bar-item.swapping, :global(.bar-item.swapping) {
+    border-color: #f472b6;
+    background: linear-gradient(180deg, rgba(244, 114, 182, 0.45) 0%, rgba(244, 114, 182, 0.15) 100%);
+    box-shadow: 0 0 20px rgba(244, 114, 182, 0.45);
+    transform: translateY(-8px) scale(1.05);
+  }
+
+  .bar-item.sorted, :global(.bar-item.sorted) {
+    border-color: var(--green);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0.08) 100%);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+  }
+
+  .bar-val, :global(.bar-val) {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .bar-item.target-pos .bar-val, :global(.bar-item.target-pos .bar-val) {
+    color: #ede9fe;
+  }
+
+  .bar-item.min-cand .bar-val, :global(.bar-item.min-cand .bar-val) {
+    color: #e0f2fe;
+  }
+
+  .bar-item.comparing .bar-val, :global(.bar-item.comparing .bar-val) {
+    color: #ffedd5;
+  }
+
+  .bar-item.swapping .bar-val, :global(.bar-item.swapping .bar-val) {
+    color: #fce7f3;
+  }
+
+  .bar-item.sorted .bar-val, :global(.bar-item.sorted .bar-val) {
+    color: #d1fae5;
+  }
+
+  .bar-idx, :global(.bar-idx) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--api-muted-2);
+  }
+
+  .pointers-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 740px;
+    margin: 0 auto;
+    height: 24px;
+  }
+
+  .pointer-cell, :global(.pointer-cell) {
+    flex: 1;
+    max-width: 58px;
+    min-width: 0;
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .pointer-tag, :global(.pointer-tag) {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    text-transform: lowercase;
+  }
+
+  .pointer-tag.i, :global(.pointer-tag.i) {
+    background: rgba(167, 139, 250, 0.2);
+    color: #c4b5fd;
+    border: 1px solid #a78bfa;
+  }
+
+  .pointer-tag.min, :global(.pointer-tag.min) {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border: 1px solid #38bdf8;
+  }
+
+  .pointer-tag.j, :global(.pointer-tag.j) {
+    background: var(--amber-soft);
+    color: var(--amber);
+    border: 1px solid var(--amber);
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 26px;
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  button.primary {
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+  }
+
+  button.primary:hover {
+    filter: brightness(1.08);
+  }
+
+  button.primary:active {
+    transform: scale(.97);
+  }
+
+  button.ghost {
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--api-muted);
+    background: transparent;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    padding: 9px 15px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+
+  button.ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  button.ghost:disabled, button.primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .step-track {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    max-width: 240px;
+    overflow: hidden;
+  }
+
+  .step-track .seg, :global(.step-track .seg) {
+    width: 5px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--api-border);
+    transition: background .2s;
+  }
+
+  .step-track .seg.done, :global(.step-track .seg.done) {
+    background: var(--amber);
+  }
+
+  .step-count {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--api-muted-2);
+  }
+
+  /* Split Panel */
+  .split {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+  }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .panel-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--api-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-head .title {
+    font-size: 12.5px;
+    color: var(--api-muted);
+    font-weight: 500;
+  }
+
+  .panel-head .filename {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+  }
+
+  pre.code {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--api-muted);
+    overflow-x: auto;
+  }
+
+  pre.code .kw {
+    color: #f472b6;
+  }
+
+  pre.code .fn {
+    color: #38bdf8;
+  }
+
+  pre.code .line {
+    display: block;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    transition: background .25s, color .25s;
+  }
+
+  pre.code .line.active {
+    background: var(--amber-soft);
+    color: var(--text-primary);
+    border-left: 2px solid var(--amber);
+  }
+
+  .explain-body {
+    padding: 20px;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .explain-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+
+  .explain-idle {
+    color: var(--api-muted);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .explain-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+
+  .explain-tag.init-pass {
+    color: #c4b5fd;
+    background: rgba(167, 139, 250, 0.16);
+  }
+
+  .explain-tag.compare {
+    color: var(--amber);
+    background: var(--amber-soft);
+  }
+
+  .explain-tag.new-min {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.16);
+  }
+
+  .explain-tag.swap {
+    color: #f472b6;
+    background: rgba(244, 114, 182, 0.16);
+  }
+
+  .explain-tag.no-swap {
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .explain-tag.locked, .explain-tag.done {
+    color: var(--green);
+    background: var(--green-soft);
+  }
+
+  .console-line {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+    padding-top: 14px;
+    border-top: 1px dashed var(--api-border);
+    margin-top: 16px;
+  }
+
+  :global(.console-line .target-num) {
+    color: #c4b5fd;
+    font-weight: 700;
+  }
+
+  :global(.console-line .min-num) {
+    color: #38bdf8;
+    font-weight: 800;
+    text-decoration: underline;
+  }
+
+  :global(.console-line .hl-num) {
+    color: var(--amber);
+    font-weight: 800;
+  }
+
+  :global(.console-line .sorted-num) {
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  @media (max-width: 780px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .api-page {
+      padding: 0.1rem 0 0.75rem;
+    }
+
+    .topbar {
+      align-items: flex-start;
+      gap: 12px;
+      flex-direction: column;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+    }
+
+    .topbar-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    .diagram-card {
+      padding: 18px 14px 16px;
+    }
+
+    .bars-container, .pointers-row {
+      gap: 4px;
+    }
+
+    .bar-val, :global(.bar-val) {
+      font-size: 11px;
+    }
+
+    .bar-idx, :global(.bar-idx) {
+      font-size: 9.5px;
+    }
+
+    .pointer-tag, :global(.pointer-tag) {
+      font-size: 8.5px;
+      padding: 1px 3px;
+    }
+
+    .controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .controls-left {
+      width: 100%;
+    }
+
+    .controls-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>
