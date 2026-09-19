@@ -1,5 +1,10 @@
 ---
 // src/components/Navbar.astro
+import { clases } from '../data/clases.js';
+
+const currentPath = Astro.url.pathname;
+const isHome = currentPath === "/";
+const isClases = currentPath === "/clases" || currentPath === "/clases/";
 ---
 
 <header class="navbar">
@@ -23,7 +28,7 @@
   <nav class="navbar__nav" aria-label="Navegación principal">
     <ul class="navbar__pills" role="list">
       <li>
-        <a href="#inicio" class="nav-pill is-active" aria-current="page">
+        <a href="/" class:list={["nav-pill", { "is-active": isHome }]} aria-current={isHome ? "page" : undefined}>
           <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
           </svg>
@@ -31,12 +36,12 @@
         </a>
       </li>
       <li>
-        <a href="#clases" class="nav-pill">
+        <a href="/clases" class:list={["nav-pill", { "is-active": isClases }]} aria-current={isClases ? "page" : undefined}>
           <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
             <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
           </svg>
           <span>Clases</span>
-          <span class="pill-badge">8</span>
+          <span class="pill-badge">{clases.length}</span>
         </a>
       </li>
       <li>

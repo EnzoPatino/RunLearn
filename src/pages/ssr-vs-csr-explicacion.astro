@@ -1,0 +1,329 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — SSR vs CSR">
+  <div class="lesson-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">SSR vs CSR</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>simulación frontend</div>
+      </div>
+    </div>
+
+    <h1>SSR vs CSR</h1>
+    <p class="lede">
+      Compará dos formas de entregar una página con datos. En <strong>Server-Side Rendering</strong> el HTML llega armado; en <strong>Client-Side Rendering</strong> el navegador recibe una carcasa y después pide los datos.
+    </p>
+
+    <div class="mode-selector-card">
+      <div class="mode-toggle-group">
+        <button class="mode-btn active" type="button" data-mode="ssr">
+          <span class="mode-icon">SSR</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Server-Side Rendering</span>
+            <span class="mode-desc">HTML completo antes del envío</span>
+          </div>
+        </button>
+        <button class="mode-btn" type="button" data-mode="csr">
+          <span class="mode-icon">CSR</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Client-Side Rendering</span>
+            <span class="mode-desc">HTML vacío + fetch en navegador</span>
+          </div>
+        </button>
+      </div>
+      <div class="mode-status-badge" id="mode-status">Modo actual: SSR arma contenido en el servidor</div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="timing-row">
+        <div>
+          <span class="status-pill" id="phase-pill">Listo para simular</span>
+          <span class="step-count" id="step-count">0 / 4</span>
+        </div>
+        <div class="timer-box">
+          <span>Contenido visible</span>
+          <strong id="visible-time">0 ms</strong>
+        </div>
+      </div>
+
+      <div class="render-stage" id="render-stage">
+        <div class="render-node" data-node="server">
+          <span class="node-label">Servidor</span>
+          <div class="node-box" id="server-box">render()</div>
+        </div>
+        <div class="pipe">
+          <div class="packet" id="packet">HTML</div>
+        </div>
+        <div class="render-node" data-node="browser">
+          <span class="node-label">Navegador</span>
+          <div class="browser-shell">
+            <div class="browser-bar"></div>
+            <div class="browser-content" id="browser-content">Esperando simulación</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="btn-run" type="button">Simular carga</button>
+        <button class="ghost" id="btn-reset" type="button">Reiniciar</button>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código</span>
+          <span class="filename" id="code-file">astro-page.astro</span>
+        </div>
+        <pre class="code" id="code-ssr"><span class="line" data-key="ssr-fetch"><span class="kw">const</span> posts = <span class="kw">await</span> getPosts();</span>
+<span class="line" data-key="ssr-html">&lt;ArticleList posts=&#123;posts&#125; /&gt;</span>
+<span class="line" data-key="ssr-send">&lt;!-- el HTML ya contiene los datos --&gt;</span></pre>
+        <pre class="code hidden" id="code-csr"><span class="line" data-key="csr-shell">&lt;div id=<span class="fn">"app"</span>&gt;&lt;/div&gt;</span>
+<span class="line" data-key="csr-effect">useEffect(() =&gt; &#123; fetch(<span class="fn">"/api/posts"</span>) &#125;, [])</span>
+<span class="line" data-key="csr-render">setPosts(data); render(&lt;ArticleList posts=&#123;posts&#125; /&gt;)</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Cuándo conviene</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-text" class="explain-text">
+            SSR conviene cuando querés contenido visible rápido, buena indexación y menos trabajo inicial en el navegador. CSR conviene cuando la pantalla es muy interactiva, depende de sesión local o funciona como app después de cargar.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+  const modes = {
+    ssr: {
+      status: 'Modo actual: SSR arma contenido en el servidor',
+      file: 'astro-page.astro',
+      total: 4,
+      visible: 420,
+      steps: [
+        { key: 'ssr-fetch', phase: 'Servidor consulta datos', server: 'await getPosts()', browser: 'Esperando HTML', packet: 'datos + HTML', time: 120 },
+        { key: 'ssr-html', phase: 'Servidor arma HTML completo', server: '<article>...</article>', browser: 'Sin pintar todavía', packet: 'HTML listo', time: 260 },
+        { key: 'ssr-send', phase: 'HTML completo viaja al navegador', server: '200 OK', browser: 'Recibiendo documento', packet: 'HTML con datos', time: 360 },
+        { key: 'ssr-send', phase: 'First Paint bajo', server: 'terminado', browser: '<h2>Posts cargados</h2><p>3 artículos visibles.</p>', packet: 'pintado', time: 420 },
+      ],
+      explain: 'SSR entrega una respuesta útil desde el primer documento. El navegador parsea y pinta; no necesita esperar otro fetch para que aparezca el contenido principal.',
+    },
+    csr: {
+      status: 'Modo actual: CSR carga datos después en el navegador',
+      file: 'react-widget.jsx',
+      total: 5,
+      visible: 1180,
+      steps: [
+        { key: 'csr-shell', phase: 'Servidor manda HTML casi vacío', server: '<div id="app"></div>', browser: 'Shell vacío', packet: 'HTML base', time: 140 },
+        { key: 'csr-shell', phase: 'Navegador pinta loading visible', server: 'estático', browser: 'loading...', packet: 'JS bundle', time: 420 },
+        { key: 'csr-effect', phase: 'React ejecuta useEffect + fetch', server: 'GET /api/posts', browser: 'loading...', packet: 'fetch datos', time: 760 },
+        { key: 'csr-effect', phase: 'API devuelve JSON', server: '[{...posts}]', browser: 'procesando JSON', packet: 'JSON', time: 980 },
+        { key: 'csr-render', phase: 'Render final con datos', server: 'terminado', browser: '<h2>Posts cargados</h2><p>3 artículos visibles.</p>', packet: 'pintado', time: 1180 },
+      ],
+      explain: 'CSR puede mostrar una app muy dinámica, pero el contenido real aparece después de descargar JS, ejecutar código y completar el fetch de datos.',
+    },
+  };
+
+  let mode = 'ssr';
+  let index = -1;
+  let timer = null;
+
+  const modeButtons = document.querySelectorAll('[data-mode]');
+  const status = document.getElementById('mode-status');
+  const phase = document.getElementById('phase-pill');
+  const count = document.getElementById('step-count');
+  const visibleTime = document.getElementById('visible-time');
+  const serverBox = document.getElementById('server-box');
+  const packet = document.getElementById('packet');
+  const browser = document.getElementById('browser-content');
+  const btnRun = document.getElementById('btn-run');
+  const btnReset = document.getElementById('btn-reset');
+  const explain = document.getElementById('explain-text');
+  const codeFile = document.getElementById('code-file');
+  const codeSsr = document.getElementById('code-ssr');
+  const codeCsr = document.getElementById('code-csr');
+
+  function setMode(nextMode) {
+    mode = nextMode;
+    modeButtons.forEach((button) => button.classList.toggle('active', button.dataset.mode === mode));
+    reset();
+  }
+
+  function renderStep(stepIndex) {
+    const data = modes[mode];
+    const step = data.steps[stepIndex];
+    sound.play('playStep');
+    phase.textContent = step.phase;
+    count.textContent = `${stepIndex + 1} / ${data.total}`;
+    visibleTime.textContent = `${step.time} ms`;
+    serverBox.textContent = step.server;
+    packet.textContent = step.packet;
+    packet.classList.remove('move');
+    void packet.offsetWidth;
+    packet.classList.add('move');
+    browser.innerHTML = step.browser;
+    document.querySelectorAll('.line').forEach((line) => line.classList.toggle('active', line.dataset.key === step.key));
+  }
+
+  function finish() {
+    btnRun.disabled = false;
+    btnRun.textContent = 'Simular de nuevo';
+    phase.textContent = `Contenido visible en ${modes[mode].visible} ms`;
+    sound.play('playSuccess');
+  }
+
+  function next() {
+    index += 1;
+    if (index >= modes[mode].steps.length) {
+      finish();
+      return;
+    }
+    renderStep(index);
+    timer = window.setTimeout(next, mode === 'ssr' ? 760 : 680);
+  }
+
+  function run() {
+    window.clearTimeout(timer);
+    index = -1;
+    btnRun.disabled = true;
+    btnRun.textContent = 'Simulando...';
+    next();
+  }
+
+  function reset() {
+    window.clearTimeout(timer);
+    const data = modes[mode];
+    index = -1;
+    status.textContent = data.status;
+    phase.textContent = 'Listo para simular';
+    count.textContent = `0 / ${data.total}`;
+    visibleTime.textContent = '0 ms';
+    serverBox.textContent = mode === 'ssr' ? 'render()' : 'static shell';
+    packet.textContent = 'HTML';
+    packet.classList.remove('move');
+    browser.textContent = 'Esperando simulación';
+    explain.textContent = data.explain;
+    codeFile.textContent = data.file;
+    codeSsr.classList.toggle('hidden', mode !== 'ssr');
+    codeCsr.classList.toggle('hidden', mode !== 'csr');
+    document.querySelectorAll('.line').forEach((line) => line.classList.remove('active'));
+    btnRun.disabled = false;
+    btnRun.textContent = 'Simular carga';
+  }
+
+  modeButtons.forEach((button) => button.addEventListener('click', () => setMode(button.dataset.mode)));
+  btnRun.addEventListener('click', run);
+  btnReset.addEventListener('click', reset);
+  reset();
+})();
+</script>
+
+<style>
+  .lesson-page {
+    --panel: var(--surface-panel);
+    --panel-2: var(--surface-card);
+    --line: rgba(255, 255, 255, 0.14);
+    --muted: var(--text-secondary);
+    --accent: #38bdf8;
+    --accent-soft: rgba(56, 189, 248, 0.16);
+    width: min(100%, 1180px);
+    margin: 0 auto;
+    padding: 20px clamp(16px, 3vw, 32px) 48px;
+  }
+  .topbar, .topbar-main, .topbar-actions, .brand-link, .crumbs, .home-action, .controls, .timing-row, .mode-toggle-group {
+    display: flex;
+    align-items: center;
+  }
+  .topbar { justify-content: space-between; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
+  .topbar-main, .topbar-actions { gap: 14px; flex-wrap: wrap; }
+  .brand-link, .home-action { color: var(--text-primary); text-decoration: none; }
+  .brand-link { gap: 10px; font-weight: 700; }
+  .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--surface-card); border: 1px solid var(--border-subtle); color: var(--accent); }
+  .crumbs { gap: 8px; color: var(--text-muted); font-size: 13px; }
+  .crumbs a { color: var(--text-secondary); text-decoration: none; }
+  .current { color: var(--text-primary); }
+  .home-action { gap: 8px; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: 9px; font-size: 13px; font-weight: 600; }
+  .home-action svg { width: 17px; height: 17px; }
+  .badge-live, .status-pill, .step-count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); border: 1px solid var(--border-hairline); background: rgba(255, 255, 255, 0.05); padding: 6px 10px; border-radius: 999px; }
+  .dot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 12px var(--color-success); }
+  h1 { margin: 0; font-size: clamp(34px, 7vw, 76px); letter-spacing: 0; line-height: 0.94; }
+  .lede { max-width: 850px; color: var(--text-secondary); font-size: clamp(16px, 2vw, 19px); line-height: 1.7; margin: 18px 0 28px; }
+  .mode-selector-card, .diagram-card, .panel { background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)); border: 1px solid var(--border-subtle); border-radius: 16px; box-shadow: var(--shadow-card); }
+  .mode-selector-card { padding: 14px; margin-bottom: 18px; }
+  .mode-toggle-group { gap: 10px; flex-wrap: wrap; }
+  .mode-btn { flex: 1 1 280px; display: flex; gap: 12px; align-items: center; text-align: left; padding: 14px; border-radius: 12px; color: var(--text-secondary); background: rgba(255,255,255,.03); border: 1px solid var(--border-hairline); cursor: pointer; }
+  .mode-btn.active { color: var(--text-white); border-color: rgba(56,189,248,.45); background: var(--accent-soft); }
+  .mode-icon { font-family: var(--font-mono); color: var(--accent); font-weight: 800; }
+  .mode-name { display: block; font-weight: 800; }
+  .mode-desc { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+  .mode-status-badge { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  .diagram-card { padding: clamp(16px, 3vw, 24px); }
+  .timing-row { justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .timer-box { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+  .timer-box strong { color: var(--accent); font-family: var(--font-mono); }
+  .render-stage { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(160px, .8fr) minmax(220px, 1fr); align-items: center; gap: 18px; min-height: 260px; }
+  .render-node { display: grid; gap: 10px; }
+  .node-label { color: var(--muted); font-size: 13px; font-weight: 700; }
+  .node-box, .browser-shell { min-height: 156px; border-radius: 14px; border: 1px solid var(--border-subtle); background: rgba(2, 6, 23, .58); display: grid; place-items: center; padding: 16px; color: var(--text-primary); font-family: var(--font-mono); }
+  .pipe { position: relative; height: 4px; background: var(--line); border-radius: 999px; }
+  .packet { position: absolute; left: 0; top: 50%; transform: translateY(-50%); min-width: 82px; text-align: center; padding: 7px 10px; border-radius: 999px; background: var(--accent); color: #041016; font-size: 12px; font-weight: 800; transition: left .55s ease; }
+  .packet.move { left: calc(100% - 82px); }
+  .browser-shell { display: block; font-family: var(--font-main); }
+  .browser-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.13); margin-bottom: 16px; }
+  .browser-content { color: var(--text-secondary); line-height: 1.6; }
+  .browser-content h2 { margin: 0 0 8px; color: var(--text-white); font-size: 20px; }
+  .controls { gap: 10px; margin-top: 20px; }
+  button.primary, button.ghost { border-radius: 9px; font-weight: 700; cursor: pointer; }
+  button.primary { border: 0; color: #041016; background: linear-gradient(135deg, var(--accent), #22d3ee); padding: 10px 16px; }
+  button.primary:disabled { opacity: .65; cursor: not-allowed; }
+  button.ghost { color: var(--muted); background: transparent; border: 1px solid var(--border-subtle); padding: 9px 14px; }
+  .split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; margin-top: 18px; }
+  .panel { padding: 16px; min-width: 0; }
+  .panel-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+  .title { color: var(--text-primary); font-weight: 800; }
+  .filename { font-family: var(--font-mono); }
+  .code { margin: 0; overflow: auto; color: #cbd5e1; font-family: var(--font-mono); font-size: 13px; line-height: 1.75; }
+  .code.hidden { display: none; }
+  .line { display: block; padding: 1px 8px; border-radius: 6px; }
+  .line.active { background: rgba(56,189,248,.14); color: var(--text-white); }
+  .kw { color: #93c5fd; }
+  .fn { color: #fbbf24; }
+  .explain-body { color: var(--text-secondary); line-height: 1.7; }
+  @media (max-width: 820px) {
+    .render-stage, .split { grid-template-columns: 1fr; }
+    .pipe { height: 58px; width: 4px; justify-self: center; }
+    .packet.move { left: 0; top: calc(100% - 12px); }
+  }
+</style>

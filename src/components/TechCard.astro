@@ -1,16 +1,28 @@
 ---
 // src/components/TechCard.astro
+import ClassIcon from './ClassIcon.astro';
+
 interface Props {
   id: string;
   badge: string;
   title: string;
   meta: string;
   themeColor: string;
-  themeGlow: string;
+  themeGlow?: string;
   href?: string;
+  icon?: string;
 }
 
-const { id, badge, title, meta, themeColor, themeGlow, href } = Astro.props;
+const {
+  id,
+  badge,
+  title,
+  meta,
+  themeColor,
+  themeGlow = `color-mix(in srgb, ${Astro.props.themeColor} 22%, transparent)`,
+  href,
+  icon,
+} = Astro.props;
 ---
 
 {href ? (
@@ -26,7 +38,7 @@ const { id, badge, title, meta, themeColor, themeGlow, href } = Astro.props;
 
     <div class="tech-card__center">
       <div class="tech-card__icon-box">
-        <slot name="icon" />
+        {icon ? <ClassIcon name={icon} /> : <slot name="icon" />}
       </div>
       <h3 class="tech-card__title">{title}</h3>
     </div>
@@ -50,7 +62,7 @@ const { id, badge, title, meta, themeColor, themeGlow, href } = Astro.props;
 
     <div class="tech-card__center">
       <div class="tech-card__icon-box">
-        <slot name="icon" />
+        {icon ? <ClassIcon name={icon} /> : <slot name="icon" />}
       </div>
       <h3 class="tech-card__title">{title}</h3>
     </div>

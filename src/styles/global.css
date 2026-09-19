@@ -141,6 +141,32 @@ body {
   box-shadow: none;
 }
 
+.sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease;
+}
+
+.sound-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-white);
+  border-color: var(--border-hover);
+}
+
+.sound-btn.muted {
+  opacity: 0.62;
+  border-style: dashed;
+}
+
 @media (max-width: 640px) {
   body {
     padding: 0;

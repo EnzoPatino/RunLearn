@@ -20,6 +20,10 @@ const maxVal = Math.max(...defaultArray);
         </div>
       </div>
       <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m3 10.8 9-7.2 9 7.2"/>
@@ -138,6 +142,8 @@ const maxVal = Math.max(...defaultArray);
 </Layout>
 
 <script>
+  import { initSoundControls } from '../lib/soundControls.js';
+
   function setupSelectionSort() {
     const btnRun = document.getElementById('btn-run');
     const barsContainer = document.getElementById('bars-container');
@@ -170,6 +176,7 @@ const maxVal = Math.max(...defaultArray);
     let timer = null;
     let isRunning = false;
     const SPEED_MS = 650;
+    const sound = initSoundControls();
 
     // Generate a randomized set of 11 distinct numbers
     function generateRandomArray(count = 11) {
@@ -421,6 +428,7 @@ const maxVal = Math.max(...defaultArray);
     function applyStep(index) {
       if (index < 0 || index >= steps.length) return;
       const s = steps[index];
+      sound.play('playStep');
 
       // Update bars
       renderBars(s.arr, s.i, s.minIdx, s.j, s.type, s.sortedIndices);
@@ -507,6 +515,10 @@ const maxVal = Math.max(...defaultArray);
           return num;
         }).join(', ');
         consoleLine.innerHTML = `arr = [ ${formattedArr} ]`;
+      }
+
+      if (s.type === 'done') {
+        sound.play('playSuccess');
       }
     }
 

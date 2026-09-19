@@ -18,6 +18,10 @@ import PeopleApiModule from '../components/modules/PeopleApiModule.jsx';
         </div>
       </div>
       <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m3 10.8 9-7.2 9 7.2"/>
@@ -139,7 +143,11 @@ import PeopleApiModule from '../components/modules/PeopleApiModule.jsx';
 </Layout>
 
 <script>
+import { initSoundControls } from '../lib/soundControls.js';
+
 (function () {
+  const sound = initSoundControls();
+
   const steps = [
     {
       from: 'usuario', to: 'api', dir: 'request',
@@ -218,6 +226,7 @@ import PeopleApiModule from '../components/modules/PeopleApiModule.jsx';
   function renderStep(i) {
     const s = steps[i];
     const color = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+    sound.play('playStep');
 
     clearHighlights();
     setNodeActive(s.from, color);
@@ -266,6 +275,7 @@ import PeopleApiModule from '../components/modules/PeopleApiModule.jsx';
       running = false;
       btnRun.disabled = false;
       btnRun.textContent = 'Simular de nuevo';
+      sound.play('playSuccess');
       return;
     }
     renderStep(currentStep);

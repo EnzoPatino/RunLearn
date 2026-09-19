@@ -17,6 +17,10 @@ import Layout from '../layouts/Layout.astro';
         </div>
       </div>
       <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m3 10.8 9-7.2 9 7.2"/>
@@ -192,7 +196,11 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+import { initSoundControls } from '../lib/soundControls.js';
+
 (function () {
+  const sound = initSoundControls();
+
   const flows = {
     http: [
       {
@@ -290,6 +298,7 @@ import Layout from '../layouts/Layout.astro';
     const packet = card.querySelector('.packet');
     const explain = card.querySelector('[data-explain]');
     const count = card.querySelector('[data-count]');
+    sound.play('playStep');
 
     card.querySelectorAll('.node').forEach(node => {
       node.classList.toggle('active', step.nodes.includes(node.dataset.node));
@@ -328,6 +337,7 @@ import Layout from '../layouts/Layout.astro';
       if (index >= steps.length) {
         button.disabled = false;
         button.textContent = key === 'http' ? 'Animar HTTP de nuevo' : 'Animar HTTPS de nuevo';
+        sound.play('playSuccess');
         return;
       }
 

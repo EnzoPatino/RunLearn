@@ -1,0 +1,361 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — Colas de mensajes">
+  <div class="queue-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Colas de mensajes</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>simulación en vivo</div>
+      </div>
+    </div>
+
+    <h1>Colas de mensajes</h1>
+    <p class="lede">
+      Un productor genera tareas y un consumidor las procesa a su propio ritmo. La cola desacopla esas velocidades: absorbe picos, ordena el trabajo pendiente y muestra cuándo el sistema empieza a saturarse.
+    </p>
+
+    <div class="diagram-card" id="queue-card">
+      <div class="stats-row">
+        <span class="status-pill" id="status-pill">Cola estable</span>
+        <span class="metric">Pendientes: <strong id="queue-size">0</strong></span>
+        <span class="metric">Procesadas: <strong id="processed-count">0</strong></span>
+        <span class="metric">Rechazadas: <strong id="dropped-count">0</strong></span>
+      </div>
+
+      <div class="factory-stage">
+        <div class="actor producer">
+          <span class="actor-label">Productor</span>
+          <div class="actor-box" id="producer-box">producer.tick()</div>
+        </div>
+        <div class="queue-lane">
+          <div class="lane-head">
+            <span>Queue</span>
+            <span id="capacity-label">0 / 12</span>
+          </div>
+          <div class="queue-slots" id="queue-slots"></div>
+        </div>
+        <div class="actor consumer">
+          <span class="actor-label">Consumidor</span>
+          <div class="actor-box" id="consumer-box">consumer.idle</div>
+        </div>
+      </div>
+
+      <div class="controls-panel">
+        <div class="slider-row">
+          <label for="producer-speed">Productor cada <strong id="producer-label">600 ms</strong></label>
+          <input id="producer-speed" type="range" min="250" max="1500" step="50" value="600" />
+        </div>
+        <div class="slider-row">
+          <label for="consumer-speed">Consumidor cada <strong id="consumer-label">900 ms</strong></label>
+          <input id="consumer-speed" type="range" min="250" max="1500" step="50" value="900" />
+        </div>
+        <div class="button-row">
+          <button class="primary" id="btn-toggle" type="button">Iniciar simulación</button>
+          <button class="ghost" id="btn-reset" type="button">Reiniciar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Pseudo-código</span>
+          <span class="filename">queue-worker.js</span>
+        </div>
+        <pre class="code"><span class="line" data-key="produce"><span class="kw">const</span> tarea = producer.createTask()</span>
+<span class="line" data-key="push">queue.push(tarea)</span>
+<span class="line" data-key="check"><span class="kw">if</span> (queue.length &gt; 0) &#123;</span>
+<span class="line" data-key="shift">  <span class="kw">const</span> tarea = queue.shift()</span>
+<span class="line" data-key="process">  consumer.process(tarea)</span>
+<span class="line" data-key="close">&#125;</span></pre>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Por qué existen</span>
+        </div>
+        <div class="explain-body">
+          <p id="explain-text">Las colas permiten que quien produce trabajo no tenga que esperar a quien lo procesa. Si entran muchas tareas juntas, quedan pendientes y los consumidores las toman cuando pueden.</p>
+          <div class="examples">
+            <span>RabbitMQ</span>
+            <span>Amazon SQS</span>
+            <span>Kafka</span>
+            <span>workers de email</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+  const capacity = 12;
+  let queue = [];
+  let nextId = 1;
+  let processed = 0;
+  let dropped = 0;
+  let running = false;
+  let producerTimer = null;
+  let consumerTimer = null;
+  let alertActive = false;
+
+  const queueCard = document.getElementById('queue-card');
+  const slots = document.getElementById('queue-slots');
+  const status = document.getElementById('status-pill');
+  const size = document.getElementById('queue-size');
+  const processedCount = document.getElementById('processed-count');
+  const droppedCount = document.getElementById('dropped-count');
+  const capacityLabel = document.getElementById('capacity-label');
+  const producerBox = document.getElementById('producer-box');
+  const consumerBox = document.getElementById('consumer-box');
+  const producerSpeed = document.getElementById('producer-speed');
+  const consumerSpeed = document.getElementById('consumer-speed');
+  const producerLabel = document.getElementById('producer-label');
+  const consumerLabel = document.getElementById('consumer-label');
+  const btnToggle = document.getElementById('btn-toggle');
+  const btnReset = document.getElementById('btn-reset');
+  const explain = document.getElementById('explain-text');
+
+  function highlight(key) {
+    document.querySelectorAll('.line').forEach((line) => line.classList.toggle('active', line.dataset.key === key));
+  }
+
+  function renderSlots() {
+    slots.innerHTML = '';
+    for (let i = 0; i < capacity; i++) {
+      const task = queue[i];
+      const cell = document.createElement('div');
+      cell.className = 'queue-slot';
+      if (task) {
+        cell.classList.add('filled');
+        cell.textContent = `T${task.id}`;
+      }
+      slots.appendChild(cell);
+    }
+  }
+
+  function renderStatus() {
+    const pressure = queue.length / capacity;
+    queueCard.classList.toggle('saturated', pressure >= 0.85);
+    size.textContent = queue.length;
+    processedCount.textContent = processed;
+    droppedCount.textContent = dropped;
+    capacityLabel.textContent = `${queue.length} / ${capacity}`;
+
+    if (pressure >= 0.85) {
+      status.textContent = 'Cola saturada';
+      status.className = 'status-pill danger';
+      explain.textContent = 'El productor está llegando más rápido de lo que el consumidor puede procesar. La cola protege al sistema, pero si sigue creciendo aparece saturación.';
+      if (!alertActive) {
+        sound.play('playAlert');
+        alertActive = true;
+      }
+    } else if (queue.length === 0) {
+      status.textContent = 'Cola vacía';
+      status.className = 'status-pill quiet';
+      explain.textContent = 'El consumidor alcanza o supera al productor. La cola queda casi siempre vacía porque no se acumula trabajo pendiente.';
+      alertActive = false;
+    } else {
+      status.textContent = 'Cola absorbiendo trabajo';
+      status.className = 'status-pill';
+      explain.textContent = 'Productor y consumidor operan a ritmos distintos. La cola mantiene el trabajo pendiente hasta que un consumidor lo toma.';
+      alertActive = false;
+    }
+  }
+
+  function render() {
+    renderSlots();
+    renderStatus();
+  }
+
+  function produce() {
+    highlight('produce');
+    producerBox.textContent = `creando T${nextId}`;
+    window.setTimeout(() => {
+      if (queue.length >= capacity) {
+        dropped += 1;
+        producerBox.textContent = 'cola llena';
+        sound.play('playBlocked');
+      } else {
+        queue.push({ id: nextId });
+        producerBox.textContent = `push(T${nextId})`;
+        nextId += 1;
+        highlight('push');
+        sound.play('playStep');
+      }
+      render();
+    }, 120);
+  }
+
+  function consume() {
+    highlight('check');
+    if (queue.length === 0) {
+      consumerBox.textContent = 'sin tareas';
+      render();
+      return;
+    }
+    const task = queue.shift();
+    consumerBox.textContent = `shift() -> T${task.id}`;
+    highlight('shift');
+    sound.play('playStep');
+    render();
+    window.setTimeout(() => {
+      processed += 1;
+      consumerBox.textContent = `process(T${task.id})`;
+      highlight('process');
+      render();
+      if (processed > 0 && processed % 8 === 0) sound.play('playSuccess');
+    }, 180);
+  }
+
+  function scheduleProducer() {
+    window.clearInterval(producerTimer);
+    if (running) producerTimer = window.setInterval(produce, Number(producerSpeed.value));
+  }
+
+  function scheduleConsumer() {
+    window.clearInterval(consumerTimer);
+    if (running) consumerTimer = window.setInterval(consume, Number(consumerSpeed.value));
+  }
+
+  function setRunning(nextRunning) {
+    running = nextRunning;
+    btnToggle.textContent = running ? 'Pausar simulación' : 'Iniciar simulación';
+    scheduleProducer();
+    scheduleConsumer();
+    if (running) {
+      produce();
+      window.setTimeout(consume, 220);
+    }
+  }
+
+  function reset() {
+    window.clearInterval(producerTimer);
+    window.clearInterval(consumerTimer);
+    queue = [];
+    nextId = 1;
+    processed = 0;
+    dropped = 0;
+    alertActive = false;
+    running = false;
+    producerBox.textContent = 'producer.tick()';
+    consumerBox.textContent = 'consumer.idle';
+    btnToggle.textContent = 'Iniciar simulación';
+    highlight('');
+    render();
+  }
+
+  producerSpeed.addEventListener('input', () => {
+    producerLabel.textContent = `${producerSpeed.value} ms`;
+    scheduleProducer();
+  });
+  consumerSpeed.addEventListener('input', () => {
+    consumerLabel.textContent = `${consumerSpeed.value} ms`;
+    scheduleConsumer();
+  });
+  btnToggle.addEventListener('click', () => setRunning(!running));
+  btnReset.addEventListener('click', reset);
+
+  render();
+})();
+</script>
+
+<style>
+  .queue-page {
+    --panel: var(--surface-panel);
+    --muted: var(--text-secondary);
+    --accent: #22c55e;
+    --accent-soft: rgba(34, 197, 94, .15);
+    --danger: #fb7185;
+    width: min(100%, 1180px);
+    margin: 0 auto;
+    padding: 20px clamp(16px, 3vw, 32px) 48px;
+  }
+  .topbar, .topbar-main, .topbar-actions, .brand-link, .crumbs, .home-action, .stats-row, .controls-panel, .button-row {
+    display: flex;
+    align-items: center;
+  }
+  .topbar { justify-content: space-between; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
+  .topbar-main, .topbar-actions { gap: 14px; flex-wrap: wrap; }
+  .brand-link, .home-action { color: var(--text-primary); text-decoration: none; }
+  .brand-link { gap: 10px; font-weight: 700; }
+  .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--surface-card); border: 1px solid var(--border-subtle); color: var(--accent); }
+  .crumbs { gap: 8px; color: var(--text-muted); font-size: 13px; }
+  .crumbs a { color: var(--text-secondary); text-decoration: none; }
+  .current { color: var(--text-primary); }
+  .home-action { gap: 8px; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: 9px; font-size: 13px; font-weight: 600; }
+  .home-action svg { width: 17px; height: 17px; }
+  .badge-live, .status-pill, .metric { font-family: var(--font-mono); font-size: 12px; color: var(--muted); border: 1px solid var(--border-hairline); background: rgba(255, 255, 255, 0.05); padding: 6px 10px; border-radius: 999px; }
+  .dot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  h1 { margin: 0; font-size: clamp(34px, 7vw, 76px); letter-spacing: 0; line-height: 0.94; }
+  .lede { max-width: 880px; color: var(--text-secondary); font-size: clamp(16px, 2vw, 19px); line-height: 1.7; margin: 18px 0 28px; }
+  .diagram-card, .panel { background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)); border: 1px solid var(--border-subtle); border-radius: 16px; box-shadow: var(--shadow-card); }
+  .diagram-card { padding: clamp(16px, 3vw, 24px); transition: border-color .2s, box-shadow .2s; }
+  .diagram-card.saturated { border-color: rgba(251,113,133,.45); box-shadow: 0 0 0 1px rgba(251,113,133,.12), var(--shadow-card); }
+  .stats-row { gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .status-pill { color: #86efac; border-color: rgba(34,197,94,.28); background: var(--accent-soft); }
+  .status-pill.quiet { color: var(--text-secondary); border-color: var(--border-hairline); background: rgba(255,255,255,.05); }
+  .status-pill.danger { color: #fecdd3; border-color: rgba(251,113,133,.36); background: rgba(251,113,133,.15); }
+  .factory-stage { display: grid; grid-template-columns: 170px 1fr 170px; gap: 18px; align-items: center; }
+  .actor { display: grid; gap: 10px; }
+  .actor-label { color: var(--muted); font-size: 13px; font-weight: 800; }
+  .actor-box { min-height: 92px; display: grid; place-items: center; text-align: center; padding: 14px; border-radius: 14px; border: 1px solid var(--border-subtle); background: rgba(2,6,23,.58); color: var(--text-primary); font-family: var(--font-mono); }
+  .producer .actor-box { color: #93c5fd; }
+  .consumer .actor-box { color: #86efac; }
+  .queue-lane { border: 1px solid var(--border-subtle); border-radius: 14px; padding: 14px; background: rgba(2,6,23,.42); }
+  .lane-head { display: flex; justify-content: space-between; color: var(--muted); font-family: var(--font-mono); font-size: 12px; margin-bottom: 12px; }
+  .queue-slots { display: grid; grid-template-columns: repeat(12, minmax(34px, 1fr)); gap: 8px; }
+  .queue-slot { aspect-ratio: 1; min-width: 0; display: grid; place-items: center; border-radius: 8px; border: 1px dashed rgba(255,255,255,.16); color: var(--text-white); font-family: var(--font-mono); font-size: 12px; background: rgba(255,255,255,.03); }
+  .queue-slot.filled { border-style: solid; border-color: rgba(56,189,248,.42); background: rgba(56,189,248,.16); }
+  .controls-panel { gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+  .slider-row { flex: 1 1 260px; display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+  .slider-row strong { color: var(--text-primary); font-family: var(--font-mono); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .button-row { gap: 10px; }
+  button.primary, button.ghost { border-radius: 9px; font-weight: 700; cursor: pointer; }
+  button.primary { border: 0; color: #041016; background: linear-gradient(135deg, #86efac, var(--accent)); padding: 10px 16px; }
+  button.ghost { color: var(--muted); background: transparent; border: 1px solid var(--border-subtle); padding: 9px 14px; }
+  .split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; margin-top: 18px; }
+  .panel { padding: 16px; min-width: 0; }
+  .panel-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+  .title { color: var(--text-primary); font-weight: 800; }
+  .filename { font-family: var(--font-mono); }
+  .code { margin: 0; overflow: auto; color: #cbd5e1; font-family: var(--font-mono); font-size: 13px; line-height: 1.75; }
+  .line { display: block; padding: 1px 8px; border-radius: 6px; }
+  .line.active { background: rgba(34,197,94,.14); color: var(--text-white); }
+  .kw { color: #93c5fd; }
+  .explain-body { color: var(--text-secondary); line-height: 1.7; }
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .examples span { border: 1px solid var(--border-hairline); border-radius: 999px; padding: 6px 10px; color: var(--text-primary); background: rgba(255,255,255,.04); font-size: 12px; }
+  @media (max-width: 880px) {
+    .factory-stage, .split { grid-template-columns: 1fr; }
+    .queue-slots { grid-template-columns: repeat(6, minmax(34px, 1fr)); }
+  }
+</style>

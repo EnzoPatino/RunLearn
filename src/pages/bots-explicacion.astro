@@ -348,12 +348,12 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-import sounds from '../lib/sounds.js';
+import { initSoundControls } from '../lib/soundControls.js';
 
 (function () {
   let mode = 'unprotected'; // 'unprotected' | 'protected'
   let simulating = false;
-  let soundEnabled = true;
+  const sound = initSoundControls();
 
   const btnUnprotected = document.getElementById('btn-mode-unprotected');
   const btnProtected = document.getElementById('btn-mode-protected');
@@ -364,9 +364,6 @@ import sounds from '../lib/sounds.js';
 
   const btnRunSim = document.getElementById('btn-run-sim');
   const btnResetSim = document.getElementById('btn-reset-sim');
-  const btnToggleSound = document.getElementById('btn-toggle-sound');
-  const soundIcon = document.getElementById('sound-icon');
-  const soundText = document.getElementById('sound-text');
   const simPhaseBadge = document.getElementById('sim-phase-badge');
 
   const serverTargetNode = document.getElementById('server-target-node');
@@ -388,20 +385,8 @@ import sounds from '../lib/sounds.js';
   const consoleLine = document.getElementById('console-line');
   const codeLines = document.querySelectorAll('.line');
 
-  // Toggle de sonido
-  btnToggleSound?.addEventListener('click', () => {
-    soundEnabled = !soundEnabled;
-    if (soundIcon) soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
-    if (soundText) soundText.textContent = soundEnabled ? 'Sonido activo' : 'Silenciado';
-    btnToggleSound.classList.toggle('muted', !soundEnabled);
-  });
-
   function safePlay(fnName: 'playStep' | 'playBlocked' | 'playSuccess' | 'playAlert') {
-    if (soundEnabled && sounds && typeof (sounds as any)[fnName] === 'function') {
-      try {
-        (sounds as any)[fnName]();
-      } catch {}
-    }
+    sound.play(fnName);
   }
 
   // Cambio de Modo
