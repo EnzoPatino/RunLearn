@@ -8,6 +8,9 @@ export default defineConfig({
     '/docker': '/docker-explicacion',
     '/base-de-datos': '/database-explicacion',
     '/http-https': '/http-explicacion',
+    '/servidor': '/servidor-explicacion',
+    '/github': '/github-explicacion',
+    '/bots': '/bots-explicacion',
   },
 });
 

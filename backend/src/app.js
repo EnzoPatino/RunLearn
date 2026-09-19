@@ -2,17 +2,21 @@ import express from 'express';
 import cors from 'cors';
 import authRouter from './routes/auth.routes.js';
 import healthRouter from './routes/health.routes.js';
+import metricsRouter from './routes/metrics.routes.js';
 import peopleRouter from './routes/people.js';
+import { trackRequest } from './metrics.js';
 
 const app = express();
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(trackRequest);
 
 // Rutas
 app.use('/api/auth', authRouter);
 app.use('/api/health', healthRouter);
+app.use('/api/metrics', metricsRouter);
 app.use('/api/people', peopleRouter);
 
 app.get('/', (req, res) => {
@@ -33,6 +37,7 @@ app.get('/', (req, res) => {
         delete: 'DELETE /api/people/:id',
       },
       health: '/api/health',
+      metrics: '/api/metrics',
     },
   });
 });

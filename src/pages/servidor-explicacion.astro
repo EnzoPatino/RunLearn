@@ -1,0 +1,1616 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — Cómo funciona el Servidor">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Servidor</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>telemetría en vivo</div>
+      </div>
+    </div>
+
+    <h1>Cómo funciona el Servidor</h1>
+    <p class="lede">
+      Un servidor backend no es solo una máquina remota: es un <strong>proceso Node.js continuo</strong> que mantiene un socket TCP abierto en el puerto <code>5000</code>, administra el Event Loop en memoria y coordina conexiones con PostgreSQL y Redis. Este panel consulta <code>/api/metrics</code> en tiempo real para mostrar su estado real y vivo.
+    </p>
+
+    <!-- Diagrama interactivo de arquitectura del servidor -->
+    <div class="diagram-card">
+      <div class="diagram" id="diagram">
+        <svg class="lines">
+          <line x1="9%" y1="50%" x2="91%" y2="50%" stroke="var(--api-line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <div class="node" id="node-cliente" style="left:9%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <div class="label">Navegador</div>
+        </div>
+
+        <div class="node" id="node-servidor" style="left:36.3%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" stroke-width="2.5" />
+              <line x1="6" y1="18" x2="6.01" y2="18" stroke-width="2.5" />
+              <line x1="10" y1="6" x2="14" y2="6" />
+              <line x1="10" y1="18" x2="14" y2="18" />
+            </svg>
+          </div>
+          <div class="label">Servidor :5000</div>
+        </div>
+
+        <div class="node" id="node-postgres" style="left:63.7%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="6" rx="7" ry="2.6"/>
+              <path d="M5 6v12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/>
+              <path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/>
+            </svg>
+          </div>
+          <div class="label">PostgreSQL</div>
+        </div>
+
+        <div class="node" id="node-redis" style="left:91%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
+          </div>
+          <div class="label">Redis Caché</div>
+        </div>
+
+        <div class="packet" id="packet"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-run">Simular ciclo de vida</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+        <button class="action-btn" id="btn-manual-ping">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          Petición manual (+1 request)
+        </button>
+      </div>
+      <div class="controls-left">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 5</span>
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE TELEMETRÍA EN VIVO -->
+    <section class="live-dashboard" aria-label="Telemetría en Vivo del Servidor">
+      <div class="live-header">
+        <div class="live-header-info">
+          <div class="status-indicator online" id="status-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text" id="status-text">Conectando al servidor...</span>
+          </div>
+          <span class="sync-info" id="sync-info">Sondeando cada 3s</span>
+        </div>
+        <div class="live-header-actions">
+          <span class="endpoint-badge">GET http://localhost:5000/api/metrics</span>
+          <span class="timestamp-chip" id="last-sync-chip">Última sinc: --:--:--</span>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <!-- Card 1: Uptime -->
+        <div class="metric-card uptime-card">
+          <div class="metric-card-top">
+            <span class="metric-title">Uptime del Proceso</span>
+            <span class="metric-badge">process.uptime()</span>
+          </div>
+          <div class="metric-main-value" id="val-uptime-formatted">--m --s</div>
+          <div class="metric-sub" id="val-uptime-seconds">0 segundos transcurridos</div>
+          <div class="metric-foot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Tiempo continuo sin reinicios</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Requests -->
+        <div class="metric-card requests-card" id="card-requests">
+          <div class="metric-card-top">
+            <span class="metric-title">Peticiones Atendidas</span>
+            <span class="metric-badge highlight" id="req-delta-badge">En memoria</span>
+          </div>
+          <div class="metric-main-value highlight" id="val-requests">--</div>
+          <div class="metric-sub">Peticiones recibidas desde el arranque</div>
+          <div class="metric-foot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <span>Incrementa con cada llamada al backend</span>
+          </div>
+        </div>
+
+        <!-- Card 3: PostgreSQL -->
+        <div class="metric-card service-card" id="card-pg">
+          <div class="metric-card-top">
+            <span class="metric-title">Base de Datos</span>
+            <span class="metric-badge">PostgreSQL 16</span>
+          </div>
+          <div class="service-status-row">
+            <div class="service-chip" id="chip-pg">
+              <span class="chip-dot"></span>
+              <span id="text-pg">Verificando...</span>
+            </div>
+          </div>
+          <div class="metric-sub">Host: postgres | Puerto: 5432</div>
+          <div class="metric-foot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span id="pg-pool-text">Pool activo (SELECT 1)</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Redis -->
+        <div class="metric-card service-card" id="card-redis">
+          <div class="metric-card-top">
+            <span class="metric-title">Caché & Sesiones</span>
+            <span class="metric-badge">Redis 7</span>
+          </div>
+          <div class="service-status-row">
+            <div class="service-chip" id="chip-redis">
+              <span class="chip-dot"></span>
+              <span id="text-redis">Verificando...</span>
+            </div>
+          </div>
+          <div class="metric-sub">Host: redis | Puerto: 6379</div>
+          <div class="metric-foot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
+            <span id="redis-ping-text">Conexión viva (PING/PONG)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen secundario de sistema & JSON en vivo -->
+      <div class="telemetry-details">
+        <div class="telemetry-detail-item">
+          <span class="detail-label">Plataforma / Runtime:</span>
+          <span class="detail-value" id="val-runtime">Node.js (Linux)</span>
+        </div>
+        <div class="telemetry-detail-item">
+          <span class="detail-label">Memoria RSS:</span>
+          <span class="detail-value" id="val-mem-rss">-- MB</span>
+        </div>
+        <div class="telemetry-detail-item">
+          <span class="detail-label">Heap Usado:</span>
+          <span class="detail-value" id="val-mem-heap">-- MB</span>
+        </div>
+        <div class="telemetry-detail-item">
+          <span class="detail-label">Timestamp del Servidor:</span>
+          <span class="detail-value mono" id="val-timestamp">--</span>
+        </div>
+      </div>
+
+      <!-- Visor de payload JSON -->
+      <div class="json-inspector">
+        <div class="json-header">
+          <span class="json-title">Respuesta cruda de <code>/api/metrics</code> (actualizada en tiempo real)</span>
+          <button class="json-copy-btn" id="btn-copy-json">Copiar JSON</button>
+        </div>
+        <pre class="json-code" id="raw-json">Cargando métricas del backend...</pre>
+      </div>
+    </section>
+
+    <!-- Split: Código del endpoint vs Explicación conceptual -->
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="tabs">
+            <button class="tab active" data-tab="routes">routes/metrics.routes.js</button>
+            <button class="tab" data-tab="middleware">metrics.js (contador)</button>
+          </div>
+          <span class="filename" id="code-filename">routes/metrics.routes.js</span>
+        </div>
+
+        <div id="tab-content-routes">
+          <pre class="code"><span class="line" data-key="router"><span class="kw">router</span>.get(<span class="str">'/'</span>, <span class="kw">async</span> (req, res) =&gt; &#123;</span>
+<span class="line" data-key="health">  <span class="comment">// 1. Verifica estado de Postgres y Redis concurrentemente</span></span>
+<span class="line" data-key="health">  <span class="kw">const</span> [dbResult, redisResult] = <span class="kw">await</span> Promise.all([</span>
+<span class="line" data-key="health">    checkDbConnection(),</span>
+<span class="line" data-key="health">    checkRedisConnection()</span>
+<span class="line" data-key="health">  ]);</span>
+<span class="line" data-key="uptime">  <span class="comment">// 2. Extrae métricas del proceso en ejecución</span></span>
+<span class="line" data-key="uptime">  <span class="kw">const</span> uptimeSeconds = Math.floor(process.uptime());</span>
+<span class="line" data-key="uptime">  <span class="kw">const</span> mem = process.memoryUsage();</span>
+<span class="line" data-key="response">  <span class="comment">// 3. Empaqueta telemetría y contador de requests</span></span>
+<span class="line" data-key="response">  <span class="kw">return</span> res.json(&#123;</span>
+<span class="line" data-key="response">    status: <span class="str">'ok'</span>,</span>
+<span class="line" data-key="response">    timestamp: <span class="kw">new</span> Date().toISOString(),</span>
+<span class="line" data-key="response">    uptime: uptimeSeconds,</span>
+<span class="line" data-key="response">    requestsCount: getTotalRequests(),</span>
+<span class="line" data-key="response">    services: &#123;</span>
+<span class="line" data-key="response">      postgres: dbResult.ok ? <span class="str">'connected'</span> : <span class="str">'disconnected'</span>,</span>
+<span class="line" data-key="response">      redis: redisResult.ok ? <span class="str">'connected'</span> : <span class="str">'disconnected'</span></span>
+<span class="line" data-key="response">    &#125;</span>
+<span class="line" data-key="response">  &#125;);</span>
+<span class="line" data-key="router">&#125;);</span></pre>
+        </div>
+
+        <div id="tab-content-middleware" style="display:none">
+          <pre class="code"><span class="line"><span class="kw">let</span> totalRequests = <span class="num">0</span>; <span class="comment">// Vive en la memoria del proceso Node.js</span></span>
+<span class="line">&nbsp;</span>
+<span class="line"><span class="comment">// Middleware global: se ejecuta antes de cada endpoint</span></span>
+<span class="line"><span class="kw">export function</span> trackRequest(req, res, next) &#123;</span>
+<span class="line">  totalRequests++; <span class="comment">// Incrementa el contador con cada petición</span></span>
+<span class="line">  next();          <span class="comment">// Pasa el control a la siguiente ruta</span></span>
+<span class="line">&#125;</span>
+<span class="line">&nbsp;</span>
+<span class="line"><span class="kw">export function</span> getTotalRequests() &#123;</span>
+<span class="line">  <span class="kw">return</span> totalRequests;</span>
+<span class="line">&#125;</span></pre>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando en el servidor</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            El servidor Express se ejecuta continuamente. Cada 3 segundos, este navegador consulta <code>/api/metrics</code> y los números de arriba cambian para reflejar el paso del tiempo y las peticiones reales procesadas.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">petición</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+
+          <div class="concepts-grid">
+            <div class="concept-item">
+              <div class="concept-icon">⏱️</div>
+              <div>
+                <strong>process.uptime():</strong> Mide los segundos exactos transcurridos desde que arrancó el proceso Node.js. Si el servidor se reinicia, vuelve a cero.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">📈</div>
+              <div>
+                <strong>Contador en Memoria:</strong> <code>totalRequests++</code> es una variable en la RAM del servidor. Es ultra rápida (sin I/O de disco) y refleja la carga viva del proceso.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">🔌</div>
+              <div>
+                <strong>Pools de Conexión:</strong> Postgres y Redis no abren y cierran sockets por petición; mantienen un pool permanente para responder en milisegundos.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+(function () {
+  const steps = [
+    {
+      from: 'cliente', to: 'servidor', dir: 'request',
+      code: 'router', file: 'metrics.routes.js',
+      text: 'El navegador emite una petición HTTP <strong>GET /api/metrics</strong> hacia el puerto <code>5000</code>. El middleware <code>trackRequest</code> incrementa <code>totalRequests++</code> de inmediato en la RAM del servidor.'
+    },
+    {
+      from: 'servidor', to: 'postgres', dir: 'request',
+      code: 'health', file: 'metrics.routes.js',
+      text: 'El servidor ejecuta <strong>checkDbConnection()</strong> usando el cliente activo del pool de PostgreSQL (<code>SELECT 1</code>) para confirmar que la base de datos responde.'
+    },
+    {
+      from: 'servidor', to: 'redis', dir: 'request',
+      code: 'health', file: 'metrics.routes.js',
+      text: 'En paralelo mediante <strong>Promise.all</strong>, el servidor envía un comando <code>PING</code> a Redis esperando recibir <code>PONG</code>.'
+    },
+    {
+      from: 'postgres', to: 'servidor', dir: 'response',
+      code: 'uptime', file: 'metrics.routes.js',
+      text: 'Tanto Postgres como Redis devuelven confirmación positiva. El servidor calcula <strong>process.uptime()</strong> y el uso de memoria con <code>process.memoryUsage()</code>.'
+    },
+    {
+      from: 'servidor', to: 'cliente', dir: 'response',
+      code: 'response', file: 'metrics.routes.js',
+      text: 'El servidor serializa el objeto JSON de telemetría y responde con status <code>200 OK</code>. La interfaz actualiza los contadores en pantalla.',
+      finalJson: true
+    }
+  ];
+
+  const nodePos = { cliente: 9, servidor: 36.3, postgres: 63.7, redis: 91 };
+
+  const packet = document.getElementById('packet');
+  const btnRun = document.getElementById('btn-run');
+  const btnReset = document.getElementById('btn-reset');
+  const btnManualPing = document.getElementById('btn-manual-ping');
+  const stepTrack = document.getElementById('step-track');
+  const stepCount = document.getElementById('step-count');
+  const codeFilename = document.getElementById('code-filename');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+
+  const allNodes = ['cliente', 'servidor', 'postgres', 'redis'].map(id => document.getElementById('node-' + id));
+  const allCodeLines = document.querySelectorAll('.line');
+
+  // Construir barras de progreso
+  steps.forEach((s, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.index = String(i);
+    seg.dataset.dir = s.dir;
+    stepTrack?.appendChild(seg);
+  });
+  const segs = stepTrack?.querySelectorAll('.seg');
+
+  let running = false;
+  let currentStep = -1;
+
+  function clearHighlights() {
+    allNodes.forEach(n => n?.classList.remove('active'));
+    allCodeLines.forEach(l => l.classList.remove('active', 'response'));
+  }
+
+  function setNodeActive(id: string, color: string) {
+    const node = document.getElementById('node-' + id);
+    if (node) {
+      node.classList.add('active');
+      node.style.setProperty('--node-color', color);
+    }
+  }
+
+  function renderStep(i: number) {
+    const s = steps[i];
+    const color = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+
+    clearHighlights();
+    setNodeActive(s.from, color);
+    setNodeActive(s.to, color);
+
+    if (packet) {
+      packet.classList.add('visible');
+      packet.style.background = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+      packet.style.left = nodePos[s.from as keyof typeof nodePos] + '%';
+      void packet.offsetWidth;
+      packet.style.left = nodePos[s.to as keyof typeof nodePos] + '%';
+    }
+
+    document.querySelectorAll('.line[data-key="' + s.code + '"]').forEach(l => {
+      l.classList.add('active');
+      if (s.dir === 'response') l.classList.add('response');
+    });
+
+    if (codeFilename) codeFilename.textContent = s.file;
+
+    if (explainIdle) explainIdle.style.display = 'none';
+    if (explainActive) explainActive.style.display = 'block';
+    if (explainTag) {
+      explainTag.textContent = s.dir === 'request' ? 'petición →' : '← respuesta';
+      explainTag.className = 'explain-tag' + (s.dir === 'response' ? ' response' : '');
+    }
+    if (explainText) explainText.innerHTML = s.text;
+
+    if (s.finalJson && consoleLine) {
+      consoleLine.style.display = 'block';
+      consoleLine.innerHTML = 'Status: <span class="json-str">200 OK</span> · Telemetría recibida correctamente';
+    } else if (consoleLine) {
+      consoleLine.style.display = 'none';
+    }
+
+    segs?.forEach((seg, idx) => {
+      if (idx <= i) {
+        seg.classList.add('filled');
+        (seg as HTMLElement).style.background = steps[idx].dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+      } else {
+        seg.classList.remove('filled');
+        (seg as HTMLElement).style.background = '';
+      }
+    });
+
+    if (stepCount) stepCount.textContent = (i + 1) + ' / ' + steps.length;
+  }
+
+  function reset(soft = false) {
+    running = false;
+    currentStep = -1;
+    clearHighlights();
+    if (packet) {
+      packet.classList.remove('visible');
+      packet.style.left = '9%';
+    }
+    if (explainIdle) explainIdle.style.display = 'block';
+    if (explainActive) explainActive.style.display = 'none';
+    if (consoleLine) consoleLine.style.display = 'none';
+    if (codeFilename) codeFilename.textContent = 'routes/metrics.routes.js';
+    segs?.forEach(s => {
+      s.classList.remove('filled');
+      (s as HTMLElement).style.background = '';
+    });
+    if (stepCount) stepCount.textContent = '0 / ' + steps.length;
+    if (btnRun) {
+      btnRun.textContent = 'Simular ciclo de vida';
+      (btnRun as HTMLButtonElement).disabled = false;
+    }
+  }
+
+  function nextStep() {
+    if (!running) return;
+    currentStep++;
+    if (currentStep >= steps.length) {
+      running = false;
+      if (btnRun) {
+        btnRun.textContent = 'Volver a simular';
+        (btnRun as HTMLButtonElement).disabled = false;
+      }
+      return;
+    }
+    renderStep(currentStep);
+    setTimeout(nextStep, 1800);
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    currentStep = -1;
+    if (btnRun) {
+      btnRun.textContent = 'Simulando...';
+      (btnRun as HTMLButtonElement).disabled = true;
+    }
+    nextStep();
+  }
+
+  btnRun?.addEventListener('click', start);
+  btnReset?.addEventListener('click', () => reset(true));
+
+  // Tabs de código
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tabTarget = (tab as HTMLElement).dataset.tab;
+      const routesContent = document.getElementById('tab-content-routes');
+      const middlewareContent = document.getElementById('tab-content-middleware');
+      if (codeFilename) {
+        codeFilename.textContent = tabTarget === 'routes' ? 'routes/metrics.routes.js' : 'metrics.js';
+      }
+      if (routesContent && middlewareContent) {
+        if (tabTarget === 'routes') {
+          routesContent.style.display = 'block';
+          middlewareContent.style.display = 'none';
+        } else {
+          routesContent.style.display = 'none';
+          middlewareContent.style.display = 'block';
+        }
+      }
+    });
+  });
+
+  // ============================================================
+  // POLLING EN VIVO DE /api/metrics
+  // ============================================================
+  const API_BASE = (window as any).RUNLEARN_API_URL || 'http://localhost:5000';
+  let serverUptimeSeconds = 0;
+  let lastServerFetchTime = Date.now();
+  let pollIntervalTimer: any = null;
+  let tickTimer: any = null;
+
+  const statusIndicator = document.getElementById('status-indicator');
+  const statusText = document.getElementById('status-text');
+  const lastSyncChip = document.getElementById('last-sync-chip');
+  const valUptimeFormatted = document.getElementById('val-uptime-formatted');
+  const valUptimeSeconds = document.getElementById('val-uptime-seconds');
+  const valRequests = document.getElementById('val-requests');
+  const chipPg = document.getElementById('chip-pg');
+  const textPg = document.getElementById('text-pg');
+  const chipRedis = document.getElementById('chip-redis');
+  const textRedis = document.getElementById('text-redis');
+  const valRuntime = document.getElementById('val-runtime');
+  const valMemRss = document.getElementById('val-mem-rss');
+  const valMemHeap = document.getElementById('val-mem-heap');
+  const valTimestamp = document.getElementById('val-timestamp');
+  const rawJsonEl = document.getElementById('raw-json');
+  const cardRequests = document.getElementById('card-requests');
+  const reqDeltaBadge = document.getElementById('req-delta-badge');
+
+  function formatTimeAgo(seconds: number) {
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0 || d > 0) parts.push(`${h}h`);
+    parts.push(`${m}m`);
+    parts.push(`${s}s`);
+    return parts.join(' ');
+  }
+
+  function triggerRequestPulse() {
+    if (cardRequests) {
+      cardRequests.classList.add('flash');
+      setTimeout(() => cardRequests.classList.remove('flash'), 500);
+    }
+    if (reqDeltaBadge) {
+      reqDeltaBadge.textContent = '¡Petición +1!';
+      setTimeout(() => { reqDeltaBadge.textContent = 'En memoria'; }, 1200);
+    }
+  }
+
+  async function fetchServerMetrics(isManual = false) {
+    try {
+      const res = await fetch(`${API_BASE}/api/metrics`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      serverUptimeSeconds = typeof data.uptime === 'number' ? data.uptime : 0;
+      lastServerFetchTime = Date.now();
+
+      // Actualizar estado del indicador
+      if (statusIndicator) {
+        statusIndicator.className = 'status-indicator online';
+      }
+      if (statusText) {
+        statusText.textContent = 'ONLINE · Backend activo en puerto 5000';
+      }
+
+      // Actualizar requests
+      if (valRequests) {
+        const prev = valRequests.textContent;
+        valRequests.textContent = data.requestsCount !== undefined ? String(data.requestsCount) : '--';
+        if (prev !== '--' && prev !== String(data.requestsCount)) {
+          triggerRequestPulse();
+        }
+      }
+
+      // Actualizar Uptime inicial
+      updateUptimeDisplay();
+
+      // Servicios
+      const pgConnected = data.services?.postgres === 'connected';
+      if (chipPg && textPg) {
+        chipPg.className = 'service-chip ' + (pgConnected ? 'connected' : 'disconnected');
+        textPg.textContent = pgConnected ? 'Conectado' : 'Desconectado';
+      }
+
+      const redisConnected = data.services?.redis === 'connected';
+      if (chipRedis && textRedis) {
+        chipRedis.className = 'service-chip ' + (redisConnected ? 'connected' : 'disconnected');
+        textRedis.textContent = redisConnected ? 'Conectado' : 'Desconectado';
+      }
+
+      // Sistema y memoria
+      if (valRuntime && data.system) {
+        valRuntime.textContent = `Node ${data.system.nodeVersion || ''} (${data.system.platform || 'linux'})`;
+      }
+      if (valMemRss && data.system?.memoryRssMb) {
+        valMemRss.textContent = `${data.system.memoryRssMb} MB`;
+      }
+      if (valMemHeap && data.system?.heapUsedMb) {
+        valMemHeap.textContent = `${data.system.heapUsedMb} MB`;
+      }
+      if (valTimestamp) {
+        valTimestamp.textContent = data.timestamp || new Date().toISOString();
+      }
+
+      // Raw JSON
+      if (rawJsonEl) {
+        rawJsonEl.textContent = JSON.stringify(data, null, 2);
+      }
+
+      // Sincronización chip
+      if (lastSyncChip) {
+        const now = new Date();
+        lastSyncChip.textContent = `Última sinc: ${now.toLocaleTimeString()}`;
+      }
+
+    } catch (err: any) {
+      if (statusIndicator) {
+        statusIndicator.className = 'status-indicator offline';
+      }
+      if (statusText) {
+        statusText.textContent = 'DESCONECTADO · Asegurate de que el backend en :5000 esté corriendo';
+      }
+      if (rawJsonEl) {
+        rawJsonEl.textContent = `Error al conectar con ${API_BASE}/api/metrics:\n${err?.message || err}`;
+      }
+    }
+  }
+
+  function updateUptimeDisplay() {
+    // Calcula el uptime sumando los segundos transcurridos desde el último fetch
+    const elapsedSinceFetch = Math.floor((Date.now() - lastServerFetchTime) / 1000);
+    const currentTotalUptime = Math.max(0, serverUptimeSeconds + elapsedSinceFetch);
+
+    if (valUptimeFormatted) {
+      valUptimeFormatted.textContent = formatTimeAgo(currentTotalUptime);
+    }
+    if (valUptimeSeconds) {
+      valUptimeSeconds.textContent = `${currentTotalUptime.toLocaleString()} segundos transcurridos`;
+    }
+  }
+
+  // Ticker de 1 segundo para avance suave de cronómetro
+  tickTimer = setInterval(updateUptimeDisplay, 1000);
+
+  // Polling continuo cada 3.5 segundos al endpoint real
+  fetchServerMetrics();
+  pollIntervalTimer = setInterval(() => fetchServerMetrics(false), 3500);
+
+  // Botón manual de ping
+  btnManualPing?.addEventListener('click', () => {
+    btnManualPing.classList.add('active-click');
+    setTimeout(() => btnManualPing.classList.remove('active-click'), 300);
+    fetchServerMetrics(true);
+  });
+
+  // Copiar JSON
+  const btnCopy = document.getElementById('btn-copy-json');
+  btnCopy?.addEventListener('click', () => {
+    if (rawJsonEl && rawJsonEl.textContent) {
+      navigator.clipboard.writeText(rawJsonEl.textContent).then(() => {
+        const orig = btnCopy.textContent;
+        btnCopy.textContent = '¡Copiado!';
+        setTimeout(() => { btnCopy.textContent = orig; }, 1500);
+      });
+    }
+  });
+
+  reset(true);
+})();
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --amber: #f97316;
+    --amber-soft: rgba(249, 115, 22, 0.18);
+    --blue: var(--brand-blue);
+    --blue-soft: var(--brand-blue-glow);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.15);
+
+    width: min(100%, 1040px);
+    margin: 0 auto;
+    padding: 0.35rem 0 2rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 30px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-link:hover {
+    color: var(--text-white);
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: var(--amber);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-action:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--api-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .crumbs .sep {
+    color: var(--api-muted-2);
+  }
+
+  .crumbs .current {
+    color: var(--text-primary);
+  }
+
+  .crumbs a {
+    color: var(--api-muted);
+    text-decoration: none;
+  }
+
+  .crumbs a:hover {
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+  }
+
+  .badge-live .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--amber);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--amber);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+  }
+
+  h1 {
+    font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 12px;
+    color: var(--text-white);
+  }
+
+  .lede {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--api-muted);
+    max-width: 860px;
+    margin: 0 0 28px;
+  }
+
+  .lede code {
+    font-family: var(--font-mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* Diagrama */
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    padding: 2.2rem 1.5rem 1.8rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .diagram {
+    position: relative;
+    height: 105px;
+  }
+
+  .diagram svg.lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .node {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    z-index: 2;
+    transition: transform .25s ease;
+  }
+
+  .node .icon-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--surface-card);
+    border: 1px solid var(--api-border);
+    display: grid;
+    place-items: center;
+    color: var(--api-muted);
+    transition: all .25s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .node .icon-ring svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .node .label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--api-muted);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transition: color .2s;
+  }
+
+  .node.active .icon-ring {
+    border-color: var(--node-color, var(--amber));
+    color: var(--node-color, var(--amber));
+    box-shadow: 0 0 20px color-mix(in srgb, var(--node-color, var(--amber)) 40%, transparent);
+    transform: scale(1.1);
+  }
+
+  .node.active .label {
+    color: var(--text-white);
+  }
+
+  .packet {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--amber);
+    box-shadow: 0 0 14px var(--amber);
+    opacity: 0;
+    z-index: 3;
+    pointer-events: none;
+    transition: left 1.1s cubic-bezier(0.4, 0, 0.2, 1), opacity .2s;
+  }
+
+  .packet.visible {
+    opacity: 1;
+  }
+
+  /* Controles */
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  button.primary {
+    background: var(--amber);
+    color: #ffffff;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35);
+    transition: transform .12s, filter .12s;
+  }
+
+  button.primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  button.primary:active {
+    transform: translateY(0);
+  }
+
+  button.primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  button.ghost {
+    background: transparent;
+    color: var(--api-muted);
+    border: 1px solid var(--api-border);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+
+  button.ghost:hover {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(249, 115, 22, 0.12);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+
+  .action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .action-btn:hover {
+    background: rgba(249, 115, 22, 0.22);
+    border-color: rgba(249, 115, 22, 0.5);
+    color: #ffedd5;
+  }
+
+  .action-btn.active-click {
+    transform: scale(0.96);
+    background: rgba(249, 115, 22, 0.35);
+  }
+
+  .step-track {
+    display: flex;
+    gap: 5px;
+  }
+
+  .step-track .seg {
+    width: 22px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background .25s ease;
+  }
+
+  .step-count {
+    font-size: 12.5px;
+    font-family: var(--font-mono);
+    color: var(--api-muted);
+  }
+
+  /* PANEL DE TELEMETRÍA EN VIVO */
+  .live-dashboard {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem;
+    margin-bottom: 2.2rem;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+  }
+
+  .live-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 1.4rem;
+  }
+
+  .live-header-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .status-indicator.online {
+    background: var(--green-soft);
+    color: var(--green);
+    border: 1px solid color-mix(in srgb, var(--green) 35%, transparent);
+  }
+
+  .status-indicator.offline {
+    background: var(--red-soft);
+    color: var(--red);
+    border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+    animation: blink 1.2s infinite;
+  }
+
+  .sync-info {
+    font-size: 12px;
+    color: var(--api-muted);
+    font-family: var(--font-mono);
+  }
+
+  .live-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .endpoint-badge {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--amber);
+    background: rgba(249, 115, 22, 0.08);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  .timestamp-chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted);
+  }
+
+  /* Grid de métricas */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+  }
+
+  @media (max-width: 960px) {
+    .metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 540px) {
+    .metrics-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .metric-card {
+    background: var(--surface-card);
+    border: 1px solid var(--api-border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .18s, border-color .18s, box-shadow .18s;
+  }
+
+  .metric-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+
+  .metric-card.flash {
+    border-color: var(--amber);
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.4);
+    background: rgba(249, 115, 22, 0.08);
+  }
+
+  .metric-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .metric-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--api-muted);
+  }
+
+  .metric-badge {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .metric-badge.highlight {
+    color: var(--amber);
+    background: var(--amber-soft);
+  }
+
+  .metric-main-value {
+    font-size: clamp(1.6rem, 2.2vw, 2rem);
+    font-weight: 800;
+    color: var(--text-white);
+    letter-spacing: -0.02em;
+    font-family: var(--font-mono);
+    margin-bottom: 6px;
+  }
+
+  .metric-main-value.highlight {
+    color: #fb923c;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--api-muted);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .service-status-row {
+    margin: 8px 0 12px;
+  }
+
+  .service-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+
+  .service-chip.connected {
+    background: var(--green-soft);
+    color: var(--green);
+    border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
+  }
+
+  .service-chip.disconnected {
+    background: var(--red-soft);
+    color: var(--red);
+    border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
+  }
+
+  .chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .metric-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--api-muted-2);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 8px;
+    margin-top: auto;
+  }
+
+  .metric-foot svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Detalles secundarios */
+  .telemetry-details {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--api-border-soft);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 1.4rem;
+  }
+
+  @media (max-width: 800px) {
+    .telemetry-details {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .telemetry-details {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .telemetry-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .detail-label {
+    font-size: 11.5px;
+    color: var(--api-muted);
+  }
+
+  .detail-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .detail-value.mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* Inspector JSON */
+  .json-inspector {
+    border: 1px solid var(--api-border-soft);
+    border-radius: 10px;
+    background: #090c10;
+    overflow: hidden;
+  }
+
+  .json-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+
+  .json-title {
+    font-size: 12px;
+    color: var(--api-muted);
+  }
+
+  .json-title code {
+    color: var(--amber);
+  }
+
+  .json-copy-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--api-border-soft);
+    color: var(--api-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+
+  .json-copy-btn:hover {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+  }
+
+  .json-code {
+    margin: 0;
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #38bdf8;
+    line-height: 1.5;
+    max-height: 180px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* Split Layout */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+
+  .panel-head .title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .panel-head .filename {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--api-muted);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .tab {
+    background: transparent;
+    border: none;
+    color: var(--api-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .tab:hover {
+    color: var(--text-white);
+  }
+
+  .tab.active {
+    background: rgba(249, 115, 22, 0.15);
+    color: var(--amber);
+  }
+
+  pre.code {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    background: #090c10;
+    color: #e2e8f0;
+    overflow-x: auto;
+  }
+
+  .code .line {
+    display: block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    transition: background .2s, color .2s;
+  }
+
+  .code .line.active {
+    background: rgba(249, 115, 22, 0.2);
+    color: #ffedd5;
+  }
+
+  .code .line.active.response {
+    background: rgba(56, 189, 248, 0.2);
+    color: #e0f2fe;
+  }
+
+  .kw { color: #f472b6; font-weight: 600; }
+  .str { color: #34d399; }
+  .num { color: #fbbf24; }
+  .comment { color: #64748b; font-style: italic; }
+
+  /* Explicación */
+  .explain-body {
+    padding: 1.25rem;
+  }
+
+  .explain-idle {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--api-muted);
+    margin-bottom: 1.2rem;
+  }
+
+  .explain-idle code {
+    color: var(--amber);
+  }
+
+  .explain-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+
+  .explain-tag.response {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .explain-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .console-line {
+    background: #090c10;
+    border: 1px solid var(--api-border-soft);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--green);
+    margin-bottom: 1.2rem;
+  }
+
+  .json-str { color: #34d399; }
+
+  /* Conceptos pedagógicos */
+  .concepts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid var(--api-border-soft);
+    padding-top: 1.2rem;
+  }
+
+  .concept-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--api-muted);
+  }
+
+  .concept-item strong {
+    color: var(--text-primary);
+  }
+
+  .concept-item code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--amber);
+  }
+
+  .concept-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+</style>

@@ -11,11 +11,11 @@ router.get('/', async (req, res) => {
     checkRedisConnection(),
   ]);
 
-  const isHealthy = dbResult.ok && redisResult.ok;
   const uptimeSeconds = Math.floor(process.uptime());
+  const mem = process.memoryUsage();
 
   const responsePayload = {
-    status: isHealthy ? 'ok' : 'degraded',
+    status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: uptimeSeconds,
     uptimeFormatted: formatUptime(uptimeSeconds),
@@ -24,17 +24,22 @@ router.get('/', async (req, res) => {
       postgres: dbResult.ok ? 'connected' : 'disconnected',
       redis: redisResult.ok ? 'connected' : 'disconnected',
     },
+    system: {
+      platform: process.platform,
+      nodeVersion: process.version,
+      memoryRssMb: +(mem.rss / (1024 * 1024)).toFixed(2),
+      heapUsedMb: +(mem.heapUsed / (1024 * 1024)).toFixed(2),
+    },
   };
 
-  if (!dbResult.ok) {
+  if (!dbResult.ok && dbResult.error) {
     responsePayload.services.postgres_error = dbResult.error;
   }
-
-  if (!redisResult.ok) {
+  if (!redisResult.ok && redisResult.error) {
     responsePayload.services.redis_error = redisResult.error;
   }
 
-  return res.status(isHealthy ? 200 : 503).json(responsePayload);
+  return res.status(200).json(responsePayload);
 });
 
 export default router;

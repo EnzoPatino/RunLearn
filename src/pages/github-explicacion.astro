@@ -1,0 +1,810 @@
+---
+import Layout from '../layouts/Layout.astro';
+import GithubModule from '../components/modules/GithubModule.jsx';
+---
+
+<Layout title="RunLearn — Cómo funciona GitHub">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">GitHub</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>Cómo funciona GitHub</h1>
+    <p class="lede">
+      GitHub no es solo una página web para guardar código: es una plataforma masiva construida sobre <strong>Git</strong> y expuesta mediante potentes <strong>APIs REST</strong>. Cada repositorio, commit o estrella es un objeto accesible vía HTTP. Tocá <strong>Simular flujo Git</strong> para ver el recorrido desde tu máquina hasta la nube.
+    </p>
+
+    <!-- Diagrama interactivo -->
+    <div class="diagram-card">
+      <div class="diagram" id="diagram">
+        <svg class="lines">
+          <line x1="9%" y1="50%" x2="91%" y2="50%" stroke="var(--api-line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <div class="node" id="node-local" style="left:9%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div class="label">Local (Git)</div>
+        </div>
+
+        <div class="node" id="node-commit" style="left:36.3%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="1.05" y1="12" x2="7" y2="12"/>
+              <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+            </svg>
+          </div>
+          <div class="label">Commit Hash</div>
+        </div>
+
+        <div class="node" id="node-remote" style="left:63.7%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+            </svg>
+          </div>
+          <div class="label">GitHub Remote</div>
+        </div>
+
+        <div class="node" id="node-api" style="left:91%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <div class="label">REST API v3</div>
+        </div>
+
+        <div class="packet" id="packet"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-run">Simular flujo Git</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+      </div>
+      <div class="controls-left">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 5</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código & Comandos</span>
+          <span class="filename" id="code-filename">terminal.sh</span>
+        </div>
+        <pre class="code" id="code-client"><span class="line" data-key="add"><span class="kw">git</span> add .</span>
+<span class="line" data-key="commit"><span class="kw">git</span> commit -m <span class="str">"feat: add interactive modules"</span></span>
+<span class="line" data-key="push"><span class="kw">git</span> push origin main</span></pre>
+        <div class="code-divider"></div>
+        <pre class="code" id="code-server"><span class="line" data-key="api"><span class="comment">// Consumo vía REST API v3</span></span>
+<span class="line" data-key="api"><span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'https://api.github.com/users/withastro/repos'</span>);</span>
+<span class="line" data-key="api"><span class="kw">const</span> repos = <span class="kw">await</span> res.json();</span>
+<span class="line" data-key="api">console.log(repos[<span class="num">0</span>].name, repos[<span class="num">0</span>].stargazers_count);</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Tocá «Simular flujo Git» para arrancar. Vas a ver cómo un cambio local pasa por el árbol de commits, se sincroniza con el servidor remoto de GitHub y queda indexado inmediatamente en su API REST pública.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">flujo</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Módulo interactivo React de GitHub -->
+    <GithubModule client:load />
+  </div>
+</Layout>
+
+<script>
+(function () {
+  const steps = [
+    {
+      from: 'local', to: 'commit', dir: 'request',
+      code: 'commit', file: 'terminal.sh',
+      text: 'Creás un commit en tu máquina. Git genera un <strong>hash SHA-1 criptográfico</strong> que representa una instantánea inmutable de tus archivos.'
+    },
+    {
+      from: 'commit', to: 'remote', dir: 'request',
+      code: 'push', file: 'terminal.sh',
+      text: 'Ejecutás <strong>git push origin main</strong>. Los objetos de Git se transmiten por HTTPS o SSH hacia los servidores distribuidos de GitHub.'
+    },
+    {
+      from: 'remote', to: 'api', dir: 'request',
+      code: 'api', file: 'github-api.js',
+      text: 'GitHub procesa el push, actualiza la rama y actualiza instantáneamente sus índices de metadatos (estrellas, ramas, últimos commits).'
+    },
+    {
+      from: 'api', to: 'remote', dir: 'response',
+      code: 'api', file: 'github-api.js',
+      text: 'Los endpoints de la <strong>API REST v3</strong> reflejan el cambio sin demora: cualquier cliente puede pedir <code>/users/:username/repos</code> y ver la fecha del nuevo push.'
+    },
+    {
+      from: 'remote', to: 'local', dir: 'response',
+      code: 'push', file: 'terminal.sh',
+      text: 'GitHub confirma la recepción con <code>To github.com:... [new branch] main -> main</code>. Todo tu equipo ya puede sincronizar el estado.',
+      finalJson: true
+    }
+  ];
+
+  const nodePos = { local: 9, commit: 36.3, remote: 63.7, api: 91 };
+
+  const packet = document.getElementById('packet');
+  const btnRun = document.getElementById('btn-run');
+  const btnReset = document.getElementById('btn-reset');
+  const stepTrack = document.getElementById('step-track');
+  const stepCount = document.getElementById('step-count');
+  const codeFilename = document.getElementById('code-filename');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+
+  const allNodes = ['local', 'commit', 'remote', 'api'].map(id => document.getElementById('node-' + id));
+  const allCodeLines = document.querySelectorAll('.line');
+
+  // build step track
+  steps.forEach((s, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.index = String(i);
+    seg.dataset.dir = s.dir;
+    stepTrack?.appendChild(seg);
+  });
+  const segs = stepTrack?.querySelectorAll('.seg');
+
+  let running = false;
+  let currentStep = -1;
+
+  function clearHighlights() {
+    allNodes.forEach(n => n?.classList.remove('active'));
+    allCodeLines.forEach(l => l.classList.remove('active', 'response'));
+  }
+
+  function setNodeActive(id: string, color: string) {
+    const node = document.getElementById('node-' + id);
+    if (node) {
+      node.classList.add('active');
+      node.style.setProperty('--node-color', color);
+    }
+  }
+
+  function renderStep(i: number) {
+    const s = steps[i];
+    const color = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+
+    clearHighlights();
+    setNodeActive(s.from, color);
+    setNodeActive(s.to, color);
+
+    if (packet) {
+      packet.classList.add('visible');
+      packet.style.background = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+      packet.style.left = nodePos[s.from as keyof typeof nodePos] + '%';
+      void packet.offsetWidth;
+      packet.style.left = nodePos[s.to as keyof typeof nodePos] + '%';
+    }
+
+    document.querySelectorAll('.line[data-key="' + s.code + '"]').forEach(l => {
+      l.classList.add('active');
+      if (s.dir === 'response') l.classList.add('response');
+    });
+
+    if (codeFilename) codeFilename.textContent = s.file;
+
+    if (explainIdle) explainIdle.style.display = 'none';
+    if (explainActive) explainActive.style.display = 'block';
+    if (explainTag) {
+      explainTag.textContent = s.dir === 'request' ? 'push / envío →' : '← confirmación';
+      explainTag.className = 'explain-tag' + (s.dir === 'response' ? ' response' : '');
+    }
+    if (explainText) explainText.innerHTML = s.text;
+
+    if (s.finalJson && consoleLine) {
+      consoleLine.style.display = 'block';
+      consoleLine.innerHTML = 'Branch <span class="json-str">\'main\'</span> set up to track remote branch <span class="json-str">\'main\'</span> from <span class="json-str">\'origin\'</span>.';
+    } else if (consoleLine) {
+      consoleLine.style.display = 'none';
+    }
+
+    segs?.forEach((seg, idx) => {
+      if (idx <= i) {
+        seg.classList.add('filled');
+        (seg as HTMLElement).style.background = steps[idx].dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+      } else {
+        seg.classList.remove('filled');
+        (seg as HTMLElement).style.background = '';
+      }
+    });
+
+    if (stepCount) stepCount.textContent = (i + 1) + ' / ' + steps.length;
+  }
+
+  function reset(soft = false) {
+    running = false;
+    currentStep = -1;
+    clearHighlights();
+    if (packet) {
+      packet.classList.remove('visible');
+      packet.style.left = '9%';
+    }
+    if (explainIdle) explainIdle.style.display = 'block';
+    if (explainActive) explainActive.style.display = 'none';
+    if (consoleLine) consoleLine.style.display = 'none';
+    if (codeFilename) codeFilename.textContent = 'terminal.sh';
+    segs?.forEach(s => {
+      s.classList.remove('filled');
+      (s as HTMLElement).style.background = '';
+    });
+    if (stepCount) stepCount.textContent = '0 / ' + steps.length;
+    if (btnRun) {
+      btnRun.textContent = 'Simular flujo Git';
+      (btnRun as HTMLButtonElement).disabled = false;
+    }
+  }
+
+  function nextStep() {
+    if (!running) return;
+    currentStep++;
+    if (currentStep >= steps.length) {
+      running = false;
+      if (btnRun) {
+        btnRun.textContent = 'Volver a simular';
+        (btnRun as HTMLButtonElement).disabled = false;
+      }
+      return;
+    }
+    renderStep(currentStep);
+    setTimeout(nextStep, 1700);
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    currentStep = -1;
+    if (btnRun) {
+      btnRun.textContent = 'Simulando...';
+      (btnRun as HTMLButtonElement).disabled = true;
+    }
+    nextStep();
+  }
+
+  btnRun?.addEventListener('click', start);
+  btnReset?.addEventListener('click', () => reset(true));
+
+  reset(true);
+})();
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --amber: #e2e8f0;
+    --amber-soft: rgba(226, 232, 240, 0.15);
+    --blue: var(--brand-blue);
+    --blue-soft: var(--brand-blue-glow);
+
+    width: min(100%, 1020px);
+    margin: 0 auto;
+    padding: 0.35rem 0 2rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-link:hover {
+    color: var(--text-white);
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-action:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .home-action:active {
+    transform: scale(.98);
+  }
+
+  .home-action:focus-visible,
+  .brand-link:focus-visible,
+  .crumbs a:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 4px;
+  }
+
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--api-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .crumbs .sep {
+    color: var(--api-muted-2);
+  }
+
+  .crumbs .current {
+    color: var(--text-primary);
+  }
+
+  .crumbs a {
+    color: var(--api-muted);
+    text-decoration: none;
+  }
+
+  .crumbs a:hover {
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.85); }
+  }
+
+  h1 {
+    font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 12px;
+    color: var(--text-white);
+  }
+
+  .lede {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--api-muted);
+    max-width: 860px;
+    margin: 0 0 28px;
+  }
+
+  .lede code {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* Diagram */
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    padding: 2.2rem 1.5rem 1.8rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .diagram {
+    position: relative;
+    height: 105px;
+  }
+
+  .diagram svg.lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .node {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    z-index: 2;
+    transition: transform .25s ease;
+  }
+
+  .node .icon-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--surface-card);
+    border: 1px solid var(--api-border);
+    display: grid;
+    place-items: center;
+    color: var(--api-muted);
+    transition: all .25s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .node .icon-ring svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .node .label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--api-muted);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transition: color .2s;
+  }
+
+  .node.active .icon-ring {
+    border-color: var(--node-color, var(--amber));
+    color: var(--node-color, var(--amber));
+    box-shadow: 0 0 20px color-mix(in srgb, var(--node-color, var(--amber)) 40%, transparent);
+    transform: scale(1.1);
+  }
+
+  .node.active .label {
+    color: var(--text-white);
+  }
+
+  .packet {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--amber);
+    box-shadow: 0 0 14px var(--amber);
+    opacity: 0;
+    z-index: 3;
+    pointer-events: none;
+    transition: left 1s cubic-bezier(0.4, 0, 0.2, 1), opacity .2s;
+  }
+
+  .packet.visible {
+    opacity: 1;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  button.primary {
+    background: #e2e8f0;
+    color: #07080b;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(226, 232, 240, 0.25);
+    transition: transform .12s, filter .12s;
+  }
+
+  button.primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  button.primary:active {
+    transform: translateY(0);
+  }
+
+  button.primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  button.ghost {
+    background: transparent;
+    color: var(--api-muted);
+    border: 1px solid var(--api-border);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+
+  button.ghost:hover {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+  }
+
+  .step-track {
+    display: flex;
+    gap: 5px;
+  }
+
+  .step-track .seg {
+    width: 22px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background .25s ease;
+  }
+
+  .step-count {
+    font-size: 12.5px;
+    font-family: var(--font-mono);
+    color: var(--api-muted);
+  }
+
+  /* Split */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 860px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+
+  .panel-head .title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .panel-head .filename {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--api-muted);
+  }
+
+  pre.code {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    background: #090c10;
+    color: #e2e8f0;
+    overflow-x: auto;
+  }
+
+  .code-divider {
+    height: 1px;
+    background: var(--api-border-soft);
+  }
+
+  .code .line {
+    display: block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    transition: background .2s, color .2s;
+  }
+
+  .code .line.active {
+    background: rgba(226, 232, 240, 0.15);
+    color: #ffffff;
+  }
+
+  .code .line.active.response {
+    background: rgba(56, 189, 248, 0.2);
+    color: #e0f2fe;
+  }
+
+  .kw { color: #f472b6; font-weight: 600; }
+  .str { color: #34d399; }
+  .num { color: #fbbf24; }
+  .comment { color: #64748b; font-style: italic; }
+
+  /* Explicación */
+  .explain-body {
+    padding: 1.25rem;
+  }
+
+  .explain-idle {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--api-muted);
+  }
+
+  .explain-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+
+  .explain-tag.response {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .explain-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  .console-line {
+    margin-top: 1rem;
+    background: #090c10;
+    border: 1px solid var(--api-border-soft);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #38bdf8;
+  }
+
+  .json-str { color: #34d399; }
+</style>
