@@ -1,0 +1,805 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — Transacciones SQL">
+  <div class="tx-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Transacciones SQL</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>Transacciones SQL</h1>
+    <p class="lede">
+      Una transacción agrupa varias operaciones en una unidad atómica. Si todo va bien, se confirma con <strong>COMMIT</strong>. Si algo falla, <strong>ROLLBACK</strong> deshace todos los cambios como si nada hubiera pasado. Elegí un modo y seguí cada paso.
+    </p>
+
+    <div class="diagram-card">
+      <div class="stats-row">
+        <span class="status-pill" id="status-pill">Esperando transacción</span>
+        <span class="metric" id="mode-pill" style="display:none"></span>
+      </div>
+
+      <div class="accounts-row">
+        <div class="account-card" id="card-alice">
+          <div class="account-icon">A</div>
+          <div class="account-name">Alice</div>
+          <div class="account-balance" id="balance-alice">$1,000.00</div>
+        </div>
+        <div class="transfer-arrow" id="transfer-arrow">
+          <svg viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12h36"/>
+            <path d="M36 12l-8-6"/>
+            <path d="M36 12l-8 6"/>
+          </svg>
+          <span class="amount-badge" id="amount-badge">$150</span>
+        </div>
+        <div class="account-card" id="card-bob">
+          <div class="account-icon bob">B</div>
+          <div class="account-name">Bob</div>
+          <div class="account-balance" id="balance-bob">$500.00</div>
+        </div>
+      </div>
+
+      <div class="flow-diagram" id="flow-diagram">
+        <div class="flow-step" id="flow-begin" data-step="begin">
+          <div class="flow-icon begin">B</div>
+          <div class="flow-label">BEGIN</div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step" id="flow-update-alice" data-step="update_origen">
+          <div class="flow-icon update">U</div>
+          <div class="flow-label">UPDATE Alice</div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step" id="flow-update-bob" data-step="update_destino">
+          <div class="flow-icon update">U</div>
+          <div class="flow-label">UPDATE Bob</div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step" id="flow-commit" data-step="commit">
+          <div class="flow-icon commit">C</div>
+          <div class="flow-label">COMMIT</div>
+        </div>
+        <div class="flow-step" id="flow-rollback" data-step="rollback" style="display:none">
+          <div class="flow-icon rollback">R</div>
+          <div class="flow-label">ROLLBACK</div>
+        </div>
+        <div class="packet" id="packet"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-success">Transferencia exitosa</button>
+        <button class="danger" id="btn-fail">Transferencia fallida</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+      </div>
+      <div class="controls-left">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 4</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código</span>
+          <span class="filename" id="code-filename">transferencia.sql</span>
+        </div>
+        <pre class="code"><span class="line" data-key="begin"><span class="kw">BEGIN</span>;</span>
+<span class="line" data-key="update-alice"><span class="kw">UPDATE</span> cuentas_demo</span>
+<span class="line" data-key="update-alice">  <span class="kw">SET</span> saldo = saldo - 150</span>
+<span class="line" data-key="update-alice">  <span class="kw">WHERE</span> id = 1;</span>
+<span class="line" data-key="update-bob"><span class="kw">UPDATE</span> cuentas_demo</span>
+<span class="line" data-key="update-bob">  <span class="kw">SET</span> saldo = saldo + 150</span>
+<span class="line" data-key="update-bob">  <span class="kw">WHERE</span> id = 2;</span>
+<span class="line" data-key="commit"><span class="kw">COMMIT</span>;</span>
+<span class="line" data-key="rollback"><span class="kw">ROLLBACK</span>;  <span class="cm">-- si algo falla</span></span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Elegí «Transferencia exitosa» o «Transferencia fallida» para arrancar. Vas a ver cómo BEGIN abre la transacción, los UPDATE mueven el dinero, y COMMIT o ROLLBACK confirman o deshacen todo.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">paso</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+
+  const API_BASE = 'http://localhost:5000/api/transaccion-demo';
+  const FEE = 150;
+
+  const btnSuccess = document.getElementById('btn-success');
+  const btnFail = document.getElementById('btn-fail');
+  const btnReset = document.getElementById('btn-reset');
+  const stepTrack = document.getElementById('step-track');
+  const stepCount = document.getElementById('step-count');
+  const codeFilename = document.getElementById('code-filename');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+  const statusPill = document.getElementById('status-pill');
+  const modePill = document.getElementById('mode-pill');
+  const balanceAlice = document.getElementById('balance-alice');
+  const balanceBob = document.getElementById('balance-bob');
+  const cardAlice = document.getElementById('card-alice');
+  const cardBob = document.getElementById('card-bob');
+  const packet = document.getElementById('packet');
+  const flowDiagram = document.getElementById('flow-diagram');
+  const flowRollback = document.getElementById('flow-rollback');
+  const flowCommit = document.getElementById('flow-commit');
+  const amountBadge = document.getElementById('amount-badge');
+
+  const allCodeLines = document.querySelectorAll('.line');
+  const flowSteps = document.querySelectorAll('.flow-step');
+  const flowConnectors = document.querySelectorAll('.flow-connector');
+
+  const flowPositions = { begin: 0, update_origen: 1, update_destino: 2, commit: 3, rollback: 3 };
+
+  steps.forEach((s, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.index = i;
+    stepTrack.appendChild(seg);
+  });
+  const segs = stepTrack.querySelectorAll('.seg');
+
+  function clearHighlights() {
+    allCodeLines.forEach(l => l.classList.remove('active'));
+    flowSteps.forEach(s => s.classList.remove('active', 'done', 'error'));
+    flowConnectors.forEach(c => c.classList.remove('active'));
+  }
+
+  function highlightCode(key) {
+    allCodeLines.forEach(l => l.classList.remove('active'));
+    document.querySelectorAll(`.line[data-key="${key}"]`).forEach(l => l.classList.add('active'));
+  }
+
+  function activateFlowStep(stepName, isError) {
+    flowSteps.forEach(s => {
+      if (s.dataset.step === stepName) {
+        s.classList.add('active');
+        if (isError) s.classList.add('error');
+      }
+    });
+    const idx = flowPositions[stepName];
+    flowSteps.forEach((s, i) => {
+      if (i <= idx) s.classList.add('done');
+    });
+    flowConnectors.forEach((c, i) => {
+      if (i < idx) c.classList.add('active');
+    });
+  }
+
+  function movePacketToStep(stepName) {
+    const step = document.getElementById('flow-' + stepName);
+    if (!step) return;
+    const diagramRect = flowDiagram.getBoundingClientRect();
+    const stepRect = step.getBoundingClientRect();
+    const x = stepRect.left + stepRect.width / 2 - diagramRect.left;
+    packet.classList.add('visible');
+    packet.style.left = x + 'px';
+  }
+
+  function updateBalance(alice, bob) {
+    balanceAlice.textContent = '$' + Number(alice).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    balanceBob.textContent = '$' + Number(bob).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  }
+
+  function highlightAccount(who, active) {
+    const card = who === 'alice' ? cardAlice : cardBob;
+    card.classList.toggle('active', active);
+  }
+
+  function reset() {
+    clearHighlights();
+    packet.classList.remove('visible');
+    explainIdle.style.display = 'block';
+    explainActive.style.display = 'none';
+    consoleLine.style.display = 'none';
+    codeFilename.textContent = 'transferencia.sql';
+    statusPill.textContent = 'Esperando transacción';
+    statusPill.className = 'status-pill';
+    modePill.style.display = 'none';
+    updateBalance(1000, 500);
+    highlightAccount('alice', false);
+    highlightAccount('bob', false);
+    flowRollback.style.display = 'none';
+    flowCommit.style.display = 'flex';
+    amountBadge.textContent = '$' + FEE;
+    segs.forEach(s => s.classList.remove('done'));
+    stepCount.textContent = '0 / 4';
+    btnSuccess.disabled = false;
+    btnFail.disabled = false;
+  }
+
+  function buildSteps(forzarError) {
+    const stepsDef = [
+      {
+        flow: 'begin', code: 'begin', file: 'transferencia.sql',
+        tag: 'BEGIN', tagClass: 'begin',
+        text: 'Se inicia la transacción. A partir de aquí, todas las operaciones son parte de la misma unidad. Si algo falla, todo se deshace.',
+        console: 'BEGIN;'
+      },
+      {
+        flow: 'update_origen', code: 'update-alice', file: 'transferencia.sql',
+        tag: 'UPDATE Alice', tagClass: 'update',
+        text: `Se debitan <strong>$${FEE}</strong> de la cuenta de Alice. El saldo pasa de $1,000 a $850. La operación queda pendiente de confirmación.`,
+        console: `UPDATE cuentas_demo SET saldo = saldo - 150 WHERE id = 1;`,
+        balance: { alice: 850, bob: 500 }
+      },
+    ];
+
+    if (forzarError) {
+      stepsDef.push({
+        flow: 'rollback', code: 'rollback', file: 'transacción',
+        tag: 'ROLLBACK', tagClass: 'rollback',
+        text: 'Ocurrió un error. PostgreSQL ejecuta <strong>ROLLBACK</strong>: los $150 que salieron de Alice vuelven, Bob no recibe nada. La base queda exactamente como estaba.',
+        console: 'ROLLBACK;  -- undo all changes',
+        balance: { alice: 1000, bob: 500 },
+        isError: true
+      });
+    } else {
+      stepsDef.push(
+        {
+          flow: 'update_destino', code: 'update-bob', file: 'transferencia.sql',
+          tag: 'UPDATE Bob', tagClass: 'update',
+          text: `Se acreditan <strong>$${FEE}</strong> a la cuenta de Bob. Su saldo pasa de $500 a $650. Ambos UPDATE están dentro de la misma transacción.`,
+          console: `UPDATE cuentas_demo SET saldo = saldo + 150 WHERE id = 2;`,
+          balance: { alice: 850, bob: 650 }
+        },
+        {
+          flow: 'commit', code: 'commit', file: 'transacción',
+          tag: 'COMMIT', tagClass: 'commit',
+          text: 'Todo salió bien. <strong>COMMIT</strong> confirma los cambios: Alice tiene $850 y Bob $650 de forma permanente.',
+          console: 'COMMIT;',
+          balance: { alice: 850, bob: 650 }
+        }
+      );
+    }
+
+    return stepsDef;
+  }
+
+  async function run(forzarError) {
+    btnSuccess.disabled = true;
+    btnFail.disabled = true;
+    reset();
+
+    const mode = forzarError ? 'fallida' : 'exitosa';
+    modePill.style.display = 'inline-flex';
+    modePill.textContent = 'Modo: ' + mode;
+    modePill.className = 'metric ' + mode;
+    flowRollback.style.display = forzarError ? 'flex' : 'none';
+    flowCommit.style.display = forzarError ? 'none' : 'flex';
+
+    const stepsDef = buildSteps(forzarError);
+    const totalSteps = stepsDef.length;
+
+    // rebuild step track
+    stepTrack.innerHTML = '';
+    stepsDef.forEach((s, i) => {
+      const seg = document.createElement('div');
+      seg.className = 'seg';
+      seg.dataset.index = i;
+      if (s.isError) seg.dataset.dir = 'error';
+      stepTrack.appendChild(seg);
+    });
+    const segsNew = stepTrack.querySelectorAll('.seg');
+    stepCount.textContent = `0 / ${totalSteps}`;
+
+    statusPill.textContent = `Transacción ${mode} — procesando...`;
+    statusPill.className = 'status-pill pending';
+
+    const startFetch = performance.now();
+
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forzarError })
+      });
+      const result = await res.json();
+
+      explainIdle.style.display = 'none';
+      explainActive.style.display = 'block';
+
+      // Play through each log entry
+      for (let i = 0; i < result.log.length; i++) {
+        const entry = result.log[i];
+        const def = stepsDef.find(s => s.flow === entry.step);
+        if (!def) continue;
+
+        const stepIdx = stepsDef.indexOf(def);
+
+        // highlight code
+        highlightCode(def.code);
+
+        // activate flow
+        activateFlowStep(entry.step, def.isError);
+        movePacketToStep(entry.step);
+
+        // sound
+        if (def.isError) {
+          sound.play('playBlocked');
+        } else {
+          sound.play('playStep');
+        }
+
+        // update balances
+        if (def.balance) {
+          highlightAccount('alice', true);
+          highlightAccount('bob', true);
+          updateBalance(def.balance.alice, def.balance.bob);
+        }
+
+        // explain
+        explainTag.textContent = def.tag;
+        explainTag.className = 'explain-tag ' + def.tagClass;
+        explainText.innerHTML = def.text;
+
+        // console
+        consoleLine.style.display = 'block';
+        consoleLine.innerHTML = `<span class="sql-kw">${def.console}</span>`;
+
+        // step track
+        segsNew.forEach((seg, idx) => {
+          seg.classList.toggle('done', idx <= stepIdx);
+        });
+        stepCount.textContent = `${stepIdx + 1} / ${totalSteps}`;
+
+        // file
+        codeFilename.textContent = def.file;
+
+        await new Promise(r => setTimeout(r, 1400));
+      }
+
+      // final state
+      const lastEntry = result.log[result.log.length - 1];
+      if (lastEntry.data) {
+        const aliceRow = lastEntry.data.find(r => r.id === 1);
+        const bobRow = lastEntry.data.find(r => r.id === 2);
+        if (aliceRow && bobRow) {
+          updateBalance(aliceRow.saldo, bobRow.saldo);
+        }
+      }
+
+      if (result.ok) {
+        statusPill.textContent = 'Transacción exitosa — COMMIT';
+        statusPill.className = 'status-pill success';
+        sound.play('playSuccess');
+      } else {
+        statusPill.textContent = 'Transacción fallida — ROLLBACK';
+        statusPill.className = 'status-pill danger';
+        sound.play('playBlocked');
+      }
+
+      packet.classList.remove('visible');
+
+    } catch (err) {
+      statusPill.textContent = 'Error de conexión';
+      statusPill.className = 'status-pill danger';
+      explainTag.textContent = 'error';
+      explainTag.className = 'explain-tag danger';
+      explainText.innerHTML = 'No se pudo conectar al backend. Asegurate de que Docker esté corriendo.';
+      sound.play('playBlocked');
+    }
+
+    btnSuccess.disabled = false;
+    btnFail.disabled = false;
+  }
+
+  btnSuccess.addEventListener('click', () => run(false));
+  btnFail.addEventListener('click', () => run(true));
+  btnReset.addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+
+<style>
+  .tx-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --accent: #10b981;
+    --accent-soft: rgba(16, 185, 129, 0.15);
+    --danger: #f43f5e;
+    --danger-soft: rgba(244, 63, 94, 0.15);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.15);
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+  .topbar-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .brand-link { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--text-primary); text-decoration: none; font-size: 15px; font-weight: 700; }
+  .brand-link:hover { color: var(--text-white); }
+  .brand-mark { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: var(--canvas-bg); background: var(--accent); font-size: 12px; font-weight: 800; box-shadow: 0 0 0 4px var(--accent-soft); }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .home-action { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 7px 12px; border: 1px solid var(--api-border); border-radius: 10px; color: var(--api-muted); background: rgba(255,255,255,0.03); text-decoration: none; font-size: 13px; font-weight: 600; transition: color .15s, border-color .15s, background .15s, transform .15s; }
+  .home-action svg { width: 16px; height: 16px; }
+  .home-action:hover { color: var(--text-primary); border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+  .home-action:active { transform: scale(.98); }
+  .home-action:focus-visible, .brand-link:focus-visible, .crumbs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .crumbs { font-size: 13.5px; color: var(--api-muted); display: flex; align-items: center; gap: 6px; }
+  .crumbs .sep { color: var(--api-muted-2); }
+  .crumbs .current { color: var(--text-primary); }
+  .crumbs a { color: var(--api-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--text-primary); }
+  .badge-live { font-size: 12px; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); border-radius: var(--radius-pill); padding: 5px 12px; display: flex; align-items: center; gap: 7px; }
+  .badge-live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 12px; color: var(--text-primary); }
+  .lede { font-size: 15.5px; line-height: 1.6; color: var(--api-muted); max-width: 62ch; margin: 0 0 40px; }
+  .lede strong { color: var(--text-primary); font-weight: 600; }
+
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    padding: 34px 28px 26px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .stats-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+  .status-pill { font-family: var(--font-mono); font-size: 12px; color: var(--api-muted); background: rgba(255,255,255,0.05); border: 1px solid var(--border-hairline); border-radius: var(--radius-pill); padding: 5px 12px; transition: all .25s; }
+  .status-pill.pending { color: var(--amber); background: var(--amber-soft); border-color: rgba(245,158,11,0.3); }
+  .status-pill.success { color: #10b981; background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); }
+  .status-pill.danger { color: #fb7185; background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.3); }
+  .metric { font-family: var(--font-mono); font-size: 12px; color: var(--api-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-hairline); border-radius: var(--radius-pill); padding: 5px 10px; }
+  .metric.exitosa { color: #10b981; background: rgba(16,185,129,0.1); }
+  .metric.fallida { color: #fb7185; background: rgba(251,113,133,0.1); }
+
+  .accounts-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .account-card {
+    background: var(--api-panel-2);
+    border: 1px solid var(--api-border);
+    border-radius: 14px;
+    padding: 20px 28px;
+    text-align: center;
+    min-width: 140px;
+    transition: border-color .25s, box-shadow .25s;
+  }
+
+  .account-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+  }
+
+  .account-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 10px;
+    font-weight: 800;
+    font-size: 16px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .account-icon.bob {
+    background: rgba(56,189,248,0.15);
+    color: #38bdf8;
+  }
+
+  .account-name {
+    font-size: 13px;
+    color: var(--api-muted);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .account-balance {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    transition: color .3s;
+  }
+
+  .transfer-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--api-muted);
+  }
+
+  .transfer-arrow svg { width: 48px; height: 24px; }
+
+  .amount-badge {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  .flow-diagram {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 18px 0;
+  }
+
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .flow-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 800;
+    background: var(--api-panel-2);
+    border: 2px solid var(--api-border);
+    color: var(--api-muted);
+    transition: all .3s;
+  }
+
+  .flow-icon.begin { color: #a78bfa; border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.1); }
+  .flow-icon.update { color: var(--amber); border-color: rgba(245,158,11,0.4); background: var(--amber-soft); }
+  .flow-icon.commit { color: #10b981; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); }
+  .flow-icon.rollback { color: #f43f5e; border-color: rgba(244,63,94,0.4); background: var(--danger-soft); }
+
+  .flow-step.active .flow-icon {
+    transform: scale(1.15);
+    box-shadow: 0 0 16px color-mix(in srgb, currentColor 30%, transparent);
+  }
+
+  .flow-step.error .flow-icon {
+    animation: shake .4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0) scale(1.15); }
+    25% { transform: translateX(-4px) scale(1.15); }
+    75% { transform: translateX(4px) scale(1.15); }
+  }
+
+  .flow-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--api-muted);
+    white-space: nowrap;
+  }
+
+  .flow-step.active .flow-label { color: var(--text-primary); }
+
+  .flow-connector {
+    width: 36px;
+    height: 2px;
+    background: var(--api-border);
+    margin: 0 -4px;
+    margin-bottom: 20px;
+    transition: background .3s;
+    z-index: 1;
+  }
+
+  .flow-connector.active { background: var(--accent); }
+
+  .packet {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--accent);
+    box-shadow: 0 0 0 5px rgba(16,185,129,0.2);
+    transition: left .7s cubic-bezier(.62,.04,.38,.96), background .2s, box-shadow .2s;
+    opacity: 0;
+    z-index: 5;
+  }
+
+  .packet.visible { opacity: 1; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 26px;
+  }
+
+  .controls-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  button.primary, button.danger, button.ghost {
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+  }
+
+  button.primary { color: var(--canvas-bg); background: var(--accent); }
+  button.primary:hover { filter: brightness(1.08); }
+  button.primary:active { transform: scale(.97); }
+  button.primary:disabled { opacity: .4; cursor: default; transform: none; }
+
+  button.danger { color: #fff; background: var(--danger); }
+  button.danger:hover { filter: brightness(1.1); }
+  button.danger:active { transform: scale(.97); }
+  button.danger:disabled { opacity: .4; cursor: default; transform: none; }
+
+  button.ghost {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--api-muted);
+    background: transparent;
+    border: 1px solid var(--api-border);
+    padding: 10px 16px;
+    transition: color .15s, border-color .15s;
+  }
+
+  button.ghost:hover { color: var(--text-primary); border-color: var(--border-hover); }
+
+  .step-track { display: flex; align-items: center; gap: 7px; }
+  .step-track .seg { width: 22px; height: 4px; border-radius: 3px; background: var(--api-border); transition: background .25s; }
+  .step-track .seg.done { background: var(--accent); }
+  .step-track .seg.done[data-dir="error"] { background: var(--danger); }
+  .step-count { font-family: var(--font-mono); font-size: 12.5px; color: var(--api-muted-2); }
+
+  .split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; }
+  .panel { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card), var(--glass-highlight); }
+  .panel-head { padding: 14px 18px; border-bottom: 1px solid var(--api-border-soft); display: flex; align-items: center; justify-content: space-between; }
+  .panel-head .title { font-size: 12.5px; color: var(--api-muted); font-weight: 500; }
+  .panel-head .filename { font-family: var(--font-mono); font-size: 12px; color: var(--api-muted-2); }
+
+  pre.code {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--api-muted);
+    overflow-x: auto;
+  }
+
+  pre.code .kw { color: var(--text-secondary); }
+  pre.code .cm { color: var(--api-muted-2); }
+
+  pre.code .line {
+    display: block;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    transition: background .3s, color .3s;
+  }
+
+  pre.code .line.active { background: var(--accent-soft); color: var(--text-primary); }
+
+  .explain-body { padding: 20px; min-height: 210px; display: flex; flex-direction: column; justify-content: space-between; }
+  .explain-text { font-size: 14.5px; line-height: 1.65; color: var(--text-primary); }
+  .explain-idle { color: var(--api-muted); font-size: 14px; line-height: 1.6; }
+
+  .explain-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-bottom: 14px;
+  }
+
+  .explain-tag.begin { color: #a78bfa; background: rgba(167,139,250,0.12); }
+  .explain-tag.update { color: var(--amber); background: var(--amber-soft); }
+  .explain-tag.commit { color: #10b981; background: rgba(16,185,129,0.12); }
+  .explain-tag.rollback { color: #f43f5e; background: var(--danger-soft); }
+  .explain-tag.danger { color: #fb7185; background: rgba(251,113,133,0.12); }
+
+  .console-line {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+    padding-top: 14px;
+    border-top: 1px dashed var(--api-border);
+    margin-top: 16px;
+  }
+
+  .console-line .sql-kw { color: var(--accent); }
+
+  @media (max-width: 780px) {
+    .split { grid-template-columns: 1fr; }
+    .accounts-row { flex-direction: column; }
+    .transfer-arrow svg { transform: rotate(90deg); }
+  }
+
+  @media (max-width: 640px) {
+    .tx-page { padding: 0.1rem 0 0.75rem; }
+    .topbar { align-items: flex-start; gap: 12px; flex-direction: column; margin-bottom: 28px; padding-bottom: 20px; }
+    .topbar-actions { width: 100%; justify-content: space-between; }
+    h1 { font-size: 26px; }
+    .diagram-card { padding: 28px 16px 22px; }
+    .controls { align-items: flex-start; flex-direction: column; }
+    .flow-diagram { flex-wrap: wrap; gap: 8px; }
+    .flow-connector { width: 20px; }
+  }
+</style>

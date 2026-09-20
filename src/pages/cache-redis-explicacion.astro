@@ -1,0 +1,877 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — Caché con Redis">
+  <div class="cache-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Caché con Redis</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>Caché con Redis</h1>
+    <p class="lede">
+      Redis almacena datos en memoria para responder en milisegundos. Cuando un dato ya está guardado (<strong>HIT</strong>), la respuesta es instantánea. Si no está (<strong>MISS</strong>), se consulta la base de datos, se guarda con un <strong>TTL</strong> y se retorna. Tocá <strong>Consultar dato</strong> y observá la diferencia en tiempo real.
+    </p>
+
+    <div class="diagram-card">
+      <div class="stats-row">
+        <span class="status-pill" id="status-pill">Esperando consulta</span>
+        <span class="metric">Hits: <strong id="hit-count">0</strong></span>
+        <span class="metric">Misses: <strong id="miss-count">0</strong></span>
+        <span class="metric" id="ttl-row" style="display:none">TTL: <strong id="ttl-value">15s</strong></span>
+      </div>
+
+      <div class="diagram" id="diagram">
+        <svg class="lines">
+          <line x1="15%" y1="50%" x2="45%" y2="50%" stroke="var(--api-line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+          <line x1="55%" y1="50%" x2="85%" y2="50%" stroke="var(--api-line)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <div class="node" id="node-app" style="left:15%">
+          <div class="icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <path d="M8 9h8"/>
+              <path d="M8 13h5"/>
+            </svg>
+          </div>
+          <div class="label">Aplicación</div>
+        </div>
+
+        <div class="node" id="node-redis" style="left:50%">
+          <div class="icon-ring redis-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="6" rx="7" ry="2.6"/>
+              <path d="M5 6v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/>
+              <path d="M5 10v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4"/>
+              <path d="M5 14v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4"/>
+            </svg>
+          </div>
+          <div class="label">Redis</div>
+        </div>
+
+        <div class="node" id="node-pg" style="left:85%">
+          <div class="icon-ring pg-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="6" rx="7" ry="2.6"/>
+              <path d="M5 6v12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/>
+              <path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/>
+            </svg>
+          </div>
+          <div class="label">PostgreSQL</div>
+        </div>
+
+        <div class="packet" id="packet"></div>
+
+        <div class="result-badge" id="result-badge" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-consult">Consultar dato</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+      </div>
+      <div class="controls-left">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 3</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código</span>
+          <span class="filename" id="code-filename">cache-logic.js</span>
+        </div>
+        <pre class="code" id="code-client"><span class="line" data-key="check"><span class="kw">const</span> cached = <span class="kw">await</span> redis.get(key)</span>
+<span class="line" data-key="hit"><span class="kw">if</span> (cached) &#123; <span class="kw">return</span> JSON.parse(cached) &#125;</span>
+<span class="line" data-key="miss"><span class="kw">const</span> data = <span class="kw">await</span> pg.query(key)</span>
+<span class="line" data-key="store"><span class="kw">await</span> redis.setex(key, 15, data)</span></pre>
+        <div class="code-divider"></div>
+        <pre class="code" id="code-server"><span class="line" data-key="time-hit">HIT  → &lt;5ms respuesta</span>
+<span class="line" data-key="time-miss">MISS → 800ms + 15s TTL</span>
+<span class="line" data-key="time-store">datos guardados en RAM</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Tocá «Consultar dato» para hacer una consulta. Si el dato está en Redis, llega al instante (HIT). Si no, hay que ir a buscarlo a PostgreSQL (MISS) y guardarlo para las próximas veces.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">consulta</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+
+  const API_BASE = 'http://localhost:5000/api/cache-demo';
+  const SAMPLE_KEYS = ['user:42', 'curso:7', 'config:app', 'stats:visitas'];
+  let keyIndex = 0;
+
+  let hits = 0;
+  let misses = 0;
+  let ttlInterval = null;
+  let ttlRemaining = 0;
+
+  const nodePos = { app: 15, redis: 50, pg: 85 };
+
+  const packet = document.getElementById('packet');
+  const btnConsult = document.getElementById('btn-consult');
+  const btnReset = document.getElementById('btn-reset');
+  const stepTrack = document.getElementById('step-track');
+  const stepCount = document.getElementById('step-count');
+  const codeFilename = document.getElementById('code-filename');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+  const statusPill = document.getElementById('status-pill');
+  const hitCount = document.getElementById('hit-count');
+  const missCount = document.getElementById('miss-count');
+  const ttlRow = document.getElementById('ttl-row');
+  const ttlValue = document.getElementById('ttl-value');
+  const resultBadge = document.getElementById('result-badge');
+
+  const allNodes = ['app', 'redis', 'pg'].map(id => document.getElementById('node-' + id));
+  const allCodeLines = document.querySelectorAll('.line');
+
+  const steps = [
+    { from: 'app', to: 'redis', dir: 'request', code: 'check', panel: 'client', file: 'cache-logic.js' },
+    { from: 'redis', to: 'redis', dir: 'request', code: 'hit', panel: 'server', file: 'redis-check' },
+    { from: 'redis', to: 'pg', dir: 'request', code: 'miss', panel: 'client', file: 'cache-logic.js' },
+  ];
+
+  steps.forEach((s, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.index = i;
+    seg.dataset.dir = s.dir;
+    stepTrack.appendChild(seg);
+  });
+  const segs = stepTrack.querySelectorAll('.seg');
+
+  function clearHighlights() {
+    allNodes.forEach(n => n.classList.remove('active'));
+    allCodeLines.forEach(l => l.classList.remove('active', 'response'));
+  }
+
+  function setNodeActive(id, color) {
+    const node = document.getElementById('node-' + id);
+    node.classList.add('active');
+    node.style.setProperty('--node-color', color);
+  }
+
+  function movePacket(from, to, color) {
+    packet.classList.add('visible');
+    packet.style.background = color;
+    packet.style.boxShadow = `0 0 0 5px ${color}33`;
+    packet.style.left = nodePos[from] + '%';
+    void packet.offsetWidth;
+    packet.style.left = nodePos[to] + '%';
+  }
+
+  function highlight(key) {
+    allCodeLines.forEach(l => l.classList.remove('active', 'response'));
+    document.querySelectorAll(`.line[data-key="${key}"]`).forEach(l => l.classList.add('active'));
+  }
+
+  function showResult(isHit, timing) {
+    resultBadge.style.display = 'flex';
+    resultBadge.className = 'result-badge ' + (isHit ? 'hit' : 'miss');
+    resultBadge.textContent = isHit ? `HIT — ${timing.total_ms}ms` : `MISS — ${timing.total_ms}ms`;
+  }
+
+  function startTtlCountdown(seconds) {
+    clearInterval(ttlInterval);
+    ttlRemaining = seconds;
+    ttlRow.style.display = 'inline-flex';
+    ttlValue.textContent = ttlRemaining + 's';
+    ttlInterval = setInterval(() => {
+      ttlRemaining--;
+      ttlValue.textContent = ttlRemaining + 's';
+      if (ttlRemaining <= 0) {
+        clearInterval(ttlInterval);
+        ttlRow.style.display = 'none';
+        statusPill.textContent = 'Cache expirado';
+        statusPill.className = 'status-pill quiet';
+      }
+    }, 1000);
+  }
+
+  async function runSimulation() {
+    const key = SAMPLE_KEYS[keyIndex % SAMPLE_KEYS.length];
+    keyIndex++;
+
+    btnConsult.disabled = true;
+    btnConsult.textContent = 'Consultando...';
+    clearHighlights();
+    resultBadge.style.display = 'none';
+
+    const colorReq = 'var(--color-redis)';
+    const colorPg = 'var(--color-db)';
+
+    // Step 1: App -> Redis
+    highlight('check');
+    setNodeActive('app', colorReq);
+    setNodeActive('redis', colorReq);
+    movePacket('app', 'redis', colorReq);
+    sound.play('playStep');
+    codeFilename.textContent = 'cache-logic.js';
+    explainIdle.style.display = 'none';
+    explainActive.style.display = 'block';
+    explainTag.textContent = '→ consulta Redis';
+    explainTag.className = 'explain-tag';
+    explainText.innerHTML = `Buscando <strong>${key}</strong> en Redis...`;
+    segs.forEach((s, i) => { s.classList.toggle('done', i <= 0); s.classList.remove('response'); });
+    stepCount.textContent = '1 / 3';
+
+    const startFetch = performance.now();
+
+    try {
+      const res = await fetch(`${API_BASE}/${key}`);
+      const data = await res.json();
+      const elapsed = performance.now() - startFetch;
+
+      await new Promise(r => setTimeout(r, 600));
+
+      if (data.hit) {
+        // HIT path
+        highlight('time-hit');
+        setNodeActive('redis', '#10b981');
+        packet.style.background = '#10b981';
+        packet.style.boxShadow = '0 0 0 5px rgba(16,185,129,0.2)';
+
+        sound.play('playSuccess');
+        statusPill.textContent = 'HIT — respuesta instantánea';
+        statusPill.className = 'status-pill hit';
+        hits++;
+        hitCount.textContent = hits;
+
+        explainTag.textContent = 'HIT ✓';
+        explainTag.className = 'explain-tag hit';
+        explainText.innerHTML = `El dato <strong>${key}</strong> ya estaba en Redis. Respondió en <strong>${data.timing.total_ms}ms</strong> sin tocar la base de datos.`;
+
+        consoleLine.style.display = 'block';
+        consoleLine.innerHTML = `[Redis] GET cache-demo:${key} → <span class="json-str">${JSON.stringify(data.data).slice(0, 60)}...</span>`;
+
+        showResult(true, data.timing);
+        segs.forEach((s, i) => { s.classList.toggle('done', i <= 2); s.classList.add('response'); });
+        stepCount.textContent = '3 / 3';
+
+      } else {
+        // MISS path
+        highlight('time-miss');
+        setNodeActive('redis', '#fb923c');
+        packet.style.background = '#fb923c';
+        packet.style.boxShadow = '0 0 0 5px rgba(251,146,60,0.2)';
+
+        sound.play('playAlert');
+        statusPill.textContent = 'MISS — consultando PostgreSQL...';
+        statusPill.className = 'status-pill miss';
+
+        explainTag.textContent = 'MISS — PostgreSQL';
+        explainTag.className = 'explain-tag miss';
+        explainText.innerHTML = `El dato <strong>${key}</strong> no estaba en Redis. Consultando PostgreSQL... (${data.timing.postgres_ms}ms)`;
+
+        segs.forEach((s, i) => { s.classList.toggle('done', i <= 1); s.classList.remove('response'); });
+        stepCount.textContent = '2 / 3';
+
+        await new Promise(r => setTimeout(r, 1000));
+
+        // Step 3: Postgres -> Redis (store)
+        highlight('store');
+        setNodeActive('pg', colorPg);
+        movePacket('redis', 'pg', colorPg);
+        sound.play('playStep');
+
+        explainText.innerHTML = `PostgreSQL devolvió el dato. Ahora se guarda en Redis con TTL de <strong>15 segundos</strong>.`;
+        await new Promise(r => setTimeout(r, 800));
+
+        // Response back to app
+        highlight('time-store');
+        movePacket('pg', 'app', '#10b981');
+        packet.style.background = '#10b981';
+        packet.style.boxShadow = '0 0 0 5px rgba(16,185,129,0.2)';
+        setNodeActive('app', '#10b981');
+        setNodeActive('redis', '#10b981');
+        sound.play('playSuccess');
+
+        misses++;
+        missCount.textContent = misses;
+
+        explainTag.textContent = 'guardado en caché';
+        explainTag.className = 'explain-tag store';
+        explainText.innerHTML = `Dato <strong>${key}</strong> guardado en Redis con TTL de <strong>15s</strong>. Próxima consulta será HIT.`;
+
+        consoleLine.style.display = 'block';
+        consoleLine.innerHTML = `[Redis] SETEX cache-demo:${key} 15 → <span class="json-str">OK</span>`;
+
+        showResult(false, data.timing);
+        startTtlCountdown(data.ttl_seconds);
+
+        segs.forEach((s, i) => { s.classList.toggle('done', i <= 2); s.classList.add('response'); });
+        stepCount.textContent = '3 / 3';
+      }
+
+    } catch (err) {
+      statusPill.textContent = 'Error de conexión';
+      statusPill.className = 'status-pill danger';
+      explainTag.textContent = 'error';
+      explainTag.className = 'explain-tag danger';
+      explainText.innerHTML = `No se pudo conectar al backend. Asegurate de que Docker esté corriendo (<strong>docker compose up</strong>).`;
+      sound.play('playBlocked');
+    }
+
+    btnConsult.disabled = false;
+    btnConsult.textContent = 'Consultar dato';
+  }
+
+  function reset() {
+    clearInterval(ttlInterval);
+    hits = 0;
+    misses = 0;
+    keyIndex = 0;
+    hitCount.textContent = '0';
+    missCount.textContent = '0';
+    ttlRow.style.display = 'none';
+    resultBadge.style.display = 'none';
+    statusPill.textContent = 'Esperando consulta';
+    statusPill.className = 'status-pill';
+    clearHighlights();
+    packet.classList.remove('visible');
+    explainIdle.style.display = 'block';
+    explainActive.style.display = 'none';
+    consoleLine.style.display = 'none';
+    codeFilename.textContent = 'cache-logic.js';
+    segs.forEach(s => s.classList.remove('done'));
+    stepCount.textContent = '0 / 3';
+    btnConsult.disabled = false;
+    btnConsult.textContent = 'Consultar dato';
+  }
+
+  btnConsult.addEventListener('click', runSimulation);
+  btnReset.addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+
+<style>
+  .cache-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --amber: var(--color-redis);
+    --amber-soft: var(--color-redis-glow);
+    --blue: var(--color-db);
+    --blue-soft: var(--color-db-glow);
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-link:hover { color: var(--text-white); }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg { width: 16px; height: 16px; }
+  .home-action:hover { color: var(--text-primary); border-color: var(--border-hover); background: rgba(255, 255, 255, 0.06); }
+  .home-action:active { transform: scale(.98); }
+
+  .home-action:focus-visible,
+  .brand-link:focus-visible,
+  .crumbs a:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 4px;
+  }
+
+  .crumbs { font-size: 13.5px; color: var(--api-muted); display: flex; align-items: center; gap: 6px; }
+  .crumbs .sep { color: var(--api-muted-2); }
+  .crumbs .current { color: var(--text-primary); }
+  .crumbs a { color: var(--api-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--text-primary); }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+  }
+
+  .lede {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--api-muted);
+    max-width: 62ch;
+    margin: 0 0 40px;
+  }
+
+  .lede strong { color: var(--text-primary); font-weight: 600; }
+
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    padding: 34px 28px 26px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .stats-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .status-pill {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    transition: all .25s;
+  }
+
+  .status-pill.hit { color: #10b981; background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); }
+  .status-pill.miss { color: #fb923c; background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.3); }
+  .status-pill.danger { color: #fb7185; background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.3); }
+
+  .metric {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-pill);
+    padding: 5px 10px;
+  }
+
+  .metric strong { color: var(--text-primary); }
+
+  .diagram {
+    position: relative;
+    height: 120px;
+    margin: 0 6px 4px;
+  }
+
+  .diagram svg.lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .node {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .node .icon-ring {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--api-panel-2);
+    border: 1px solid var(--api-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--api-muted);
+    transition: border-color .25s, color .25s, box-shadow .25s;
+  }
+
+  .node.active .icon-ring {
+    color: var(--text-primary);
+    border-color: var(--node-color, var(--amber));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--node-color, var(--amber)) 16%, transparent);
+  }
+
+  .node .icon-ring.redis-ring { color: var(--color-redis); }
+  .node.active .icon-ring.redis-ring { color: var(--text-primary); }
+  .node .icon-ring.pg-ring { color: var(--color-db); }
+  .node.active .icon-ring.pg-ring { color: var(--text-primary); }
+
+  .node .icon-ring svg { width: 26px; height: 26px; }
+
+  .node .label {
+    font-size: 12.5px;
+    color: var(--api-muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .node.active .label { color: var(--text-primary); }
+
+  .packet {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--amber);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--amber) 20%, transparent);
+    transition: left .85s cubic-bezier(.62,.04,.38,.96), background-color .2s, box-shadow .2s;
+    opacity: 0;
+  }
+
+  .packet.visible { opacity: 1; }
+
+  .result-badge {
+    position: absolute;
+    top: -8px;
+    right: 20px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transform: translateY(-100%);
+    animation: badgePop .35s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .result-badge.hit {
+    color: #10b981;
+    background: rgba(16,185,129,0.15);
+    border: 1px solid rgba(16,185,129,0.4);
+  }
+
+  .result-badge.miss {
+    color: #fb923c;
+    background: rgba(251,146,60,0.15);
+    border: 1px solid rgba(251,146,60,0.4);
+  }
+
+  @keyframes badgePop {
+    0% { transform: translateY(-100%) scale(0.7); opacity: 0; }
+    100% { transform: translateY(-100%) scale(1); opacity: 1; }
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 26px;
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  button.primary {
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+  }
+
+  button.primary:hover { filter: brightness(1.08); }
+  button.primary:active { transform: scale(.97); }
+  button.primary:disabled { opacity: .4; cursor: default; transform: none; }
+
+  button.ghost {
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--api-muted);
+    background: transparent;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+
+  button.ghost:hover { color: var(--text-primary); border-color: var(--border-hover); }
+
+  .step-track { display: flex; align-items: center; gap: 7px; }
+
+  .step-track .seg {
+    width: 22px;
+    height: 4px;
+    border-radius: 3px;
+    background: var(--api-border);
+    transition: background .25s;
+  }
+
+  .step-track .seg.done { background: var(--amber); }
+  .step-track .seg.done.response { background: var(--blue); }
+
+  .step-count {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--api-muted-2);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+  }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .panel-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--api-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-head .title { font-size: 12.5px; color: var(--api-muted); font-weight: 500; }
+  .panel-head .filename { font-family: var(--font-mono); font-size: 12px; color: var(--api-muted-2); }
+
+  pre.code {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--api-muted);
+    overflow-x: auto;
+  }
+
+  pre.code .kw { color: var(--text-secondary); }
+  pre.code .fn { color: var(--text-secondary); }
+
+  pre.code .line {
+    display: block;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    transition: background .3s, color .3s;
+  }
+
+  pre.code .line.active {
+    background: var(--amber-soft);
+    color: var(--text-primary);
+  }
+
+  pre.code .line.active.response {
+    background: var(--blue-soft);
+  }
+
+  pre.code .line.active .fn { color: var(--amber); }
+  pre.code .line.active.response .fn { color: var(--blue); }
+
+  .code-divider { border-top: 1px solid var(--api-border-soft); }
+
+  .explain-body {
+    padding: 20px;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .explain-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+
+  .explain-idle {
+    color: var(--api-muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .explain-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-bottom: 14px;
+  }
+
+  .explain-tag.response { color: var(--blue); background: var(--blue-soft); }
+  .explain-tag.hit { color: #10b981; background: rgba(16,185,129,0.12); }
+  .explain-tag.miss { color: #fb923c; background: rgba(251,146,60,0.12); }
+  .explain-tag.store { color: var(--color-db); background: var(--blue-soft); }
+  .explain-tag.danger { color: #fb7185; background: rgba(251,113,133,0.12); }
+
+  .console-line {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+    padding-top: 14px;
+    border-top: 1px dashed var(--api-border);
+    margin-top: 16px;
+  }
+
+  .console-line .json-key { color: var(--brand-blue); }
+  .console-line .json-str { color: var(--color-html); }
+
+  @media (max-width: 780px) {
+    .split { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .cache-page { padding: 0.1rem 0 0.75rem; }
+    .topbar { align-items: flex-start; gap: 12px; flex-direction: column; margin-bottom: 28px; padding-bottom: 20px; }
+    .topbar-actions { width: 100%; justify-content: space-between; }
+    h1 { font-size: 26px; }
+    .diagram-card { padding: 28px 16px 22px; }
+    .controls { align-items: flex-start; flex-direction: column; }
+  }
+</style>

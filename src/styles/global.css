@@ -42,6 +42,8 @@
   --color-http-glow: rgba(6, 182, 212, 0.2);
   --color-db: #a855f7;
   --color-db-glow: rgba(168, 85, 247, 0.2);
+  --color-redis: #dc2626;
+  --color-redis-glow: rgba(220, 38, 38, 0.2);
   --color-success: #10b981;
 
   /* Radios */

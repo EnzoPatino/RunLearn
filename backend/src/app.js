@@ -4,6 +4,8 @@ import authRouter from './routes/auth.routes.js';
 import healthRouter from './routes/health.routes.js';
 import metricsRouter from './routes/metrics.routes.js';
 import peopleRouter from './routes/people.js';
+import cacheDemoRouter from './routes/cache-demo.js';
+import transaccionDemoRouter from './routes/transaccion-demo.js';
 import { trackRequest } from './metrics.js';
 
 const app = express();
@@ -18,6 +20,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/metrics', metricsRouter);
 app.use('/api/people', peopleRouter);
+app.use('/api/cache-demo', cacheDemoRouter);
+app.use('/api/transaccion-demo', transaccionDemoRouter);
 
 app.get('/', (req, res) => {
   res.json({

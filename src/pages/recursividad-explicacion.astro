@@ -1,0 +1,1361 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — Recursividad: factorial(n) paso a paso">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">Recursividad</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>Recursividad: <code>factorial(n)</code></h1>
+    <p class="lede">
+      Visualizá cómo funciona la recursividad calculando <strong>factorial(n)</strong>. La pila de llamadas crece hacia abajo (cada llamada espera a la siguiente) y luego se resuelve de abajo hacia arriba, devolviendo el resultado acumulado hasta el caso base.
+    </p>
+
+    <!-- Input Controls -->
+    <div class="input-controls">
+      <label for="n-input" class="input-label">Valor de n (máx 8):</label>
+      <input type="number" id="n-input" class="n-input" min="1" max="8" value="5" aria-label="Ingresar valor de n para factorial">
+      <span class="input-hint">factorial(5) = 5 × 4 × 3 × 2 × 1 = 120</span>
+    </div>
+
+    <!-- Visualizer Card: Call Stack -->
+    <div class="diagram-card">
+      <div class="diagram-meta">
+        <div class="meta-left">
+          <span class="status-pill" id="status-pill">Listo para simular</span>
+          <span class="pass-pill" id="depth-pill">Profundidad: 0</span>
+        </div>
+        <div class="meta-right">
+          <span class="legend-item"><span class="legend-dot calling"></span>Llamada activa</span>
+          <span class="legend-item"><span class="legend-dot waiting"></span>Esperando retorno</span>
+          <span class="legend-item"><span class="legend-dot returning"></span>Retornando</span>
+          <span class="legend-item"><span class="legend-dot base"></span>Caso base</span>
+        </div>
+      </div>
+
+      <!-- Call Stack Visualization -->
+      <div class="stack-wrapper" id="stack-wrapper" role="region" aria-label="Pila de llamadas recursivas">
+        <div class="stack-container" id="stack-container"></div>
+        <div class="stack-arrow" id="stack-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M19 12l-7 7-7-7"/>
+          </svg>
+          <span class="arrow-label" id="arrow-label">Creciendo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Controls -->
+    <div class="controls">
+      <div class="controls-left">
+        <button class="primary" id="btn-run">Simular funcionamiento</button>
+        <button class="ghost" id="btn-step" title="Avanzar un solo paso">Paso a paso</button>
+        <button class="ghost" id="btn-reset">Reiniciar</button>
+      </div>
+      <div class="controls-right">
+        <div class="step-track" id="step-track"></div>
+        <span class="step-count" id="step-count">0 / 0</span>
+      </div>
+    </div>
+
+    <!-- Code & Explanation Split Panel -->
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código del algoritmo</span>
+          <span class="filename" id="code-filename">factorial.js</span>
+        </div>
+        <pre class="code" id="code-block"><span class="line" data-key="fn"><span class="kw">function</span> <span class="fn">factorial</span>(n) &#123;</span>
+<span class="line" data-key="base-check">  <span class="kw">if</span> (n === 0 || n === 1) &#123;</span>
+<span class="line" data-key="base-return">    <span class="kw">return</span> 1;</span>
+<span class="line" data-key="base-close">  &#125;</span>
+<span class="line" data-key="recursive">  <span class="kw">return</span> n * <span class="fn">factorial</span>(n - 1);</span>
+<span class="line" data-key="close-fn">&#125;</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando en este paso</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Elegí un valor de <strong>n</strong> (1–8) y tocá <strong>«Simular funcionamiento»</strong>. Verás cómo la pila crece con cada llamada recursiva hasta llegar al caso base, y luego cómo se resuelve devolviendo el resultado hacia arriba.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">llamada</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+function setupRecursion() {
+  const btnRun = document.getElementById('btn-run');
+  const stackContainer = document.getElementById('stack-container');
+  if (!btnRun || !stackContainer) return;
+  if (btnRun.dataset.initialized === 'true') return;
+  btnRun.dataset.initialized = 'true';
+
+  const btnStep = document.getElementById('btn-step');
+  const btnReset = document.getElementById('btn-reset');
+  const nInput = document.getElementById('n-input');
+  const stepTrack = document.getElementById('step-track');
+  const stepCount = document.getElementById('step-count');
+  const statusPill = document.getElementById('status-pill');
+  const depthPill = document.getElementById('depth-pill');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+  const stackArrow = document.getElementById('stack-arrow');
+  const arrowLabel = document.getElementById('arrow-label');
+  const allCodeLines = document.querySelectorAll('.line');
+  const codeFilename = document.getElementById('code-filename');
+
+  const sound = initSoundControls();
+
+  let steps = [];
+  let currentStep = -1;
+  let timer = null;
+  let isRunning = false;
+  const SPEED_MS = 900;
+  let currentN = 5;
+
+  // Build the steps for factorial(n)
+  function buildSteps(n) {
+    const computed = [];
+    let callId = 0;
+
+    // Phase 1: Growing the stack (recursive calls going down)
+    for (let i = n; i >= 0; i--) {
+      const isBase = i === 0 || i === 1;
+      callId++;
+      computed.push({
+        type: 'call',
+        n: i,
+        depth: n - i + 1,
+        maxDepth: n + 1,
+        callId,
+        isBase,
+        codeKeys: isBase ? ['base-check', 'base-return', 'base-close'] : ['base-check', 'recursive'],
+        tag: isBase ? 'caso base' : 'llamada recursiva',
+        tagType: isBase ? 'base' : 'calling',
+        text: isBase
+          ? `Llegamos al <strong>caso base</strong>: factorial(${i}) = 1. La recursión se detiene aquí y comienza el retorno.`
+          : `Llamada <strong>factorial(${i})</strong>: como ${i} > 1, se llama a <strong>factorial(${i - 1})</strong> y espera su resultado.`,
+        stackState: Array.from({ length: n - i + 1 }, (_, idx) => ({
+          n: n - idx,
+          status: idx === 0 ? 'active' : 'waiting',
+          value: null
+        })),
+        returningValue: null
+      });
+    }
+
+    // Phase 2: Unwinding the stack (returning values bottom-up)
+    let accumulated = 1;
+    for (let i = 1; i <= n; i++) {
+      accumulated *= i;
+      computed.push({
+        type: 'return',
+        n: i,
+        depth: n - i + 1,
+        maxDepth: n + 1,
+        callId: n - i + 1,
+        isBase: false,
+        codeKeys: ['recursive'],
+        tag: 'retorno',
+        tagType: 'returning',
+        text: `factorial(${i}) recibe ${accumulated / i} de la llamada inferior y calcula <strong>${i} × ${accumulated / i} = ${accumulated}</strong>. Retorna <strong>${accumulated}</strong> a la llamada anterior.`,
+        stackState: Array.from({ length: n - i + 1 }, (_, idx) => {
+          const levelN = n - idx;
+          if (levelN < i) {
+            return { n: levelN, status: 'done', value: null };
+          } else if (levelN === i) {
+            return { n: levelN, status: 'returning', value: accumulated };
+          } else {
+            return { n: levelN, status: 'waiting', value: null };
+          }
+        }),
+        returningValue: accumulated
+      });
+    }
+
+    // Final step: show complete result
+    computed.push({
+      type: 'done',
+      n: n,
+      depth: 0,
+      maxDepth: n + 1,
+      callId: 0,
+      isBase: false,
+      codeKeys: ['fn'],
+      tag: '¡resultado final!',
+      tagType: 'done',
+      text: `¡Completado! <strong>factorial(${n}) = ${accumulated}</strong>. Todas las llamadas se resolvieron y la pila está vacía.`,
+      stackState: [],
+      returningValue: accumulated
+    });
+
+    return computed;
+  }
+
+  function updateInputHint(n) {
+    const hint = document.querySelector('.input-hint');
+    if (hint) {
+      let expr = '';
+      for (let i = n; i >= 1; i--) {
+        expr += i;
+        if (i > 1) expr += ' × ';
+      }
+      const result = factorial(n);
+      hint.textContent = `factorial(${n}) = ${expr} = ${result}`;
+    }
+  }
+
+  function factorial(n) {
+    if (n === 0 || n === 1) return 1;
+    return n * factorial(n - 1);
+  }
+
+  // Render the stack
+  function renderStack(stackState, phase) {
+    stackContainer.innerHTML = '';
+    
+    if (stackState.length === 0) {
+      // Empty stack - show empty state
+      const empty = document.createElement('div');
+      empty.className = 'stack-empty';
+      empty.innerHTML = '<span class="empty-icon">📭</span><span>Pila vacía</span>';
+      stackContainer.appendChild(empty);
+      return;
+    }
+
+    // Stack grows bottom-up visually (first call at bottom)
+    const reversedState = [...stackState].reverse();
+    
+    reversedState.forEach((frame, idx) => {
+      const card = document.createElement('div');
+      card.className = 'stack-frame';
+      card.style.setProperty('--frame-index', idx);
+      
+      // Status classes
+      if (frame.status === 'active') card.classList.add('calling');
+      else if (frame.status === 'waiting') card.classList.add('waiting');
+      else if (frame.status === 'returning') card.classList.add('returning');
+      else if (frame.status === 'done') card.classList.add('done');
+      else if (frame.status === 'base') card.classList.add('base');
+
+      const frameNumber = stackState.length - idx;
+      
+      let valueDisplay = '';
+      if (frame.value !== null && frame.value !== undefined) {
+        valueDisplay = `<div class="frame-value">→ <strong>${frame.value}</strong></div>`;
+      } else if (frame.status === 'waiting') {
+        valueDisplay = `<div class="frame-value waiting">→ esperando...</div>`;
+      }
+
+      const baseBadge = frame.n <= 1 ? '<span class="base-badge">caso base</span>' : '';
+
+      card.innerHTML = `
+        <div class="frame-header">
+          <span class="frame-fn">factorial(<span class="frame-n">${frame.n}</span>)</span>
+          ${baseBadge}
+        </div>
+        <div class="frame-body">
+          <div class="frame-code">${frame.n <= 1 ? 'return 1;' : `return ${frame.n} * factorial(${frame.n - 1});`}</div>
+          ${valueDisplay}
+        </div>
+      `;
+      stackContainer.appendChild(card);
+    });
+
+    // Update arrow direction and label
+    if (phase === 'growing') {
+      stackArrow.classList.remove('returning');
+      stackArrow.classList.add('growing');
+      arrowLabel.textContent = 'Creciendo ↓';
+    } else if (phase === 'unwinding') {
+      stackArrow.classList.remove('growing');
+      stackArrow.classList.add('returning');
+      arrowLabel.textContent = 'Resolviendo ↑';
+    } else {
+      stackArrow.classList.remove('growing', 'returning');
+      arrowLabel.textContent = '';
+    }
+  }
+
+  // Update track segments
+  function buildStepTrack(count) {
+    if (!stepTrack) return;
+    stepTrack.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'seg';
+      stepTrack.appendChild(seg);
+    }
+  }
+
+  function highlightCodeLines(keys = []) {
+    allCodeLines.forEach(line => {
+      const key = line.getAttribute('data-key');
+      if (keys.includes(key)) {
+        line.classList.add('active');
+      } else {
+        line.classList.remove('active');
+      }
+    });
+  }
+
+  // Render a specific step
+  function applyStep(index) {
+    if (index < 0 || index >= steps.length) return;
+    const s = steps[index];
+    sound.play('playStep');
+
+    // Determine phase
+    const phase = s.type === 'call' ? 'growing' : s.type === 'return' ? 'unwinding' : 'done';
+
+    // Update stack visualization
+    renderStack(s.stackState, phase);
+
+    // Update track
+    if (stepTrack) {
+      const segs = stepTrack.querySelectorAll('.seg');
+      segs.forEach((seg, i) => {
+        seg.classList.toggle('done', i <= index);
+        if (s.type === 'return') seg.classList.add('return-seg');
+      });
+    }
+    if (stepCount) {
+      stepCount.textContent = `${index + 1} / ${steps.length}`;
+    }
+
+    // Update status pills
+    if (statusPill) {
+      if (s.type === 'call') {
+        if (s.isBase) {
+          statusPill.textContent = `Caso base: factorial(${s.n}) = 1`;
+          statusPill.style.color = '#10b981';
+          statusPill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        } else {
+          statusPill.textContent = `Llamada: factorial(${s.n}) → factorial(${s.n - 1})`;
+          statusPill.style.color = '#fb923c';
+          statusPill.style.borderColor = 'rgba(251, 146, 60, 0.3)';
+        }
+      } else if (s.type === 'return') {
+        statusPill.textContent = `Retorno: factorial(${s.n}) = ${s.returningValue}`;
+        statusPill.style.color = '#38bdf8';
+        statusPill.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+      } else if (s.type === 'done') {
+        statusPill.textContent = `¡factorial(${s.n}) = ${s.returningValue}!`;
+        statusPill.style.color = '#10b981';
+        statusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+      }
+    }
+
+    if (depthPill) {
+      depthPill.textContent = `Profundidad: ${s.depth} / ${s.maxDepth}`;
+    }
+
+    // Highlight code
+    highlightCodeLines(s.codeKeys);
+
+    // Explanation panel
+    if (explainIdle && explainActive && explainTag && explainText) {
+      explainIdle.style.display = 'none';
+      explainActive.style.display = 'block';
+      explainTag.textContent = s.tag;
+      explainTag.className = `explain-tag ${s.tagType}`;
+      explainText.innerHTML = s.text;
+    }
+
+    // Console representation
+    if (consoleLine) {
+      if (s.type === 'done') {
+        consoleLine.style.display = 'block';
+        consoleLine.innerHTML = `<span class="result-value">factorial(${s.n}) = ${s.returningValue}</span>`;
+      } else if (s.type === 'return') {
+        consoleLine.style.display = 'block';
+        consoleLine.innerHTML = `<span class="return-value">return ${s.returningValue}</span> ← factorial(${s.n})`;
+      } else {
+        consoleLine.style.display = 'none';
+      }
+    }
+
+    if (s.type === 'done') {
+      sound.play('playSuccess');
+    }
+  }
+
+  // Animation Loop
+  function nextStep() {
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      applyStep(currentStep);
+
+      if (currentStep === steps.length - 1) {
+        stopRunning();
+        btnRun.textContent = 'Simular de nuevo';
+      } else if (isRunning) {
+        timer = setTimeout(nextStep, SPEED_MS);
+      }
+    } else {
+      stopRunning();
+      btnRun.textContent = 'Simular de nuevo';
+    }
+  }
+
+  function startRunning() {
+    if (currentStep >= steps.length - 1) {
+      currentStep = -1;
+    }
+    isRunning = true;
+    btnRun.textContent = 'Pausar';
+    if (btnStep) btnStep.disabled = true;
+    nextStep();
+  }
+
+  function stopRunning() {
+    isRunning = false;
+    clearTimeout(timer);
+    timer = null;
+    btnRun.textContent = currentStep >= steps.length - 1 ? 'Simular de nuevo' : 'Reanudar';
+    if (btnStep) btnStep.disabled = false;
+  }
+
+  function init(newN = null) {
+    stopRunning();
+    if (newN !== null) {
+      currentN = Math.max(1, Math.min(8, newN));
+    }
+    nInput.value = currentN;
+    updateInputHint(currentN);
+    steps = buildSteps(currentN);
+    currentStep = -1;
+
+    buildStepTrack(steps.length);
+    if (stepCount) stepCount.textContent = `0 / ${steps.length}`;
+    if (statusPill) {
+      statusPill.textContent = 'Listo para simular';
+      statusPill.style.color = 'var(--text-secondary)';
+      statusPill.style.borderColor = 'var(--border-subtle)';
+    }
+    if (depthPill) depthPill.textContent = `Profundidad: 0 / ${currentN + 1}`;
+
+    highlightCodeLines([]);
+    renderStack([], 'idle');
+
+    if (explainIdle) explainIdle.style.display = 'block';
+    if (explainActive) explainActive.style.display = 'none';
+    if (consoleLine) consoleLine.style.display = 'none';
+    if (stackArrow) {
+      stackArrow.classList.remove('growing', 'returning');
+      if (arrowLabel) arrowLabel.textContent = '';
+    }
+    btnRun.textContent = 'Simular funcionamiento';
+    if (btnStep) btnStep.disabled = false;
+    codeFilename.textContent = 'factorial.js';
+  }
+
+  // Event Listeners
+  btnRun.addEventListener('click', () => {
+    if (isRunning) {
+      stopRunning();
+    } else {
+      startRunning();
+    }
+  });
+
+  if (btnStep) {
+    btnStep.addEventListener('click', () => {
+      stopRunning();
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        applyStep(currentStep);
+      }
+    });
+  }
+
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      init(currentN);
+    });
+  }
+
+  if (nInput) {
+    nInput.addEventListener('change', () => {
+      const val = parseInt(nInput.value, 10);
+      if (!isNaN(val) && val >= 1 && val <= 8) {
+        init(val);
+      } else {
+        nInput.value = currentN;
+      }
+    });
+    nInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = parseInt(nInput.value, 10);
+        if (!isNaN(val) && val >= 1 && val <= 8) {
+          init(val);
+        } else {
+          nInput.value = currentN;
+        }
+      }
+    });
+  }
+
+  // Initialize state
+  init(currentN);
+}
+
+// Handle immediate execution or DOMContentLoaded, plus astro:page-load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupRecursion);
+} else {
+  setupRecursion();
+}
+
+document.addEventListener('astro:page-load', setupRecursion);
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --amber: #fb923c;
+    --amber-soft: rgba(251, 146, 60, 0.15);
+    --blue: #38bdf8;
+    --blue-soft: rgba(56, 189, 248, 0.15);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.16);
+    --purple: #a78bfa;
+    --purple-soft: rgba(167, 139, 250, 0.15);
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+
+  .topbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .brand-link:hover {
+    color: var(--text-white);
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--api-muted);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .15s, border-color .15s, background .15s, transform .15s;
+  }
+
+  .home-action svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-action:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--api-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .crumbs .sep {
+    color: var(--api-muted-2);
+  }
+
+  .crumbs .current {
+    color: var(--text-primary);
+  }
+
+  .crumbs a {
+    color: var(--api-muted);
+    text-decoration: none;
+  }
+
+  .crumbs a:hover {
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+  }
+
+  h1 code {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    background: var(--amber-soft);
+    color: var(--amber);
+    padding: 0 8px;
+    border-radius: 6px;
+  }
+
+  .lede {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--api-muted);
+    max-width: 65ch;
+    margin: 0 0 24px;
+  }
+
+  .lede strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* Input Controls */
+  .input-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .input-label {
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .n-input {
+    width: 80px;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    background: var(--canvas-bg);
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    transition: border-color .15s, box-shadow .15s;
+  }
+
+  .n-input:focus {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px var(--amber-soft);
+  }
+
+  .input-hint {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--api-muted);
+    margin-left: auto;
+  }
+
+  /* Diagram Card */
+  .diagram-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    padding: 24px 28px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .diagram-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+
+  .meta-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-pill, .pass-pill {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--api-border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+  }
+
+  .meta-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--api-muted);
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.calling {
+    background: var(--amber);
+    box-shadow: 0 0 6px var(--amber);
+  }
+
+  .legend-dot.waiting {
+    background: var(--purple);
+    box-shadow: 0 0 6px var(--purple);
+  }
+
+  .legend-dot.returning {
+    background: var(--blue);
+    box-shadow: 0 0 6px var(--blue);
+  }
+
+  .legend-dot.base {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  /* Stack Visualization */
+  .stack-wrapper {
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  .stack-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 380px;
+    z-index: 2;
+  }
+
+  .stack-frame {
+    width: 100%;
+    max-width: 380px;
+    background: var(--api-panel-2);
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+    transform-origin: center bottom;
+    animation: frameEnter 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+
+  @keyframes frameEnter {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .stack-frame.calling {
+    border-color: var(--amber);
+    box-shadow: 0 0 16px rgba(251, 146, 60, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .stack-frame.waiting {
+    border-color: var(--purple);
+    opacity: 0.85;
+  }
+
+  .stack-frame.returning {
+    border-color: var(--blue);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), 0 4px 16px rgba(0, 0, 0, 0.2);
+    animation: frameReturn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+
+  @keyframes frameReturn {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.02); }
+    100% { transform: translateY(0) scale(1); }
+  }
+
+  .stack-frame.base {
+    border-color: var(--green);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .stack-frame.done {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+
+  .frame-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .frame-fn {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .frame-n {
+    color: var(--amber);
+    font-weight: 800;
+  }
+
+  .base-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--green);
+    background: var(--green-soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .frame-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .frame-code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted);
+  }
+
+  .frame-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+  }
+
+  .frame-value.waiting {
+    color: var(--api-muted);
+    font-style: italic;
+  }
+
+  .stack-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--api-muted-2);
+    padding: 40px 20px;
+  }
+
+  .empty-icon {
+    font-size: 36px;
+    opacity: 0.5;
+  }
+
+  /* Stack Arrow */
+  .stack-arrow {
+    position: absolute;
+    right: -60px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--amber);
+    transition: color 0.3s, transform 0.3s;
+    z-index: 1;
+  }
+
+  .stack-arrow svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .stack-arrow.growing {
+    color: var(--amber);
+  }
+
+  .stack-arrow.returning {
+    color: var(--blue);
+    transform: translateY(-50%) rotate(180deg);
+  }
+
+  .arrow-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 26px;
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  button.primary {
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--canvas-bg);
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+  }
+
+  button.primary:hover {
+    filter: brightness(1.08);
+  }
+
+  button.primary:active {
+    transform: scale(.97);
+  }
+
+  button.ghost {
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--api-muted);
+    background: transparent;
+    border: 1px solid var(--api-border);
+    border-radius: 10px;
+    padding: 9px 15px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+
+  button.ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  button.ghost:disabled, button.primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .step-track {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    max-width: 280px;
+    overflow: hidden;
+  }
+
+  .step-track .seg {
+    width: 6px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--api-border);
+    transition: background .2s, width .2s;
+  }
+
+  .step-track .seg.done {
+    background: var(--amber);
+  }
+
+  .step-track .seg.return-seg.done {
+    background: var(--blue);
+  }
+
+  .step-count {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--api-muted-2);
+  }
+
+  /* Split Panel */
+  .split {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+  }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow-card), var(--glass-highlight);
+  }
+
+  .panel-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--api-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-head .title {
+    font-size: 12.5px;
+    color: var(--api-muted);
+    font-weight: 500;
+  }
+
+  .panel-head .filename {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--api-muted-2);
+  }
+
+  pre.code {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--api-muted);
+    overflow-x: auto;
+  }
+
+  pre.code .kw {
+    color: #f472b6;
+  }
+
+  pre.code .fn {
+    color: #38bdf8;
+  }
+
+  pre.code .line {
+    display: block;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    transition: background .25s, color .25s;
+  }
+
+  pre.code .line.active {
+    background: var(--amber-soft);
+    color: var(--text-primary);
+    border-left: 2px solid var(--amber);
+  }
+
+  pre.code .line.active[data-key="base-return"],
+  pre.code .line.active[data-key="base-check"],
+  pre.code .line.active[data-key="base-close"] {
+    background: var(--green-soft);
+    border-left-color: var(--green);
+  }
+
+  pre.code .line.active[data-key="recursive"] {
+    background: var(--blue-soft);
+    border-left-color: var(--blue);
+  }
+
+  .explain-body {
+    padding: 20px;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .explain-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+
+  .explain-idle {
+    color: var(--api-muted);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .explain-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+
+  .explain-tag.calling {
+    color: var(--amber);
+    background: var(--amber-soft);
+  }
+
+  .explain-tag.base {
+    color: var(--green);
+    background: var(--green-soft);
+  }
+
+  .explain-tag.returning {
+    color: var(--blue);
+    background: var(--blue-soft);
+  }
+
+  .explain-tag.done {
+    color: var(--green);
+    background: var(--green-soft);
+  }
+
+  .console-line {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--api-muted-2);
+    padding-top: 14px;
+    border-top: 1px dashed var(--api-border);
+    margin-top: 16px;
+  }
+
+  .console-line .result-value {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .console-line .return-value {
+    color: var(--blue);
+    font-weight: 700;
+  }
+
+  @media (max-width: 780px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+
+    .stack-arrow {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .api-page {
+      padding: 0.1rem 0 0.75rem;
+    }
+
+    .topbar {
+      align-items: flex-start;
+      gap: 12px;
+      flex-direction: column;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+    }
+
+    .topbar-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    h1 code {
+      font-size: 20px;
+    }
+
+    .diagram-card {
+      padding: 18px 14px 16px;
+    }
+
+    .input-controls {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+    }
+
+    .input-hint {
+      margin-left: 0;
+    }
+
+    .stack-frame {
+      max-width: 100%;
+    }
+
+    .controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .controls-left {
+      width: 100%;
+    }
+
+    .controls-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>

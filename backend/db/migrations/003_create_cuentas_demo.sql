@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS cuentas_demo (
+  id SERIAL PRIMARY KEY,
+  titular VARCHAR(255) NOT NULL,
+  saldo NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO cuentas_demo (titular, saldo)
+VALUES
+  ('Alice', 1000.00),
+  ('Bob', 500.00)
+ON CONFLICT DO NOTHING;
