@@ -1,0 +1,655 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — XSS (Cross-Site Scripting)">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">XSS</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>XSS (Cross-Site Scripting)</h1>
+    <p class="lede">
+      Un ataque <strong>XSS</strong> ocurre cuando el input de un usuario se inyecta directamente en el HTML de una página sin sanitizar. El navegador interpreta el HTML/JS inyectado y lo ejecuta como si fuera parte legítima del sitio. Probá ambos modos para ver la diferencia en tiempo real.
+    </p>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector-card">
+      <div class="mode-toggle-group">
+        <button type="button" class="mode-btn active" id="btn-mode-vulnerable" data-mode="vulnerable">
+          <span class="mode-icon">🔓</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Modo vulnerable</span>
+            <span class="mode-desc">innerHTML — renderiza HTML crudo</span>
+          </div>
+        </button>
+        <button type="button" class="mode-btn" id="btn-mode-secure" data-mode="secure">
+          <span class="mode-icon">🛡️</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Modo seguro</span>
+            <span class="mode-desc">textContent — texto plano, sin HTML</span>
+          </div>
+        </button>
+      </div>
+      <div class="mode-status-badge" id="mode-status-badge">
+        <span class="mode-status-dot"></span>
+        <span id="mode-status-text">VULNERABLE — innerHTML renderiza HTML tal cual</span>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE ZONE -->
+    <div class="diagram-card">
+      <div class="diagram-meta">
+        <div class="meta-left">
+          <span class="status-pill" id="status-pill">Listo para inyectar</span>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-zone">
+        <label for="xss-input" class="input-label">Texto del usuario:</label>
+        <div class="input-row">
+          <input type="text" id="xss-input" class="xss-input" placeholder="Escribí algo o probá un payload..." autocomplete="off" />
+          <button class="primary" id="btn-render">Renderizar</button>
+        </div>
+        <div class="preset-buttons">
+          <button class="ghost preset-btn" id="btn-preset-normal">
+            <span class="preset-icon">✅</span>
+            <span class="preset-text">Texto normal<br /><code>&lt;b&gt;Hola&lt;/b&gt; mundo</code></span>
+          </button>
+          <button class="ghost preset-btn danger-preset" id="btn-preset-xss">
+            <span class="preset-icon">💉</span>
+            <span class="preset-text">Payload XSS<br /><code>&lt;img src=x onerror="alert('hackeado')"&gt;</code></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Render Area -->
+      <div class="render-zone">
+        <div class="render-label">Resultado renderizado en el DOM:</div>
+        <div class="render-area" id="render-area">
+          <div class="render-empty">El resultado del renderizado aparecerá aquí...</div>
+        </div>
+        <div class="render-simulation" id="render-simulation" style="display:none"></div>
+      </div>
+
+      <!-- Consequence display -->
+      <div class="consequence-zone" id="consequence-zone" style="display:none">
+        <div class="consequence-header">
+          <span class="consequence-icon" id="consequence-icon">⚠️</span>
+          <span class="consequence-title" id="consequence-title">Script detectado</span>
+        </div>
+        <div class="consequence-body" id="consequence-body"></div>
+      </div>
+    </div>
+
+    <!-- SPLIT: CODE + EXPLANATION -->
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código del frontend</span>
+          <span class="filename" id="code-filename">comments.js</span>
+        </div>
+        <pre class="code" id="code-block"><span class="line" data-key="vuln"><span class="cm">// ⚠️ VULNERABLE — innerHTML</span></span>
+<span class="line" data-key="vuln">commentBox.innerHTML = userInput;</span>
+<span class="line" data-key="vuln"><span class="cm">// &lt;img onerror&gt; se ejecuta al instante</span></span>
+<span class="line">&nbsp;</span>
+<span class="line" data-key="sec"><span class="cm">// ✅ SEGURO — textContent</span></span>
+<span class="line" data-key="sec">commentBox.textContent = userInput;</span>
+<span class="line" data-key="sec"><span class="cm">// Solo muestra texto plano, nunca HTML</span></span>
+<span class="line">&nbsp;</span>
+<span class="line" data-key="esc"><span class="cm">// ✅ También seguro — escape manual</span></span>
+<span class="line" data-key="esc"><span class="kw">function</span> escapeHtml(str) &#123;</span>
+<span class="line" data-key="esc">  <span class="kw">return</span> str.replace(<span class="num">/&amp;|&lt;|&gt;|"/g</span>, c =&gt; (&#123;</span>
+<span class="line" data-key="esc">    <span class="str">'&amp;'</span>: <span class="str">'&amp;amp;'</span>, <span class="str">'&lt;'</span>: <span class="str">'&amp;lt;'</span>,</span>
+<span class="line" data-key="esc">    <span class="str">'&gt;'</span>: <span class="str">'&amp;gt;'</span>, <span class="str">'"'</span>: <span class="str">'&amp;quot;'</span></span>
+<span class="line" data-key="esc">  &#125;[c]));</span>
+<span class="line" data-key="esc">&#125;</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Elegí un modo y escribí algo en el input, o probá los botones de ejemplo. Primero con <strong>texto normal</strong> para ver que ambos modos funcionan igual. Después con el <strong>payload XSS</strong> para ver la diferencia crítica.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">renderizado</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+
+          <div class="concepts-grid">
+            <div class="concept-item">
+              <div class="concept-icon">💉</div>
+              <div>
+                <strong>¿Qué es XSS?</strong> Cross-Site Scripting es cuando un atacante inyecta código JavaScript en páginas que otros usuarios visitan. El navegador no puede distinguir entre HTML legítimo e inyectado — ejecuta todo lo que recibe.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">🔍</div>
+              <div>
+                <strong>¿Por qué <code>innerHTML</code> es peligroso?</strong> Porque interpreta el string como HTML. Si contiene <code>&lt;script&gt;</code>, <code>&lt;img onerror&gt;</code> o cualquier tag con event handler, el navegador lo ejecuta automáticamente.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">🛡️</div>
+              <div>
+                <strong>¿Cómo se previene?</strong> Usando <code>textContent</code> en vez de <code>innerHTML</code> (muestra texto plano, nunca interpreta HTML). O escapando los caracteres especiales <code>&amp; &lt; &gt; " '</code> antes de insertar en el DOM.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+  let mode = 'vulnerable';
+
+  const XSS_PAYLOAD = `<img src=x onerror="alert('hackeado')">`;
+  const NORMAL_TEXT = `<b>Hola</b> mundo`;
+
+  // DOM refs
+  const btnVulnerable = document.getElementById('btn-mode-vulnerable');
+  const btnSecure = document.getElementById('btn-mode-secure');
+  const modeStatusBadge = document.getElementById('mode-status-badge');
+  const modeStatusText = document.getElementById('mode-status-text');
+  const xssInput = document.getElementById('xss-input');
+  const btnRender = document.getElementById('btn-render');
+  const btnPresetNormal = document.getElementById('btn-preset-normal');
+  const btnPresetXss = document.getElementById('btn-preset-xss');
+  const renderArea = document.getElementById('render-area');
+  const renderSimulation = document.getElementById('render-simulation');
+  const consequenceZone = document.getElementById('consequence-zone');
+  const consequenceIcon = document.getElementById('consequence-icon');
+  const consequenceTitle = document.getElementById('consequence-title');
+  const consequenceBody = document.getElementById('consequence-body');
+  const statusPill = document.getElementById('status-pill');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+  const codeLines = document.querySelectorAll('.line');
+
+  function highlightCode(keys) {
+    codeLines.forEach(line => {
+      const k = line.getAttribute('data-key');
+      line.classList.toggle('active', keys.includes(k));
+    });
+  }
+
+  function setMode(newMode) {
+    if (!['vulnerable', 'secure'].includes(newMode)) return;
+    mode = newMode;
+    if (mode === 'vulnerable') {
+      btnVulnerable?.classList.add('active');
+      btnSecure?.classList.remove('active');
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge danger';
+      if (modeStatusText) modeStatusText.textContent = 'VULNERABLE — innerHTML renderiza HTML tal cual';
+      highlightCode(['vuln']);
+    } else {
+      btnSecure?.classList.add('active');
+      btnVulnerable?.classList.remove('active');
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge safe';
+      if (modeStatusText) modeStatusText.textContent = 'SEGURO — textContent muestra solo texto plano';
+      highlightCode(['sec']);
+    }
+    resetRender();
+  }
+
+  function resetRender() {
+    if (renderArea) {
+      renderArea.innerHTML = '<div class="render-empty">El resultado del renderizado aparecerá aquí...</div>';
+    }
+    if (renderSimulation) renderSimulation.style.display = 'none';
+    if (consequenceZone) consequenceZone.style.display = 'none';
+    if (explainIdle) explainIdle.style.display = 'block';
+    if (explainActive) explainActive.style.display = 'none';
+    if (consoleLine) consoleLine.style.display = 'none';
+    if (statusPill) {
+      statusPill.textContent = 'Listo para inyectar';
+      statusPill.className = 'status-pill';
+    }
+  }
+
+  function escapeHtml(str) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return str.replace(/[&<>"']/g, c => map[c]);
+  }
+
+  function isXSSPayload(input) {
+    const lower = input.toLowerCase();
+    return lower.includes('<script') ||
+           lower.includes('onerror') ||
+           lower.includes('onload') ||
+           lower.includes('onclick') ||
+           lower.includes('onfocus') ||
+           lower.includes('onmouseover') ||
+           lower.includes('javascript:') ||
+           lower.includes('<img') ||
+           lower.includes('<svg') ||
+           lower.includes('<iframe') ||
+           lower.includes('<object') ||
+           lower.includes('<embed');
+  }
+
+  function simulateXSSExecution(input) {
+    // Instead of actually executing, we simulate the consequence visually
+    if (renderSimulation) {
+      renderSimulation.style.display = 'block';
+      renderSimulation.innerHTML = `
+        <div class="sim-overlay">
+          <div class="sim-alert-box">
+            <div class="sim-alert-icon">🚨</div>
+            <div class="sim-alert-title">Script ejecutado en el navegador</div>
+            <div class="sim-alert-detail">
+              <code>${escapeHtml(input)}</code>
+            </div>
+            <div class="sim-alert-consequence">
+              En un ataque real, este código podría: robar cookies, redirigir al usuario, robar tokens de sesión, o tomar control de la cuenta.
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (consequenceZone) {
+      consequenceZone.style.display = 'block';
+      if (consequenceIcon) consequenceIcon.textContent = '🚨';
+      if (consequenceTitle) consequenceTitle.textContent = 'Script XSS ejecutado';
+      if (consequenceBody) {
+        consequenceBody.innerHTML = `
+          <div class="consequence-row">
+            <span class="consequence-label">Método de renderizado:</span>
+            <span class="consequence-value danger">innerHTML</span>
+          </div>
+          <div class="consequence-row">
+            <span class="consequence-label">Resultado:</span>
+            <span class="consequence-value danger">El navegador ejecutó el HTML inyectado como código</span>
+          </div>
+          <div class="consequence-row">
+            <span class="consequence-label">Riesgo real:</span>
+            <span class="consequence-value">Robo de cookies, sesión, redirección maliciosa, defacement</span>
+          </div>
+        `;
+      }
+    }
+  }
+
+  function renderInput(input) {
+    if (!input || !input.trim()) return;
+    const trimmed = input.trim();
+    const hasXSS = isXSSPayload(trimmed);
+
+    if (mode === 'vulnerable') {
+      // VULNERABLE: innerHTML — renders HTML as-is
+      if (renderArea) {
+        renderArea.innerHTML = trimmed;
+      }
+
+      if (hasXSS) {
+        simulateXSSExecution(trimmed);
+        sound.play('playBlocked');
+
+        if (statusPill) {
+          statusPill.textContent = 'XSS detectado — script ejecutado';
+          statusPill.className = 'status-pill danger';
+        }
+        if (explainIdle) explainIdle.style.display = 'none';
+        if (explainActive) explainActive.style.display = 'block';
+        if (explainTag) {
+          explainTag.textContent = 'XSS ejecutado';
+          explainTag.className = 'explain-tag danger';
+        }
+        if (explainText) {
+          explainText.innerHTML = `<strong style="color:var(--rose,#fb7185)">innerHTML ejecutó el HTML inyectado:</strong> El navegador interpretó <code>${escapeHtml(trimmed)}</code> como HTML válido y ejecutó el <code>onerror</code> del tag <code>&lt;img&gt;</code>. En un escenario real, un atacante podría robar cookies, sesiones o redirigir al usuario a un sitio malicioso.`;
+        }
+        if (consoleLine) {
+          consoleLine.style.display = 'block';
+          consoleLine.className = 'console-line danger';
+          consoleLine.innerHTML = `[XSS] innerHTML ejecutó: ${escapeHtml(trimmed)}`;
+        }
+        highlightCode(['vuln']);
+      } else {
+        sound.play('playStep');
+        if (statusPill) {
+          statusPill.textContent = 'Renderizado con innerHTML (sin payload)';
+          statusPill.className = 'status-pill';
+        }
+        if (explainIdle) explainIdle.style.display = 'none';
+        if (explainActive) explainActive.style.display = 'block';
+        if (explainTag) {
+          explainTag.textContent = 'innerHTML (sin amenaza)';
+          explainTag.className = 'explain-tag';
+        }
+        if (explainText) {
+          explainText.innerHTML = `innerHTML renderizó el HTML: el tag <code>&lt;b&gt;</code> se interpreta y el texto aparece en negrita. Esto es útil para contenido legítimo, pero <strong>acepta cualquier HTML</strong> — incluyendo scripts maliciosos.`;
+        }
+        if (consoleLine) {
+          consoleLine.style.display = 'block';
+          consoleLine.className = 'console-line';
+          consoleLine.innerHTML = `innerHTML renderizó ${trimmed.length} caracteres de HTML.`;
+        }
+        highlightCode(['vuln']);
+      }
+    } else {
+      // SECURE: textContent — plain text only
+      if (renderArea) {
+        renderArea.textContent = trimmed;
+      }
+
+      if (hasXSS) {
+        sound.play('playSuccess');
+
+        if (consequenceZone) {
+          consequenceZone.style.display = 'block';
+          if (consequenceIcon) consequenceIcon.textContent = '🛡️';
+          if (consequenceTitle) consequenceTitle.textContent = 'Payload neutralizado';
+          if (consequenceBody) {
+            consequenceBody.innerHTML = `
+              <div class="consequence-row">
+                <span class="consequence-label">Método de renderizado:</span>
+                <span class="consequence-value safe">textContent</span>
+              </div>
+              <div class="consequence-row">
+                <span class="consequence-label">Resultado:</span>
+                <span class="consequence-value safe">El HTML se muestra como texto literal, sin ejecutarse</span>
+              </div>
+              <div class="consequence-row">
+                <span class="consequence-label">Estado:</span>
+                <span class="consequence-value safe">Amenaza neutralizada</span>
+              </div>
+            `;
+          }
+        }
+
+        if (statusPill) {
+          statusPill.textContent = 'Payload bloqueado — textContent';
+          statusPill.className = 'status-pill success';
+        }
+        if (explainIdle) explainIdle.style.display = 'none';
+        if (explainActive) explainActive.style.display = 'block';
+        if (explainTag) {
+          explainTag.textContent = 'XSS bloqueado';
+          explainTag.className = 'explain-tag safe';
+        }
+        if (explainText) {
+          explainText.innerHTML = `<strong style="color:var(--green,#10b981)">textContent ignoró el HTML:</strong> El navegador muestra <code>${escapeHtml(trimmed)}</code> como texto literal. El <code>&lt;img&gt;</code> y su <code>onerror</code> nunca se interpretaron como HTML — solo son caracteres de texto. El script nunca se ejecutó.`;
+        }
+        if (consoleLine) {
+          consoleLine.style.display = 'block';
+          consoleLine.className = 'console-line success';
+          consoleLine.innerHTML = `[SAFE] textContent renderizó ${trimmed.length} caracteres como texto plano. Cero ejecución de HTML.`;
+        }
+        highlightCode(['sec']);
+      } else {
+        sound.play('playStep');
+
+        if (statusPill) {
+          statusPill.textContent = 'Renderizado con textContent';
+          statusPill.className = 'status-pill success';
+        }
+        if (explainIdle) explainIdle.style.display = 'none';
+        if (explainActive) explainActive.style.display = 'block';
+        if (explainTag) {
+          explainTag.textContent = 'textContent (seguro)';
+          explainTag.className = 'explain-tag safe';
+        }
+        if (explainText) {
+          explainText.innerHTML = `textContent muestra el texto tal cual: <code>&lt;b&gt;Hola&lt;/b&gt;</code> aparece como texto plano con los tags visibles, no en negrita. Es más seguro porque <strong>nunca interpreta HTML</strong>.`;
+        }
+        if (consoleLine) {
+          consoleLine.style.display = 'block';
+          consoleLine.className = 'console-line success';
+          consoleLine.innerHTML = `[SAFE] textContent renderizó ${trimmed.length} caracteres como texto plano.`;
+        }
+        highlightCode(['sec']);
+      }
+    }
+  }
+
+  // Event listeners
+  btnVulnerable?.addEventListener('click', () => setMode('vulnerable'));
+  btnSecure?.addEventListener('click', () => setMode('secure'));
+
+  btnRender?.addEventListener('click', () => renderInput(xssInput?.value || ''));
+
+  xssInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') renderInput(xssInput.value);
+  });
+
+  btnPresetNormal?.addEventListener('click', () => {
+    if (xssInput) xssInput.value = NORMAL_TEXT;
+    renderInput(NORMAL_TEXT);
+  });
+
+  btnPresetXss?.addEventListener('click', () => {
+    if (xssInput) xssInput.value = XSS_PAYLOAD;
+    renderInput(XSS_PAYLOAD);
+  });
+
+  // Init
+  setMode('vulnerable');
+})();
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --rose: #fb7185;
+    --rose-soft: rgba(251, 113, 133, 0.18);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.18);
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+  .topbar-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .brand-link { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--text-primary); text-decoration: none; font-size: 15px; font-weight: 700; }
+  .brand-link:hover { color: var(--text-white); }
+  .brand-mark { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: #ffffff; background: var(--rose); font-size: 12px; font-weight: 800; box-shadow: 0 0 0 4px var(--rose-soft); }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .home-action { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 7px 12px; border: 1px solid var(--api-border); border-radius: 10px; color: var(--api-muted); background: rgba(255,255,255,0.03); text-decoration: none; font-size: 13px; font-weight: 600; transition: color .15s, border-color .15s, background .15s, transform .15s; }
+  .home-action svg { width: 16px; height: 16px; }
+  .home-action:hover { color: var(--text-primary); border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+  .crumbs { font-size: 13.5px; color: var(--api-muted); display: flex; align-items: center; gap: 6px; }
+  .crumbs .sep { color: var(--api-muted-2); }
+  .crumbs .current { color: var(--text-primary); }
+  .crumbs a { color: var(--api-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--text-primary); }
+  .badge-live { font-size: 12px; color: var(--rose); background: var(--rose-soft); border: 1px solid color-mix(in srgb, var(--rose) 30%, transparent); border-radius: var(--radius-pill); padding: 5px 12px; display: flex; align-items: center; gap: 7px; font-weight: 600; }
+  .badge-live .dot { width: 7px; height: 7px; background: var(--rose); border-radius: 50%; box-shadow: 0 0 8px var(--rose); animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.85); } }
+
+  h1 { font-size: clamp(1.85rem, 3.2vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 12px; color: var(--text-white); }
+  .lede { font-size: 15px; line-height: 1.65; color: var(--api-muted); max-width: 860px; margin: 0 0 24px; }
+  .lede code { font-family: var(--font-mono); color: var(--rose); background: var(--rose-soft); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  /* MODE SELECTOR */
+  .mode-selector-card { display: flex; justify-content: space-between; align-items: center; background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); padding: 1rem 1.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 14px; }
+  .mode-toggle-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mode-btn { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--api-border); border-radius: 10px; padding: 8px 16px; cursor: pointer; transition: all .2s ease; text-align: left; }
+  .mode-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+  .mode-btn.active { background: rgba(251,113,133,0.12); border-color: var(--rose); box-shadow: 0 0 14px rgba(251,113,133,0.2); }
+  .mode-btn#btn-mode-secure.active { background: rgba(16,185,129,0.12); border-color: var(--green); box-shadow: 0 0 14px rgba(16,185,129,0.2); }
+  .mode-icon { font-size: 20px; }
+  .mode-btn-text { display: flex; flex-direction: column; }
+  .mode-name { font-size: 13.5px; font-weight: 700; color: var(--text-white); }
+  .mode-desc { font-size: 11px; color: var(--api-muted); }
+  .mode-status-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; font-family: var(--font-mono); padding: 6px 12px; border-radius: var(--radius-pill); }
+  .mode-status-badge.danger { background: var(--red-soft); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .mode-status-badge.safe { background: var(--green-soft); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .mode-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* DIAGRAM CARD */
+  .diagram-card { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); padding: 1.6rem; margin-bottom: 1.2rem; box-shadow: 0 12px 35px rgba(0,0,0,0.35); }
+  .diagram-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--api-border-soft); }
+  .meta-left { display: flex; align-items: center; gap: 10px; }
+  .status-pill { font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--api-border); background: rgba(255,255,255,0.03); color: var(--text-secondary); transition: all .25s; }
+  .status-pill.danger { color: #fca5a5; background: var(--red-soft); border-color: rgba(239,68,68,0.3); }
+  .status-pill.success { color: #6ee7b7; background: var(--green-soft); border-color: rgba(16,185,129,0.3); }
+
+  /* INPUT ZONE */
+  .input-zone { margin-bottom: 24px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 8px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .xss-input { flex: 1; padding: 10px 14px; font-family: var(--font-mono); font-size: 14px; background: var(--canvas-bg, #0a0d12); border: 1px solid var(--api-border); border-radius: 10px; color: var(--text-primary); transition: border-color .15s, box-shadow .15s; }
+  .xss-input:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-soft); }
+  .xss-input::placeholder { color: var(--api-muted-2); }
+
+  button.primary { display: inline-flex; align-items: center; gap: 7px; background: var(--rose); color: #ffffff; border: none; font-size: 13.5px; font-weight: 700; padding: 10px 18px; border-radius: 9px; cursor: pointer; box-shadow: 0 2px 10px rgba(251,113,133,0.35); transition: transform .12s, filter .12s; }
+  button.primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  button.primary:active { transform: translateY(0); }
+  button.ghost { background: transparent; color: var(--api-muted); border: 1px solid var(--api-border); font-size: 13.5px; font-weight: 600; padding: 8px 14px; border-radius: 9px; cursor: pointer; transition: color .15s, border-color .15s; }
+  button.ghost:hover { color: var(--text-white); border-color: var(--border-hover); }
+
+  .preset-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+  .preset-btn { display: flex; align-items: center; gap: 10px; padding: 10px 16px; text-align: left; min-width: 0; flex: 1; }
+  .preset-icon { font-size: 18px; flex-shrink: 0; }
+  .preset-text { font-size: 12.5px; line-height: 1.4; }
+  .preset-text code { font-family: var(--font-mono); font-size: 11px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; word-break: break-all; }
+  .danger-preset { border-color: rgba(239,68,68,0.3); }
+  .danger-preset:hover { border-color: var(--rose); background: rgba(251,113,133,0.08); }
+
+  /* RENDER ZONE */
+  .render-zone { border-top: 1px solid var(--api-border-soft); padding-top: 20px; margin-bottom: 16px; }
+  .render-label { font-size: 12px; font-weight: 600; color: var(--api-muted); margin-bottom: 8px; }
+  .render-area { min-height: 60px; padding: 14px 16px; background: #090c10; border: 1px solid var(--api-border-soft); border-radius: 8px; font-size: 14px; line-height: 1.6; color: var(--text-primary); transition: border-color .2s; overflow-wrap: break-word; word-break: break-word; }
+  .render-area:empty::before { content: ''; }
+  .render-empty { color: var(--api-muted-2); font-style: italic; font-size: 13px; }
+
+  .render-simulation { margin-top: 12px; }
+  .sim-overlay { position: relative; }
+  .sim-alert-box { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(251,113,133,0.08)); border: 1px solid rgba(239,68,68,0.4); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; animation: shakeAlert 0.4s ease; }
+  @keyframes shakeAlert {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+  }
+  .sim-alert-icon { font-size: 28px; }
+  .sim-alert-title { font-size: 14px; font-weight: 700; color: #fca5a5; }
+  .sim-alert-detail { font-family: var(--font-mono); font-size: 12px; color: var(--api-muted); background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 6px; }
+  .sim-alert-detail code { color: #fca5a5; }
+  .sim-alert-consequence { font-size: 12.5px; color: var(--api-muted); line-height: 1.5; }
+
+  /* CONSEQUENCE ZONE */
+  .consequence-zone { border-top: 1px solid var(--api-border-soft); padding-top: 16px; margin-top: 12px; }
+  .consequence-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .consequence-icon { font-size: 18px; }
+  .consequence-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .consequence-body { display: flex; flex-direction: column; gap: 6px; }
+  .consequence-row { display: flex; gap: 8px; font-size: 12.5px; line-height: 1.5; }
+  .consequence-label { color: var(--api-muted); min-width: 140px; flex-shrink: 0; }
+  .consequence-value { color: var(--text-primary); }
+  .consequence-value.danger { color: #fca5a5; }
+  .consequence-value.safe { color: #6ee7b7; }
+
+  /* SPLIT */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; margin-bottom: 2rem; }
+  @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--api-border-soft); }
+  .panel-head .title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .panel-head .filename { font-family: var(--font-mono); font-size: 11.5px; color: var(--api-muted); }
+
+  pre.code { margin: 0; padding: 14px 16px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; background: #090c10; color: #e2e8f0; overflow-x: auto; }
+  .code .line { display: block; padding: 1px 6px; border-radius: 4px; transition: background .2s, color .2s; }
+  .code .line.active { background: rgba(251,113,133,0.18); color: #ffe4e6; }
+  .kw { color: #f472b6; font-weight: 600; }
+  .str { color: #34d399; }
+  .num { color: #fbbf24; }
+  .cm { color: #64748b; font-style: italic; }
+  .fn { color: #38bdf8; }
+
+  /* EXPLANATION */
+  .explain-body { padding: 1.25rem; }
+  .explain-idle { font-size: 13.5px; line-height: 1.6; color: var(--api-muted); margin-bottom: 1rem; }
+  .explain-tag { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; background: var(--rose-soft); color: var(--rose); }
+  .explain-tag.danger { background: var(--red-soft); color: #fca5a5; }
+  .explain-tag.safe { background: var(--green-soft); color: #6ee7b7; }
+  .explain-text { font-size: 14px; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem; }
+  .explain-text code { font-family: var(--font-mono); font-size: 12.5px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+  .explain-text strong { color: var(--text-primary); }
+
+  .console-line { background: #090c10; border: 1px solid var(--api-border-soft); border-radius: 6px; padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 1.2rem; }
+  .console-line.danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+  .console-line.success { color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
+
+  .concepts-grid { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--api-border-soft); padding-top: 1.2rem; }
+  .concept-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.55; color: var(--api-muted); }
+  .concept-item strong { color: var(--text-primary); }
+  .concept-item code { font-family: var(--font-mono); font-size: 12px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+  .concept-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+  .sound-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--api-border); color: var(--api-muted); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: all .15s ease; }
+  .sound-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-white); }
+  .sound-btn.muted { opacity: 0.6; border-style: dashed; }
+
+  @media (max-width: 640px) {
+    .api-page { padding: 0.1rem 0 0.75rem; }
+    .topbar { align-items: flex-start; gap: 12px; flex-direction: column; margin-bottom: 28px; padding-bottom: 20px; }
+    .topbar-actions { width: 100%; justify-content: space-between; }
+    h1 { font-size: 26px; }
+    .diagram-card { padding: 28px 16px 22px; }
+    .preset-buttons { flex-direction: column; }
+    .input-row { flex-direction: column; }
+    .consequence-row { flex-direction: column; gap: 2px; }
+    .consequence-label { min-width: auto; }
+  }
+</style>

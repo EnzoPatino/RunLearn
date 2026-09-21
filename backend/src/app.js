@@ -6,6 +6,9 @@ import metricsRouter from './routes/metrics.routes.js';
 import peopleRouter from './routes/people.js';
 import cacheDemoRouter from './routes/cache-demo.js';
 import transaccionDemoRouter from './routes/transaccion-demo.js';
+import sqliDemoRouter from './routes/sqli-demo.js';
+import hashDemoRouter from './routes/hash-demo.js';
+import jwtDemoRouter from './routes/jwt-demo.js';
 import { trackRequest } from './metrics.js';
 
 const app = express();
@@ -22,6 +25,9 @@ app.use('/api/metrics', metricsRouter);
 app.use('/api/people', peopleRouter);
 app.use('/api/cache-demo', cacheDemoRouter);
 app.use('/api/transaccion-demo', transaccionDemoRouter);
+app.use('/api/sqli-demo', sqliDemoRouter);
+app.use('/api/hash-demo', hashDemoRouter);
+app.use('/api/jwt-demo', jwtDemoRouter);
 
 app.get('/', (req, res) => {
   res.json({

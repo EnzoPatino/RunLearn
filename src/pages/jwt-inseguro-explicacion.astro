@@ -1,0 +1,1434 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — JWT Inseguro">
+  <div class="api-page">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">JWT Inseguro</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="header-badge">Módulo de Seguridad Web</div>
+      <h1>JWT Inseguro: Secretos Débiles y Algoritmo "none"</h1>
+      <p class="lede">
+        Un <strong>JSON Web Token (JWT)</strong> contiene información pública legible por cualquiera. Su seguridad depende
+        <strong>exclusivamente</strong> de que el servidor valide la firma con un secreto inquebrantable y nunca acepte algoritmos no autorizados.
+        Explorá los 3 modos y probá forjar un rol de administrador en tiempo real.
+      </p>
+    </div>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector-card">
+      <div class="mode-toggle-group">
+        <button type="button" class="mode-btn active" id="btn-mode-secreto-debil" data-mode="secreto-debil">
+          <span class="mode-icon">🔓</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">1. Secreto Débil</span>
+            <span class="mode-desc">HS256 con clave trivial ("123456")</span>
+          </div>
+        </button>
+
+        <button type="button" class="mode-btn" id="btn-mode-alg-none" data-mode="alg-none">
+          <span class="mode-icon">⚠️</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">2. Algoritmo "none"</span>
+            <span class="mode-desc">Bypass de firma sin clave</span>
+          </div>
+        </button>
+
+        <button type="button" class="mode-btn" id="btn-mode-seguro" data-mode="seguro">
+          <span class="mode-icon">🛡️</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">3. Modo Seguro</span>
+            <span class="mode-desc">HS256 + 256 bits aleatorios</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="mode-status-badge danger" id="mode-status-badge">
+        <span class="mode-status-dot"></span>
+        <span id="mode-status-text">VULNERABLE — Firma generada con secreto débil susceptible a fuerza bruta instantánea</span>
+      </div>
+    </div>
+
+    <!-- TOKEN INSPECTOR CARD (jwt.io style) -->
+    <div class="workbench-card">
+      <div class="workbench-header">
+        <div class="wb-title-box">
+          <span class="wb-icon">🎫</span>
+          <div>
+            <h2 class="wb-title">Token JWT Actual (Transmitido en cada petición HTTP)</h2>
+            <p class="wb-subtitle">Formato: <code>base64Url(Header)</code>.<code>base64Url(Payload)</code>.<code>base64Url(Firma)</code></p>
+          </div>
+        </div>
+        <div class="wb-actions">
+          <button class="ghost-small" id="btn-copy-token" type="button" title="Copiar token al portapapeles">
+            <span id="copy-icon">📋</span> <span id="copy-text">Copiar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ENCODED JWT STRING -->
+      <div class="raw-jwt-container">
+        <div class="raw-jwt-label">Cadena JWT compacta (lo que viaja en el header <code>Authorization: Bearer ...</code>):</div>
+        <div class="raw-jwt-box" id="raw-jwt-box" tabindex="0" role="textbox" aria-label="Token JWT codificado">
+          <span class="jwt-part jwt-h" id="raw-h">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span><span class="jwt-dot">.</span><span class="jwt-part jwt-p" id="raw-p">eyJzdWIiOiJ1c3JfMTAxIiwidXNlciI6ImVzdHVkaWFudGVfZGVtbyIsImVtYWlsIjoiYWx1bW5vQHJ1bmxlYXJuLmRldiIsInJvbCI6InVzZXIiLCJpYXQiOjE3ODk5NTgwNzEsImV4cCI6MTc4OTk2MTY3MX0</span><span class="jwt-dot">.</span><span class="jwt-part jwt-s" id="raw-s">2_qdZYw6ZCttbC31rYO63gbzuKvoiG7cY9YeRZuQx2Y</span>
+        </div>
+      </div>
+
+      <!-- DECODED TRI-PANEL -->
+      <div class="jwt-decoded-grid">
+        <!-- HEADER -->
+        <div class="decoded-panel panel-header">
+          <div class="panel-badge header-badge">
+            <span class="dot-h"></span> HEADER: ALGORITMO & TIPO
+          </div>
+          <pre class="decoded-code" id="decoded-header">&#123;
+  "alg": "HS256",
+  "typ": "JWT"
+&#125;</pre>
+          <div class="panel-footer" id="header-desc">
+            Algoritmo indicado: <code>HS256</code> (HMAC con SHA-256).
+          </div>
+        </div>
+
+        <!-- PAYLOAD -->
+        <div class="decoded-panel panel-payload">
+          <div class="panel-badge payload-badge">
+            <span class="dot-p"></span> PAYLOAD: DATOS / RECLAMOS
+          </div>
+          <pre class="decoded-code" id="decoded-payload">&#123;
+  "sub": "usr_101",
+  "user": "estudiante_demo",
+  "email": "alumno@runlearn.dev",
+  "rol": "user"
+&#125;</pre>
+          <div class="panel-footer" id="payload-desc">
+            Rol actual del estudiante: <span class="role-pill role-user" id="pill-user-role">user</span>
+          </div>
+        </div>
+
+        <!-- SIGNATURE / SECRET -->
+        <div class="decoded-panel panel-signature">
+          <div class="panel-badge signature-badge">
+            <span class="dot-s"></span> FIRMA Y SECRETO DEL SERVIDOR
+          </div>
+          <div class="sig-content">
+            <div class="sig-calc" id="sig-calc-text">
+              HMACSHA256(<br/>
+              &nbsp;&nbsp;base64Url(Header) + "." +<br/>
+              &nbsp;&nbsp;base64Url(Payload),<br/>
+              &nbsp;&nbsp;<span class="secret-val" id="secret-display-val">"123456"</span><br/>
+              )
+            </div>
+            <div class="sig-status-box" id="sig-status-box">
+              <span class="status-key">Entropía:</span>
+              <span class="status-val danger-text" id="secret-entropy-val">~16 bits (Muy Débil)</span>
+            </div>
+          </div>
+          <div class="panel-footer" id="sig-desc">
+            ⚠️ Secreto trivial. Un atacante puede crackearlo offline en microsegundos.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTACK WORKBENCH -->
+    <div class="attack-card" id="attack-card">
+      <div class="attack-header">
+        <div class="attack-header-left">
+          <span class="attack-badge">Simulador de Ataque</span>
+          <h3 class="attack-title">Objetivo del Atacante: Forjar un Token con Privilegios de Administrador</h3>
+          <p class="attack-subtitle">
+            El atacante intentará explotar la configuración del modo activo para alterar <code>"rol": "user"</code> a <code>"rol": "admin"</code> y lograr que el servidor lo acepte como válido.
+          </p>
+        </div>
+        <div class="attack-header-right">
+          <button class="primary attack-btn" id="btn-forge-admin" type="button">
+            <span class="btn-spark" aria-hidden="true">⚡</span>
+            <span>Intentar forjar admin</span>
+          </button>
+          <button class="ghost reset-btn" id="btn-reset-demo" type="button">
+            <span>↺ Reiniciar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ATTACK PROCESS FEEDBACK -->
+      <div class="attack-body" id="attack-body">
+        <div class="attack-placeholder" id="attack-placeholder">
+          <div class="placeholder-icon">🎯</div>
+          <div class="placeholder-title">Listo para simular la forja de token</div>
+          <div class="placeholder-text">
+            Hacé clic en <strong>"Intentar forjar admin"</strong> para ver cómo se comporta el servidor frente al ataque correspondiente a este modo.
+          </div>
+        </div>
+
+        <!-- LIVE ATTACK EXECUTION VIEW -->
+        <div class="attack-execution" id="attack-execution" style="display:none">
+          <div class="attack-steps-grid">
+            <!-- STEP 1 -->
+            <div class="step-card" id="step-1">
+              <div class="step-num">Paso 1</div>
+              <div class="step-title" id="step-1-title">Análisis del Token</div>
+              <div class="step-desc" id="step-1-desc">Extrayendo Header, Payload y Firma del JWT recibido...</div>
+              <div class="step-indicator" id="step-1-ind">✓ Completado</div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="step-card" id="step-2">
+              <div class="step-num">Paso 2</div>
+              <div class="step-title" id="step-2-title">Vector de Ataque</div>
+              <div class="step-desc" id="step-2-desc">Probando contraseñas comunes del diccionario...</div>
+              <div class="step-indicator" id="step-2-ind">En progreso...</div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step-card" id="step-3">
+              <div class="step-num">Paso 3</div>
+              <div class="step-title" id="step-3-title">Alteración de Rol</div>
+              <div class="step-desc" id="step-3-desc">Inyectando claim <code>"rol": "admin"</code> en el payload...</div>
+              <div class="step-indicator" id="step-3-ind">Pendiente</div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="step-card" id="step-4">
+              <div class="step-num">Paso 4</div>
+              <div class="step-title" id="step-4-title">Validación en Servidor</div>
+              <div class="step-desc" id="step-4-desc">Enviando token al endpoint <code>/api/jwt-demo/verify</code>...</div>
+              <div class="step-indicator" id="step-4-ind">Pendiente</div>
+            </div>
+          </div>
+
+          <!-- ATTACK CONSOLE / METRICS -->
+          <div class="attack-telemetry">
+            <div class="telemetry-item">
+              <span class="tel-label">Técnica aplicada:</span>
+              <span class="tel-val" id="tel-technique">—</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="tel-label">Tiempo de ejecución:</span>
+              <span class="tel-val highlight" id="tel-time">—</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="tel-label">Secreto descubierto:</span>
+              <span class="tel-val" id="tel-secret">—</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="tel-label">Intentos probados:</span>
+              <span class="tel-val" id="tel-attempts">—</span>
+            </div>
+          </div>
+
+          <!-- VERDICT BOX -->
+          <div class="verdict-banner" id="verdict-banner">
+            <div class="verdict-icon-box" id="verdict-icon">🚨</div>
+            <div class="verdict-details">
+              <div class="verdict-headline" id="verdict-headline">Resultado del Ataque</div>
+              <div class="verdict-body-text" id="verdict-body-text">Procesando...</div>
+              <div class="verdict-auth-status" id="verdict-auth-status">
+                <span class="auth-label">Rol final autenticado en el backend:</span>
+                <span class="role-pill role-danger" id="verdict-role-pill">admin</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- FORGED TOKEN COMPARISON (WHEN APPLICABLE) -->
+          <div class="forged-token-box" id="forged-token-box" style="display:none">
+            <div class="forged-title">Token forjado generado por el atacante:</div>
+            <div class="forged-token-raw" id="forged-token-raw">...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE COMPARISON & EXPLANATION (SPLIT PANEL) -->
+    <div class="split">
+      <!-- CODE PANEL -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-head-title">
+            <span class="title">Verificación en el Servidor Express</span>
+            <span class="filename" id="code-filename">backend/src/routes/auth.routes.js</span>
+          </div>
+          <span class="code-badge" id="code-mode-badge">HS256 Débil</span>
+        </div>
+
+        <pre class="code" id="code-block"><!--
+--><span class="line" data-key="secreto-debil"><span class="cm">// ❌ CASO 1: SECRETO DÉBIL O HARCODEADO (VULNERABLE)</span></span>
+<span class="line" data-key="secreto-debil"><span class="kw">const</span> WEAK_SECRET = <span class="str">"123456"</span>; <span class="cm">// ⚠️ Clave trivial</span></span>
+<span class="line" data-key="secreto-debil"><span class="kw">const</span> token = jwt.sign(userPayload, WEAK_SECRET);</span>
+<span class="line" data-key="secreto-debil"><span class="cm">// Un atacante con hashcat prueba 500M claves/segundo offline.</span></span>
+<span class="line" data-key="secreto-debil"><span class="kw">const</span> decoded = jwt.verify(token, WEAK_SECRET);</span>
+<span class="line" data-key="secreto-debil"><br/></span>
+<span class="line" data-key="alg-none"><span class="cm">// ❌ CASO 2: ALGORITMO "none" SIN WHITELIST (CRÍTICO)</span></span>
+<span class="line" data-key="alg-none"><span class="cm">// Servidor vulnerable que no restringe los algoritmos:</span></span>
+<span class="line" data-key="alg-none"><span class="kw">function</span> verifyInsecure(token) &#123;</span>
+<span class="line" data-key="alg-none">  <span class="kw">const</span> [header, payload, sig] = token.split(<span class="str">'.'</span>);</span>
+<span class="line" data-key="alg-none">  <span class="kw">const</span> &#123; alg &#125; = JSON.parse(atob(header));</span>
+<span class="line" data-key="alg-none">  <span class="kw">if</span> (alg === <span class="str">'none'</span>) &#123;</span>
+<span class="line" data-key="alg-none">    <span class="kw">return</span> JSON.parse(atob(payload)); <span class="cm">// 🚨 Acepta sin firma!</span></span>
+<span class="line" data-key="alg-none">  &#125;</span>
+<span class="line" data-key="alg-none">&#125;</span>
+<span class="line" data-key="alg-none"><br/></span>
+<span class="line" data-key="seguro"><span class="cm">// ✅ CASO 3: IMPLEMENTACIÓN SEGURA DE PRODUCCIÓN</span></span>
+<span class="line" data-key="seguro"><span class="kw">const</span> SECRET = process.env.JWT_SECRET; <span class="cm">// 256 bits aleatorios</span></span>
+<span class="line" data-key="seguro"><span class="kw">const</span> decoded = jwt.verify(token, SECRET, &#123;</span>
+<span class="line" data-key="seguro">  algorithms: [<span class="str">'HS256'</span>], <span class="cm">// 🔒 Whitelist estricta: rechaza "none"</span></span>
+<span class="line" data-key="seguro">  maxAge: <span class="str">'1h'</span>           <span class="cm">// ⏱ Expiración obligatoria</span></span>
+<span class="line" data-key="seguro">&#125;);</span>
+        </pre>
+      </div>
+
+      <!-- EXPLANATION PANEL -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Fundamentos Criptográficos</span>
+          <span class="filename">Guía de Seguridad JWT</span>
+        </div>
+        <div class="explain-body">
+          <div class="explain-tag-wrapper">
+            <span class="explain-tag danger" id="explain-tag">SECRETO DÉBIL</span>
+          </div>
+
+          <div class="explain-dynamic-text" id="explain-text">
+            <p>
+              Cuando un servidor firma un JWT con una clave corta como <code>"123456"</code> o <code>"secret"</code>,
+              el atacante no necesita vulnerar el servidor: toma el token que recibió legalmente y ejecuta
+              <strong>fuerza bruta offline</strong> con herramientas como John the Ripper o Hashcat.
+            </p>
+            <p>
+              Al descubrir la clave en milisegundos, el atacante puede forjar nuevos tokens cambiando el rol a <code>"admin"</code>,
+              y el servidor los considerará 100% auténticos.
+            </p>
+          </div>
+
+          <div class="concepts-grid">
+            <div class="concept-item">
+              <span class="concept-icon">🛡️</span>
+              <div class="concept-content">
+                <strong>¿Por qué el servidor debe forzar la whitelist de algoritmos?</strong>
+                Si el servidor confía en el header <code>"alg"</code> enviado por el cliente, un atacante puede cambiarlo a <code>"none"</code>.
+                Al configurar explícitamente <code>algorithms: ['HS256']</code> en <code>jwt.verify()</code>, la librería rechaza de raíz cualquier token sin firma.
+              </div>
+            </div>
+
+            <div class="concept-item">
+              <span class="concept-icon">🔑</span>
+              <div class="concept-content">
+                <strong>¿Por qué el secreto debe tener alta entropía (256 bits)?</strong>
+                HS256 utiliza HMAC con SHA-256. Un secreto seguro debe ser generado con generadores criptográficos aleatorios (ej. <code>crypto.randomBytes(32).toString('hex')</code>), haciendo que el espacio de búsqueda sea de \(2^{256}\) combinaciones, matemáticamente imposible de crackear.
+              </div>
+            </div>
+
+            <div class="concept-item">
+              <span class="concept-icon">👁️</span>
+              <div class="concept-content">
+                <strong>El payload es público (Base64Url ≠ Cifrado)</strong>
+                Cualquiera que intercepte un JWT puede decodificar el payload al instante sin ninguna clave. Nunca deben guardarse contraseñas, tarjetas de crédito ni datos sensibles en los claims del token.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+function setupJwtDemo() {
+  const sound = initSoundControls();
+
+  // API Base
+  const apiBase =
+    (window as any).RUNLEARN_API_URL ||
+    (window as any).API_URL ||
+    'http://localhost:5000';
+
+  let currentMode: 'secreto-debil' | 'alg-none' | 'seguro' = 'secreto-debil';
+  let isAttacking = false;
+  let currentToken = '';
+
+  // DOM Elements
+  const btnModeDebil = document.getElementById('btn-mode-secreto-debil');
+  const btnModeNone = document.getElementById('btn-mode-alg-none');
+  const btnModeSeguro = document.getElementById('btn-mode-seguro');
+  const modeStatusBadge = document.getElementById('mode-status-badge');
+  const modeStatusText = document.getElementById('mode-status-text');
+
+  const rawH = document.getElementById('raw-h');
+  const rawP = document.getElementById('raw-p');
+  const rawS = document.getElementById('raw-s');
+  const btnCopyToken = document.getElementById('btn-copy-token');
+  const copyText = document.getElementById('copy-text');
+  const copyIcon = document.getElementById('copy-icon');
+
+  const decodedHeader = document.getElementById('decoded-header');
+  const decodedPayload = document.getElementById('decoded-payload');
+  const headerDesc = document.getElementById('header-desc');
+  const payloadDesc = document.getElementById('payload-desc');
+  const pillUserRole = document.getElementById('pill-user-role');
+
+  const secretDisplayVal = document.getElementById('secret-display-val');
+  const secretEntropyVal = document.getElementById('secret-entropy-val');
+  const sigDesc = document.getElementById('sig-desc');
+  const sigCalcText = document.getElementById('sig-calc-text');
+
+  const btnForgeAdmin = document.getElementById('btn-forge-admin') as HTMLButtonElement;
+  const btnResetDemo = document.getElementById('btn-reset-demo');
+  const attackPlaceholder = document.getElementById('attack-placeholder');
+  const attackExecution = document.getElementById('attack-execution');
+
+  const step1 = document.getElementById('step-1');
+  const step2 = document.getElementById('step-2');
+  const step3 = document.getElementById('step-3');
+  const step4 = document.getElementById('step-4');
+
+  const step1Ind = document.getElementById('step-1-ind');
+  const step2Ind = document.getElementById('step-2-ind');
+  const step3Ind = document.getElementById('step-3-ind');
+  const step4Ind = document.getElementById('step-4-ind');
+
+  const telTechnique = document.getElementById('tel-technique');
+  const telTime = document.getElementById('tel-time');
+  const telSecret = document.getElementById('tel-secret');
+  const telAttempts = document.getElementById('tel-attempts');
+
+  const verdictBanner = document.getElementById('verdict-banner');
+  const verdictIcon = document.getElementById('verdict-icon');
+  const verdictHeadline = document.getElementById('verdict-headline');
+  const verdictBodyText = document.getElementById('verdict-body-text');
+  const verdictRolePill = document.getElementById('verdict-role-pill');
+
+  const forgedTokenBox = document.getElementById('forged-token-box');
+  const forgedTokenRaw = document.getElementById('forged-token-raw');
+
+  const codeModeBadge = document.getElementById('code-mode-badge');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const codeLines = document.querySelectorAll('.line');
+
+  // Highlights code lines matching the active mode
+  function highlightCode(modeKey: string) {
+    codeLines.forEach(line => {
+      const key = line.getAttribute('data-key');
+      line.classList.toggle('active', key === modeKey);
+    });
+  }
+
+  // Set mode UI and trigger token generation
+  async function selectMode(newMode: 'secreto-debil' | 'alg-none' | 'seguro') {
+    if (isAttacking) return;
+    currentMode = newMode;
+    sound.play('playStep');
+
+    // Update buttons
+    btnModeDebil?.classList.toggle('active', newMode === 'secreto-debil');
+    btnModeNone?.classList.toggle('active', newMode === 'alg-none');
+    btnModeSeguro?.classList.toggle('active', newMode === 'seguro');
+
+    // Reset attack preview
+    if (attackPlaceholder) attackPlaceholder.style.display = 'flex';
+    if (attackExecution) attackExecution.style.display = 'none';
+    if (forgedTokenBox) forgedTokenBox.style.display = 'none';
+
+    // Highlight code
+    highlightCode(newMode);
+
+    if (newMode === 'secreto-debil') {
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge danger';
+      if (modeStatusText) modeStatusText.textContent = 'VULNERABLE — Firma con clave trivial ("123456"). Vulnerable a fuerza bruta.';
+      if (codeModeBadge) codeModeBadge.textContent = 'HS256 Secreto Débil';
+      if (explainTag) {
+        explainTag.className = 'explain-tag danger';
+        explainTag.textContent = 'SECRETO DÉBIL';
+      }
+      if (explainText) {
+        explainText.innerHTML = `
+          <p>
+            Cuando un servidor firma un JWT con una clave corta como <code>"123456"</code> o <code>"secret"</code>,
+            el atacante no necesita acceso al servidor: toma el token que recibió legalmente y ejecuta
+            <strong>fuerza bruta offline</strong> probando diccionarios de contraseñas conocidas.
+          </p>
+          <p>
+            Al descubrir la clave en microsegundos, el atacante puede forjar nuevos tokens cambiando el rol a <code>"admin"</code>,
+            y el servidor los considerará 100% auténticos.
+          </p>
+        `;
+      }
+    } else if (newMode === 'alg-none') {
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge danger';
+      if (modeStatusText) modeStatusText.textContent = 'VULNERABLE CRÍTICO — Algoritmo "none" sin firma. Cualquiera puede alterar el token.';
+      if (codeModeBadge) codeModeBadge.textContent = 'Algoritmo "none"';
+      if (explainTag) {
+        explainTag.className = 'explain-tag danger';
+        explainTag.textContent = 'ALGORITMO NONE';
+      }
+      if (explainText) {
+        explainText.innerHTML = `
+          <p>
+            El estándar JWT permite <code>"alg": "none"</code> para casos no protegidos. Sin embargo, si un servidor no restringe
+            explícitamente qué algoritmos acepta (whitelist), un atacante puede simplemente cambiar <code>alg</code> a <code>none</code>
+            y <strong>borrar la firma</strong>.
+          </p>
+          <p>
+            El servidor interpreta que el token es válido sin verificar ninguna firma, permitiendo que cualquiera edite
+            su ID, permisos o rol a su antojo.
+          </p>
+        `;
+      }
+    } else {
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge safe';
+      if (modeStatusText) modeStatusText.textContent = 'SEGURO — Secreto de 256 bits y verificación estricta con whitelist de algoritmos.';
+      if (codeModeBadge) codeModeBadge.textContent = 'HS256 Seguro';
+      if (explainTag) {
+        explainTag.className = 'explain-tag safe';
+        explainTag.textContent = 'MODO SEGURO';
+      }
+      if (explainText) {
+        explainText.innerHTML = `
+          <p>
+            La implementación segura utiliza una clave generada criptográficamente con al menos <strong>256 bits de entropía</strong>
+            (almacenada en variables de entorno, nunca en el repositorio).
+          </p>
+          <p>
+            Además, el servidor aplica <code>algorithms: ['HS256']</code> en <code>jwt.verify()</code>, bloqueando tanto el ataque de diccionario
+            como el intento de bypass mediante <code>alg: "none"</code>.
+          </p>
+        `;
+      }
+    }
+
+    await loadInitialToken();
+  }
+
+  // Fetch or mock the initial token for the mode
+  async function loadInitialToken() {
+    try {
+      const res = await fetch(`${apiBase}/api/jwt-demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: currentMode, action: 'generate' }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        updateTokenDisplay(data);
+        return;
+      }
+    } catch {}
+
+    // Fallback if backend is not reachable
+    renderLocalTokenFallback();
+  }
+
+  function updateTokenDisplay(data: any) {
+    currentToken = data.token;
+    const parts = currentToken.split('.');
+
+    if (rawH) rawH.textContent = parts[0] || '';
+    if (rawP) rawP.textContent = parts[1] || '';
+    if (rawS) rawS.textContent = parts[2] || '';
+
+    if (decodedHeader) decodedHeader.textContent = JSON.stringify(data.parts.header.decoded, null, 2);
+    if (decodedPayload) decodedPayload.textContent = JSON.stringify(data.parts.payload.decoded, null, 2);
+
+    if (pillUserRole) {
+      pillUserRole.textContent = data.parts.payload.decoded.rol || 'user';
+      pillUserRole.className = 'role-pill role-user';
+    }
+
+    if (currentMode === 'secreto-debil') {
+      if (headerDesc) headerDesc.innerHTML = 'Algoritmo indicado: <code>HS256</code>.';
+      if (secretDisplayVal) secretDisplayVal.textContent = '"123456"';
+      if (secretEntropyVal) {
+        secretEntropyVal.textContent = '~16 bits (Muy Débil)';
+        secretEntropyVal.className = 'status-val danger-text';
+      }
+      if (sigDesc) sigDesc.innerHTML = '⚠️ Secreto trivial. Un atacante puede crackearlo offline en microsegundos.';
+      if (sigCalcText) {
+        sigCalcText.innerHTML = `HMACSHA256(<br/>&nbsp;&nbsp;base64Url(Header) + "." +<br/>&nbsp;&nbsp;base64Url(Payload),<br/>&nbsp;&nbsp;<span class="secret-val">"123456"</span><br/>)`;
+      }
+    } else if (currentMode === 'alg-none') {
+      if (headerDesc) headerDesc.innerHTML = 'Algoritmo indicado: <code>none</code> (sin firma).';
+      if (secretDisplayVal) secretDisplayVal.textContent = 'Ninguno';
+      if (secretEntropyVal) {
+        secretEntropyVal.textContent = '0 bits (Sin Criptografía)';
+        secretEntropyVal.className = 'status-val danger-text';
+      }
+      if (sigDesc) sigDesc.innerHTML = '🚨 No existe firma. El servidor vulnerable omite la verificación de integridad.';
+      if (sigCalcText) {
+        sigCalcText.innerHTML = `<span class="danger-text">Sin cálculo criptográfico.</span><br/>Firma vacía o inexistente.`;
+      }
+    } else {
+      if (headerDesc) headerDesc.innerHTML = 'Algoritmo indicado: <code>HS256</code>.';
+      if (secretDisplayVal) secretDisplayVal.textContent = '[256-bit Secret]';
+      if (secretEntropyVal) {
+        secretEntropyVal.textContent = '256 bits (Criptográficamente Seguro)';
+        secretEntropyVal.className = 'status-val safe-text';
+      }
+      if (sigDesc) sigDesc.innerHTML = '✅ Clave de alta entropía. Inmune a ataques de diccionario y fuerza bruta.';
+      if (sigCalcText) {
+        sigCalcText.innerHTML = `HMACSHA256(<br/>&nbsp;&nbsp;base64Url(Header) + "." +<br/>&nbsp;&nbsp;base64Url(Payload),<br/>&nbsp;&nbsp;<span class="safe-text">[Secreto de 256 bits]</span><br/>)`;
+      }
+    }
+  }
+
+  function renderLocalTokenFallback() {
+    const payload = {
+      sub: 'usr_101',
+      user: 'estudiante_demo',
+      email: 'alumno@runlearn.dev',
+      rol: 'user',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    };
+
+    if (currentMode === 'secreto-debil') {
+      const h = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=/g, '');
+      const p = btoa(JSON.stringify(payload)).replace(/=/g, '');
+      const s = '2_qdZYw6ZCttbC31rYO63gbzuKvoiG7cY9YeRZuQx2Y';
+      updateTokenDisplay({
+        token: `${h}.${p}.${s}`,
+        parts: {
+          header: { decoded: { alg: 'HS256', typ: 'JWT' } },
+          payload: { decoded: payload },
+          signature: { raw: s },
+        },
+      });
+    } else if (currentMode === 'alg-none') {
+      const h = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' })).replace(/=/g, '');
+      const p = btoa(JSON.stringify(payload)).replace(/=/g, '');
+      updateTokenDisplay({
+        token: `${h}.${p}.`,
+        parts: {
+          header: { decoded: { alg: 'none', typ: 'JWT' } },
+          payload: { decoded: payload },
+          signature: { raw: '' },
+        },
+      });
+    } else {
+      const h = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=/g, '');
+      const p = btoa(JSON.stringify(payload)).replace(/=/g, '');
+      const s = '8xF7j9vB2cK1LmN5pQ3rT7wY0zX6aD4eG9hJ2mP5sU8';
+      updateTokenDisplay({
+        token: `${h}.${p}.${s}`,
+        parts: {
+          header: { decoded: { alg: 'HS256', typ: 'JWT' } },
+          payload: { decoded: payload },
+          signature: { raw: s },
+        },
+      });
+    }
+  }
+
+  // Attack Execution
+  async function performAttack() {
+    if (isAttacking) return;
+    isAttacking = true;
+    sound.play('playStep');
+
+    btnForgeAdmin.disabled = true;
+    if (attackPlaceholder) attackPlaceholder.style.display = 'none';
+    if (attackExecution) attackExecution.style.display = 'block';
+
+    // Step 1: Analyze
+    setStepState(step1, step1Ind, 'active', 'Analizando token...');
+    setStepState(step2, step2Ind, 'pending', 'Esperando...');
+    setStepState(step3, step3Ind, 'pending', 'Esperando...');
+    setStepState(step4, step4Ind, 'pending', 'Esperando...');
+
+    await new Promise(r => setTimeout(r, 260));
+    setStepState(step1, step1Ind, 'done', '✓ Header y Payload leídos');
+
+    // Step 2: Exploit Vector
+    setStepState(step2, step2Ind, 'active', currentMode === 'secreto-debil' ? 'Crackeando HMAC con diccionario...' : currentMode === 'alg-none' ? 'Omitiendo firma con alg: none...' : 'Probando fuerza bruta...');
+
+    let attackResult: any = null;
+    try {
+      const res = await fetch(`${apiBase}/api/jwt-demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: currentMode, action: 'attack', token: currentToken }),
+      });
+
+      if (res.ok) {
+        attackResult = await res.json();
+      }
+    } catch {}
+
+    // Fallback if backend offline
+    if (!attackResult) {
+      if (currentMode === 'secreto-debil') {
+        attackResult = {
+          success: true,
+          mode: 'secreto-debil',
+          attackType: 'Fuerza bruta de diccionario HMAC',
+          crackedSecret: '123456',
+          attempts: 8,
+          timeMs: 0.34,
+          forgedToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfMTAxIiwidXNlciI6ImVzdHVkaWFudGVfZGVtbyIsImVtYWlsIjoiYWx1bW5vQHJ1bmxlYXJuLmRldiIsInJvbCI6ImFkbWluIiwiZXNjYWxhdGVkIjp0cnVlfQ.9eOzE_25psHZLEPsy17sW36gqK9hvGDPiGdWhiBmxMY',
+          serverVerification: {
+            valid: true,
+            status: 200,
+            assignedRole: 'admin',
+            message: '¡Ataque exitoso! Secreto descubierto ("123456") en 0.34ms. El servidor aceptó la firma manipulada y otorgó rol "admin".',
+          },
+        };
+      } else if (currentMode === 'alg-none') {
+        attackResult = {
+          success: true,
+          mode: 'alg-none',
+          attackType: 'Bypass de firma con algoritmo "none"',
+          crackedSecret: 'Innecesario',
+          attempts: 0,
+          timeMs: 0.01,
+          forgedToken: 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c3JfMTAxIiwidXNlciI6ImVzdHVkaWFudGVfZGVtbyIsImVtYWlsIjoiYWx1bW5vQHJ1bmxlYXJuLmRldiIsInJvbCI6ImFkbWluIiwiZXNjYWxhdGVkIjp0cnVlfQ.',
+          serverVerification: {
+            valid: true,
+            status: 200,
+            assignedRole: 'admin',
+            message: '¡Ataque exitoso! El servidor aceptó el token con alg="none" sin firma y escaló a "admin".',
+          },
+        };
+      } else {
+        attackResult = {
+          success: false,
+          mode: 'seguro',
+          attackType: 'Fuerza bruta y forja de payload',
+          crackedSecret: null,
+          attempts: 15,
+          timeMs: 1.25,
+          forgedToken: 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c3JfMTAxIiwicm9sIjoiYWRtaW4ifQ.',
+          serverVerification: {
+            valid: false,
+            status: 401,
+            assignedRole: null,
+            error: 'jwt signature is required / invalid algorithm',
+            message: '¡Ataque bloqueado! 15 secretos probados sin éxito. El servidor rechazó alg="none" y exige firma válida HS256 (HTTP 401).',
+          },
+        };
+      }
+    }
+
+    await new Promise(r => setTimeout(r, 380));
+
+    if (currentMode === 'secreto-debil') {
+      setStepState(step2, step2Ind, 'done', `✓ Secreto hallado: "${attackResult.crackedSecret}" (${attackResult.timeMs}ms)`);
+    } else if (currentMode === 'alg-none') {
+      setStepState(step2, step2Ind, 'done', '✓ Firma omitida vía alg: none (0ms)');
+    } else {
+      setStepState(step2, step2Ind, 'failed', `✗ Diccionario falló (${attackResult.attempts} candidatos)`);
+    }
+
+    // Step 3: Forge payload
+    setStepState(step3, step3Ind, 'active', 'Generando token con "rol": "admin"...');
+    await new Promise(r => setTimeout(r, 280));
+    setStepState(step3, step3Ind, 'done', '✓ Claim "rol": "admin" inyectado');
+
+    // Step 4: Server verification
+    setStepState(step4, step4Ind, 'active', 'Enviando petición a /api/jwt-demo/verify...');
+    await new Promise(r => setTimeout(r, 350));
+
+    if (attackResult.success) {
+      setStepState(step4, step4Ind, 'done', '🚨 HTTP 200 OK — Servidor concedió ADMIN');
+      sound.play('playBlocked');
+    } else {
+      setStepState(step4, step4Ind, 'failed', '🛡️ HTTP 401 — Servidor RECHAZÓ el token');
+      sound.play('playSuccess');
+    }
+
+    // Telemetry updates
+    if (telTechnique) telTechnique.textContent = attackResult.attackType;
+    if (telTime) telTime.textContent = `${attackResult.timeMs} ms`;
+    if (telSecret) telSecret.textContent = attackResult.crackedSecret ? `"${attackResult.crackedSecret}"` : 'Ninguno (No descifrado)';
+    if (telAttempts) telAttempts.textContent = `${attackResult.attempts} diccionario`;
+
+    // Verdict updates
+    if (verdictBanner) {
+      verdictBanner.className = attackResult.success ? 'verdict-banner danger' : 'verdict-banner safe';
+    }
+    if (verdictIcon) verdictIcon.textContent = attackResult.success ? '🚨' : '🛡️';
+    if (verdictHeadline) {
+      verdictHeadline.textContent = attackResult.success ? 'Vulnerabilidad Explotada con Éxito' : 'Ataque Bloqueado: Sistema Protegido';
+    }
+    if (verdictBodyText) {
+      verdictBodyText.textContent = attackResult.serverVerification.message;
+    }
+    if (verdictRolePill) {
+      if (attackResult.success) {
+        verdictRolePill.textContent = 'admin (Escalado)';
+        verdictRolePill.className = 'role-pill role-danger';
+      } else {
+        verdictRolePill.textContent = 'Acceso Denegado (401)';
+        verdictRolePill.className = 'role-pill role-safe';
+      }
+    }
+
+    // Show forged token
+    if (forgedTokenBox && forgedTokenRaw) {
+      forgedTokenBox.style.display = 'block';
+      forgedTokenRaw.textContent = attackResult.forgedToken;
+    }
+
+    btnForgeAdmin.disabled = false;
+    isAttacking = false;
+  }
+
+  function setStepState(cardEl: HTMLElement | null, indEl: HTMLElement | null, state: 'pending' | 'active' | 'done' | 'failed', text: string) {
+    if (!cardEl || !indEl) return;
+    cardEl.classList.remove('step-active', 'step-done', 'step-failed');
+    if (state === 'active') cardEl.classList.add('step-active');
+    else if (state === 'done') cardEl.classList.add('step-done');
+    else if (state === 'failed') cardEl.classList.add('step-failed');
+    indEl.textContent = text;
+  }
+
+  // Copy token to clipboard
+  btnCopyToken?.addEventListener('click', async () => {
+    if (!currentToken) return;
+    try {
+      await navigator.clipboard.writeText(currentToken);
+      sound.play('playStep');
+      if (copyText) copyText.textContent = '¡Copiado!';
+      if (copyIcon) copyIcon.textContent = '✅';
+      setTimeout(() => {
+        if (copyText) copyText.textContent = 'Copiar';
+        if (copyIcon) copyIcon.textContent = '📋';
+      }, 1600);
+    } catch {}
+  });
+
+  // Mode button events
+  btnModeDebil?.addEventListener('click', () => selectMode('secreto-debil'));
+  btnModeNone?.addEventListener('click', () => selectMode('alg-none'));
+  btnModeSeguro?.addEventListener('click', () => selectMode('seguro'));
+
+  // Attack buttons
+  btnForgeAdmin?.addEventListener('click', performAttack);
+  btnResetDemo?.addEventListener('click', () => selectMode(currentMode));
+
+  // Initialize
+  selectMode('secreto-debil');
+}
+
+// Ensure execution on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupJwtDemo);
+} else {
+  setupJwtDemo();
+}
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --rose: #f43f5e;
+    --rose-soft: rgba(244, 63, 94, 0.16);
+    --purple: #a855f7;
+    --purple-soft: rgba(168, 85, 247, 0.16);
+    --blue: #38bdf8;
+    --blue-soft: rgba(56, 189, 248, 0.16);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.16);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.16);
+
+    width: min(100%, 1020px);
+    margin: 0 auto;
+    padding: 0.5rem 0 2rem;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 24px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 28px;
+  }
+  .topbar-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .brand-link { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--text-primary); text-decoration: none; font-size: 15px; font-weight: 700; }
+  .brand-link:hover { color: var(--text-white); }
+  .brand-mark { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: var(--rose); font-size: 12px; font-weight: 800; box-shadow: 0 0 0 4px var(--rose-soft); }
+  .crumbs { font-size: 13px; color: var(--api-muted); display: flex; align-items: center; gap: 6px; }
+  .crumbs .sep { color: var(--api-muted-2); }
+  .crumbs .current { color: var(--text-primary); font-weight: 600; }
+  .crumbs a { color: var(--api-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--text-primary); }
+
+  .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--api-border);
+    border-radius: 9px;
+    color: var(--api-muted);
+    background: rgba(255,255,255,0.03);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .15s ease;
+  }
+  .home-action svg { width: 15px; height: 15px; }
+  .home-action:hover { color: var(--text-primary); border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+
+  .sound-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--api-border);
+    color: var(--api-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .sound-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-white); }
+  .sound-btn.muted { opacity: 0.6; border-style: dashed; }
+
+  .badge-live {
+    font-size: 12px;
+    color: var(--rose);
+    background: var(--rose-soft);
+    border: 1px solid color-mix(in srgb, var(--rose) 30%, transparent);
+    border-radius: 999px;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+  }
+  .badge-live .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--rose);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--rose);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.85); } }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 24px; }
+  .header-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: var(--rose-soft);
+    color: var(--rose);
+    margin-bottom: 8px;
+  }
+  h1 { font-size: clamp(1.75rem, 3.2vw, 2.4rem); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 10px; color: var(--text-white); }
+  .lede { font-size: 15px; line-height: 1.65; color: var(--api-muted); max-width: 880px; margin: 0; }
+  .lede code { font-family: var(--font-mono); color: var(--rose); background: var(--rose-soft); padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+
+  /* MODE SELECTOR */
+  .mode-selector-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .mode-toggle-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 768px) {
+    .mode-toggle-group { grid-template-columns: 1fr; }
+  }
+
+  .mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--api-border-soft);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .15s ease;
+  }
+  .mode-btn:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--border-hover);
+  }
+  .mode-btn.active {
+    background: rgba(244, 63, 94, 0.08);
+    border-color: var(--rose);
+    box-shadow: 0 0 0 1px var(--rose);
+  }
+  .mode-btn[data-mode="seguro"].active {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green);
+  }
+  .mode-icon { font-size: 20px; flex-shrink: 0; }
+  .mode-btn-text { display: flex; flex-direction: column; min-width: 0; }
+  .mode-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+  .mode-desc { font-size: 11.5px; color: var(--api-muted); margin-top: 2px; }
+
+  .mode-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .mode-status-badge.danger {
+    background: var(--rose-soft);
+    color: #fecdd3;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+  }
+  .mode-status-badge.safe {
+    background: var(--green-soft);
+    color: #a7f3d0;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .mode-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* TOKEN INSPECTOR WORKBENCH */
+  .workbench-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+  .workbench-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .wb-title-box { display: flex; align-items: center; gap: 10px; }
+  .wb-icon { font-size: 22px; }
+  .wb-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .wb-subtitle { font-size: 12px; color: var(--api-muted); margin: 3px 0 0; }
+  .wb-subtitle code { font-family: var(--font-mono); color: var(--text-white); }
+
+  .ghost-small {
+    background: transparent;
+    border: 1px solid var(--api-border);
+    color: var(--api-muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s;
+  }
+  .ghost-small:hover { color: var(--text-white); border-color: var(--border-hover); background: rgba(255,255,255,0.04); }
+
+  /* RAW JWT BOX */
+  .raw-jwt-container { margin-bottom: 20px; }
+  .raw-jwt-label { font-size: 11.5px; font-weight: 600; color: var(--api-muted-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .raw-jwt-box {
+    background: #06090e;
+    border: 1px solid var(--api-border-soft);
+    border-radius: 9px;
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.55;
+    word-break: break-all;
+    user-select: all;
+  }
+  .jwt-part.jwt-h { color: #fb7185; font-weight: 600; }
+  .jwt-part.jwt-p { color: #c084fc; font-weight: 600; }
+  .jwt-part.jwt-s { color: #38bdf8; font-weight: 600; }
+  .jwt-dot { color: #64748b; font-weight: 800; }
+
+  /* DECODED TRI-PANEL */
+  .jwt-decoded-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 14px;
+  }
+  @media (max-width: 860px) {
+    .jwt-decoded-grid { grid-template-columns: 1fr; }
+  }
+
+  .decoded-panel {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--api-border-soft);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .decoded-panel.panel-header { border-top: 3px solid #fb7185; }
+  .decoded-panel.panel-payload { border-top: 3px solid #c084fc; }
+  .decoded-panel.panel-signature { border-top: 3px solid #38bdf8; }
+
+  .panel-badge {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+  .header-badge { color: #fb7185; }
+  .payload-badge { color: #c084fc; }
+  .signature-badge { color: #38bdf8; }
+  .dot-h { width: 6px; height: 6px; border-radius: 50%; background: #fb7185; }
+  .dot-p { width: 6px; height: 6px; border-radius: 50%; background: #c084fc; }
+  .dot-s { width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; }
+
+  .decoded-code {
+    margin: 0;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: #e2e8f0;
+    background: #090c10;
+    flex: 1;
+    overflow-x: auto;
+  }
+
+  .sig-content { padding: 12px 14px; background: #090c10; flex: 1; }
+  .sig-calc { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5; color: #94a3b8; }
+  .secret-val { color: #fb7185; font-weight: 700; }
+  .sig-status-box { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1); font-size: 11.5px; }
+  .status-key { color: var(--api-muted); }
+  .status-val { font-weight: 700; font-family: var(--font-mono); font-size: 11px; }
+  .danger-text { color: #f87171; }
+  .safe-text { color: #34d399; }
+
+  .panel-footer {
+    padding: 9px 14px;
+    font-size: 11.5px;
+    color: var(--api-muted);
+    border-top: 1px solid var(--api-border-soft);
+    background: rgba(0,0,0,0.2);
+    line-height: 1.4;
+  }
+  .panel-footer code { font-family: var(--font-mono); color: var(--text-primary); }
+
+  .role-pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .role-user { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+  .role-danger { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .role-safe { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+  /* ATTACK WORKBENCH */
+  .attack-card {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .attack-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .attack-header-left { max-width: 620px; }
+  .attack-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--rose-soft);
+    color: var(--rose);
+    margin-bottom: 6px;
+  }
+  .attack-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px; }
+  .attack-subtitle { font-size: 12.5px; color: var(--api-muted); line-height: 1.5; margin: 0; }
+  .attack-subtitle code { font-family: var(--font-mono); color: var(--rose); }
+
+  .attack-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  button.primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--rose);
+    color: #fff;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(244, 63, 94, 0.35);
+    transition: transform .12s, filter .12s;
+  }
+  button.primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+  button.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+  button.ghost {
+    background: transparent;
+    color: var(--api-muted);
+    border: 1px solid var(--api-border);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  button.ghost:hover { color: var(--text-white); border-color: var(--border-hover); background: rgba(255,255,255,0.04); }
+
+  .attack-placeholder {
+    padding: 36px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--api-border);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.01);
+  }
+  .placeholder-icon { font-size: 32px; margin-bottom: 8px; }
+  .placeholder-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+  .placeholder-text { font-size: 12.5px; color: var(--api-muted); max-width: 480px; line-height: 1.5; }
+
+  /* ATTACK STEPS GRID */
+  .attack-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 768px) {
+    .attack-steps-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .attack-steps-grid { grid-template-columns: 1fr; }
+  }
+
+  .step-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--api-border-soft);
+    border-radius: 9px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all .2s;
+  }
+  .step-card.step-active {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.05);
+  }
+  .step-card.step-done {
+    border-color: var(--green);
+    background: rgba(16, 185, 129, 0.05);
+  }
+  .step-card.step-failed {
+    border-color: var(--rose);
+    background: rgba(244, 63, 94, 0.05);
+  }
+
+  .step-num { font-size: 10.5px; font-weight: 800; color: var(--api-muted-2); text-transform: uppercase; }
+  .step-title { font-size: 12.5px; font-weight: 700; color: var(--text-primary); }
+  .step-desc { font-size: 11px; color: var(--api-muted); line-height: 1.35; flex: 1; }
+  .step-indicator { font-size: 10.5px; font-weight: 700; color: var(--api-muted-2); margin-top: 6px; }
+  .step-card.step-active .step-indicator { color: #fbbf24; }
+  .step-card.step-done .step-indicator { color: #34d399; }
+  .step-card.step-failed .step-indicator { color: #f87171; }
+
+  /* ATTACK TELEMETRY */
+  .attack-telemetry {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: #090c10;
+    border: 1px solid var(--api-border-soft);
+    border-radius: 9px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 640px) {
+    .attack-telemetry { grid-template-columns: 1fr 1fr; }
+  }
+  .telemetry-item { display: flex; flex-direction: column; gap: 2px; }
+  .tel-label { font-size: 11px; color: var(--api-muted-2); }
+  .tel-val { font-size: 12.5px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); }
+  .tel-val.highlight { color: #fbbf24; }
+
+  /* VERDICT BANNER */
+  .verdict-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+  }
+  .verdict-banner.danger {
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(244, 63, 94, 0.35);
+  }
+  .verdict-banner.safe {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .verdict-icon-box { font-size: 26px; flex-shrink: 0; line-height: 1; }
+  .verdict-details { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .verdict-headline { font-size: 14px; font-weight: 800; color: var(--text-white); }
+  .verdict-body-text { font-size: 12.5px; line-height: 1.5; color: #f1f5f9; }
+  .verdict-auth-status { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; }
+  .auth-label { color: var(--api-muted); }
+
+  /* FORGED TOKEN BOX */
+  .forged-token-box {
+    background: #06090e;
+    border: 1px solid var(--api-border-soft);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .forged-title { font-size: 11px; font-weight: 700; color: var(--rose); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .forged-token-raw { font-family: var(--font-mono); font-size: 11.5px; color: #cbd5e1; word-break: break-all; }
+
+  /* SPLIT: CODE + CONCEPTS */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--api-panel);
+    border: 1px solid var(--api-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--api-border-soft);
+  }
+  .panel-head-title { display: flex; flex-direction: column; gap: 2px; }
+  .panel-head .title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .panel-head .filename { font-family: var(--font-mono); font-size: 11.5px; color: var(--api-muted); }
+  .code-badge { font-size: 11px; font-weight: 700; color: var(--rose); background: var(--rose-soft); padding: 2px 8px; border-radius: 4px; }
+
+  pre.code {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.65;
+    background: #080b0f;
+    color: #e2e8f0;
+    overflow-x: auto;
+  }
+  .code .line { display: block; padding: 1px 6px; border-radius: 4px; transition: background .2s, color .2s; }
+  .code .line.active { background: rgba(244, 63, 94, 0.16); color: #ffe4e6; }
+  .kw { color: #f472b6; font-weight: 600; }
+  .str { color: #34d399; }
+  .cm { color: #64748b; font-style: italic; }
+
+  /* EXPLANATION BODY */
+  .explain-body { padding: 1.3rem; }
+  .explain-tag-wrapper { margin-bottom: 8px; }
+  .explain-tag { display: inline-block; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; }
+  .explain-tag.danger { background: var(--rose-soft); color: var(--rose); }
+  .explain-tag.safe { background: var(--green-soft); color: var(--green); }
+
+  .explain-dynamic-text { font-size: 13.5px; line-height: 1.6; color: var(--text-primary); margin-bottom: 1.2rem; }
+  .explain-dynamic-text p { margin: 0 0 8px; }
+  .explain-dynamic-text p:last-child { margin-bottom: 0; }
+  .explain-dynamic-text code { font-family: var(--font-mono); font-size: 12px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+
+  .concepts-grid { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--api-border-soft); padding-top: 1.2rem; }
+  .concept-item { display: flex; align-items: flex-start; gap: 10px; }
+  .concept-icon { font-size: 17px; flex-shrink: 0; margin-top: 2px; }
+  .concept-content { font-size: 12.5px; line-height: 1.55; color: var(--api-muted); }
+  .concept-content strong { display: block; color: var(--text-primary); margin-bottom: 2px; }
+  .concept-content code { font-family: var(--font-mono); font-size: 11.5px; color: var(--rose); background: var(--rose-soft); padding: 1px 4px; border-radius: 3px; }
+
+  @media (max-width: 640px) {
+    .topbar { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+    .topbar-actions { width: 100%; justify-content: space-between; }
+    h1 { font-size: 24px; }
+    .attack-header { flex-direction: column; }
+    .attack-header-right { width: 100%; justify-content: flex-start; }
+  }
+</style>

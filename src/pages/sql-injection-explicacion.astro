@@ -1,0 +1,561 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — SQL Injection">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">SQL Injection</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>SQL Injection</h1>
+    <p class="lede">
+      Un ataque de <strong>SQL Injection</strong> ocurre cuando el input del usuario se inserta directamente en una consulta SQL sin sanitizar. Probá ambos modos para ver la diferencia: en modo <strong>vulnerable</strong>, el payload <code>' OR '1'='1</code> devuelve TODOS los registros. En modo <strong>seguro</strong>, la misma consulta parametrizada ignora el payload y busca literalmente.
+    </p>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector-card">
+      <div class="mode-toggle-group">
+        <button type="button" class="mode-btn active" id="btn-mode-vulnerable" data-mode="vulnerable">
+          <span class="mode-icon">🔓</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Modo vulnerable</span>
+            <span class="mode-desc">Concatenación directa en SQL</span>
+          </div>
+        </button>
+        <button type="button" class="mode-btn" id="btn-mode-seguro" data-mode="seguro">
+          <span class="mode-icon">🛡️</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Modo seguro</span>
+            <span class="mode-desc">Query parametrizada ($1)</span>
+          </div>
+        </button>
+      </div>
+      <div class="mode-status-badge" id="mode-status-badge">
+        <span class="mode-status-dot"></span>
+        <span id="mode-status-text">VULNERABLE — input concatenado directamente al SQL</span>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE ZONE -->
+    <div class="diagram-card">
+      <div class="diagram-meta">
+        <div class="meta-left">
+          <span class="status-pill" id="status-pill">Listo para consultar</span>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-zone">
+        <label for="sqli-input" class="input-label">Nombre a buscar:</label>
+        <div class="input-row">
+          <input type="text" id="sqli-input" class="sqli-input" placeholder="Ej: Ada Lovelace" autocomplete="off" />
+          <button class="primary" id="btn-search">Buscar</button>
+        </div>
+        <div class="preset-buttons">
+          <button class="ghost preset-btn" id="btn-preset-normal">
+            <span class="preset-icon">✅</span>
+            <span class="preset-text">Búsqueda normal<br /><code>"Ada Lovelace"</code></span>
+          </button>
+          <button class="ghost preset-btn danger-preset" id="btn-preset-inject">
+            <span class="preset-icon">💉</span>
+            <span class="preset-text">Payload de inyección<br /><code>' OR '1'='1</code></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Result Display -->
+      <div class="result-zone" id="result-zone" style="display:none">
+        <div class="result-section">
+          <div class="result-label">SQL ejecutado:</div>
+          <pre class="sql-display" id="sql-display"></pre>
+        </div>
+        <div class="result-section">
+          <div class="result-label">Resultado de Postgres (<span id="row-count">0</span> filas):</div>
+          <div class="result-table-wrapper">
+            <table class="result-table" id="result-table">
+              <thead><tr><th>id</th><th>nombre</th><th>email</th><th>rol</th></tr></thead>
+              <tbody id="result-tbody"></tbody>
+            </table>
+          </div>
+          <div class="result-warning" id="result-warning" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPLIT: CODE + EXPLANATION -->
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código del endpoint</span>
+          <span class="filename" id="code-filename">routes/sqli-demo.js</span>
+        </div>
+        <pre class="code" id="code-block"><span class="line" data-key="vuln"><span class="cm">// ⚠️ VULNERABLE — solo para demo</span></span>
+<span class="line" data-key="vuln"><span class="kw">const</span> sql = <span class="str">`SELECT * FROM people</span></span>
+<span class="line" data-key="vuln"><span class="str">  WHERE nombre = '</span>${'<span class="kw">{input}</span>'}<span class="str">'`</span>;</span>
+<span class="line" data-key="vuln"><span class="kw">const</span> result = <span class="kw">await</span> query(sql);</span>
+<span class="line">&nbsp;</span>
+<span class="line" data-key="safe"><span class="cm">// ✅ SEGURO — query parametrizada</span></span>
+<span class="line" data-key="safe"><span class="kw">const</span> sql = <span class="str">'SELECT * FROM people</span></span>
+<span class="line" data-key="safe"><span class="str">  WHERE nombre = </span><span class="num">$1</span><span class="str">'</span>;</span>
+<span class="line" data-key="safe"><span class="kw">const</span> result = <span class="kw">await</span> query(sql, [input]);</span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Elegí un modo y hacé una consulta. Primero probá la <strong>búsqueda normal</strong> con el nombre "Ada Lovelace". Después cambiá a modo <strong>vulnerable</strong> y probá el <strong>payload de inyección</strong> para ver cómo se manipula la consulta.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">consulta</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+
+          <div class="concepts-grid">
+            <div class="concept-item">
+              <div class="concept-icon">💉</div>
+              <div>
+                <strong>¿Qué hace <code>' OR '1'='1</code>?</strong> Cierra la cadena original con <code>'</code>, agrega una condición <code>OR '1'='1'</code> (siempre verdadera), y cierra con <code>'</code>. La consulta se convierte en <code>WHERE nombre = '' OR '1'='1'</code>, que devuelve todas las filas.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">🛡️</div>
+              <div>
+                <strong>¿Por qué la parametrización lo previene?</strong> Con <code>$1</code>, PostgreSQL trata el input como un valor literal, no como parte del SQL. El payload <code>' OR '1'='1</code> se busca como nombre exacto, no como código SQL.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">⚠️</div>
+              <div>
+                <strong>Consecuencias reales:</strong> SQL Injection puede permitir leer todos los datos de una base, modificar o borrar registros, e incluso tomar control del servidor. Es una de las vulnerabilidades más antiguas y peligrosas de la web.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+  let mode = 'vulnerable';
+
+  const API_BASE = 'http://localhost:5000/api/sqli-demo';
+
+  // DOM
+  const btnVulnerable = document.getElementById('btn-mode-vulnerable');
+  const btnSeguro = document.getElementById('btn-mode-seguro');
+  const modeStatusBadge = document.getElementById('mode-status-badge');
+  const modeStatusText = document.getElementById('mode-status-text');
+  const sqliInput = document.getElementById('sqli-input');
+  const btnSearch = document.getElementById('btn-search');
+  const btnPresetNormal = document.getElementById('btn-preset-normal');
+  const btnPresetInject = document.getElementById('btn-preset-inject');
+  const resultZone = document.getElementById('result-zone');
+  const sqlDisplay = document.getElementById('sql-display');
+  const rowCount = document.getElementById('row-count');
+  const resultTbody = document.getElementById('result-tbody');
+  const resultWarning = document.getElementById('result-warning');
+  const statusPill = document.getElementById('status-pill');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+  const codeLines = document.querySelectorAll('.line');
+
+  function highlightCode(keys) {
+    codeLines.forEach(line => {
+      const k = line.getAttribute('data-key');
+      line.classList.toggle('active', keys.includes(k));
+    });
+  }
+
+  function setMode(newMode) {
+    if (!['vulnerable', 'seguro'].includes(newMode)) return;
+    mode = newMode;
+    if (mode === 'vulnerable') {
+      btnVulnerable?.classList.add('active');
+      btnSeguro?.classList.remove('active');
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge danger';
+      if (modeStatusText) modeStatusText.textContent = 'VULNERABLE — input concatenado directamente al SQL';
+      highlightCode(['vuln']);
+    } else {
+      btnSeguro?.classList.add('active');
+      btnVulnerable?.classList.remove('active');
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge safe';
+      if (modeStatusText) modeStatusText.textContent = 'SEGURO — query parametrizada con $1';
+      highlightCode(['safe']);
+    }
+    // Reset results
+    if (resultZone) resultZone.style.display = 'none';
+    if (explainIdle) explainIdle.style.display = 'block';
+    if (explainActive) explainActive.style.display = 'none';
+    if (consoleLine) consoleLine.style.display = 'none';
+  }
+
+  btnVulnerable?.addEventListener('click', () => setMode('vulnerable'));
+  btnSeguro?.addEventListener('click', () => setMode('seguro'));
+
+  async function runQuery(searchInput) {
+    if (!searchInput || !searchInput.trim()) return;
+
+    if (statusPill) {
+      statusPill.textContent = 'Consultando...';
+      statusPill.className = 'status-pill pending';
+    }
+    if (btnSearch) btnSearch.disabled = true;
+
+    sound.play('playStep');
+
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: searchInput.trim(), mode }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error desconocido');
+      }
+
+      // Show SQL
+      if (sqlDisplay) sqlDisplay.textContent = data.sql;
+      if (rowCount) rowCount.textContent = String(data.rowCount);
+      if (resultZone) resultZone.style.display = 'block';
+
+      // Render table
+      if (resultTbody) {
+        resultTbody.innerHTML = '';
+        if (data.rows.length === 0) {
+          resultTbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Sin resultados</td></tr>';
+        } else {
+          data.rows.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${row.id}</td><td>${row.nombre}</td><td>${row.email}</td><td>${row.rol}</td>`;
+            resultTbody.appendChild(tr);
+          });
+        }
+      }
+
+      // Warning for vulnerable + injection payload
+      if (resultWarning) {
+        if (mode === 'vulnerable' && data.rowCount > 1) {
+          resultWarning.style.display = 'block';
+          resultWarning.innerHTML = `<strong>⚠️ Inyección detectada:</strong> La consulta devolvió <strong>${data.rowCount} filas</strong> en vez de 1. El payload modificó la lógica de la consulta.`;
+        } else if (mode === 'seguro' && data.rowCount === 0) {
+          resultWarning.style.display = 'block';
+          resultWarning.className = 'result-warning safe';
+          resultWarning.innerHTML = `<strong>✅ Protegido:</strong> La consulta parametrizada buscó el nombre literalmente y no encontró coincidencias. El payload fue ignorado como código SQL.`;
+        } else {
+          resultWarning.style.display = 'none';
+        }
+      }
+
+      // Explanation
+      if (explainIdle) explainIdle.style.display = 'none';
+      if (explainActive) explainActive.style.display = 'block';
+      if (explainTag) {
+        explainTag.textContent = mode === 'vulnerable' ? 'vulnerable' : 'seguro';
+        explainTag.className = `explain-tag ${mode}`;
+      }
+      if (explainText) {
+        if (mode === 'vulnerable') {
+          if (data.rowCount > 1) {
+            explainText.innerHTML = `<strong style="color:var(--rose)">SQL Injection exitosa:</strong> El payload <code>' OR '1'='1</code> cerró la cadena original y agregó una condición siempre verdadera. La consulta se convirtió en <code>WHERE nombre = '' OR '1'='1'</code>, devolviendo <strong>todas las filas</strong> de la tabla people.`;
+          } else if (data.rowCount === 1) {
+            explainText.innerHTML = `Búsqueda normal: el input <code>${searchInput.trim()}</code> se insertó directamente en la consulta. Funcionó porque no había caracteres especiales de SQL, pero <strong>acepta cualquier código SQL</strong> que se le ponga.`;
+          } else {
+            explainText.innerHTML = `Sin resultados para <code>${searchInput.trim()}</code>. El input se concatenó directamente — si hubiera caracteres de SQL como <code>'</code>, modificarían la consulta.`;
+          }
+        } else {
+          if (data.rowCount > 0) {
+            explainText.innerHTML = `Búsqueda parametrizada: PostgreSQL trató <code>${searchInput.trim()}</code> como un <strong>valor literal</strong>, no como código SQL. La consulta fue exactamente <code>WHERE nombre = $1</code> con el parámetro separado.`;
+          } else {
+            explainText.innerHTML = `Sin resultados para <code>${searchInput.trim()}</code>. La query parametrizada buscó el nombre exacto sin interpretar caracteres especiales.`;
+          }
+        }
+      }
+
+      // Console line
+      if (consoleLine) {
+        consoleLine.style.display = 'block';
+        if (mode === 'vulnerable' && data.rowCount > 1) {
+          consoleLine.className = 'console-line danger';
+          consoleLine.innerHTML = `SQL Injection: ${data.rowCount} filas expuestas. Datos de TODOS los usuarios filtrados.`;
+        } else {
+          consoleLine.className = 'console-line success';
+          consoleLine.innerHTML = `${data.rowCount} fila(s) encontrada(s) de forma ${mode === 'seguro' ? 'segura (parametrizada)' : 'directa (sin sanitizar)'}.`;
+        }
+      }
+
+      if (data.rowCount > 0 && mode === 'vulnerable') {
+        sound.play('playBlocked');
+      } else if (data.rowCount > 0) {
+        sound.play('playSuccess');
+      } else {
+        sound.play('playStep');
+      }
+
+      if (statusPill) {
+        if (mode === 'vulnerable' && data.rowCount > 1) {
+          statusPill.textContent = `Inyección: ${data.rowCount} filas expuestas`;
+          statusPill.className = 'status-pill danger';
+        } else if (data.rowCount > 0) {
+          statusPill.textContent = `${data.rowCount} fila(s) encontrada(s)`;
+          statusPill.className = 'status-pill success';
+        } else {
+          statusPill.textContent = 'Sin resultados';
+          statusPill.className = 'status-pill';
+        }
+      }
+    } catch (err) {
+      if (statusPill) {
+        statusPill.textContent = 'Error de conexión';
+        statusPill.className = 'status-pill danger';
+      }
+      if (explainActive) explainActive.style.display = 'block';
+      if (explainIdle) explainIdle.style.display = 'none';
+      if (explainTag) {
+        explainTag.textContent = 'error';
+        explainTag.className = 'explain-tag error';
+      }
+      if (explainText) {
+        explainText.innerHTML = `No se pudo conectar al backend. Asegurate de que Docker esté corriendo (<code>docker compose up -d</code>). Error: ${err.message}`;
+      }
+      sound.play('playAlert');
+    } finally {
+      if (btnSearch) btnSearch.disabled = false;
+    }
+  }
+
+  btnSearch?.addEventListener('click', () => runQuery(sqliInput?.value || ''));
+
+  sqliInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runQuery(sqliInput.value);
+  });
+
+  btnPresetNormal?.addEventListener('click', () => {
+    if (sqliInput) sqliInput.value = 'Ada Lovelace';
+    runQuery('Ada Lovelace');
+  });
+
+  btnPresetInject?.addEventListener('click', () => {
+    if (sqliInput) sqliInput.value = "' OR '1'='1";
+    runQuery("' OR '1'='1");
+  });
+
+  // Initialize
+  setMode('vulnerable');
+})();
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-panel-2: var(--surface-card);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-line: rgba(255, 255, 255, 0.14);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --rose: #fb7185;
+    --rose-soft: rgba(251, 113, 133, 0.18);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.18);
+    --amber: #f59e0b;
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 26px;
+    border-bottom: 1px solid var(--api-border-soft);
+    margin-bottom: 34px;
+  }
+  .topbar-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .brand-link { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--text-primary); text-decoration: none; font-size: 15px; font-weight: 700; }
+  .brand-link:hover { color: var(--text-white); }
+  .brand-mark { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: #ffffff; background: var(--rose); font-size: 12px; font-weight: 800; box-shadow: 0 0 0 4px var(--rose-soft); }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .home-action { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 7px 12px; border: 1px solid var(--api-border); border-radius: 10px; color: var(--api-muted); background: rgba(255,255,255,0.03); text-decoration: none; font-size: 13px; font-weight: 600; transition: color .15s, border-color .15s, background .15s, transform .15s; }
+  .home-action svg { width: 16px; height: 16px; }
+  .home-action:hover { color: var(--text-primary); border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+  .crumbs { font-size: 13.5px; color: var(--api-muted); display: flex; align-items: center; gap: 6px; }
+  .crumbs .sep { color: var(--api-muted-2); }
+  .crumbs .current { color: var(--text-primary); }
+  .crumbs a { color: var(--api-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--text-primary); }
+  .badge-live { font-size: 12px; color: var(--rose); background: var(--rose-soft); border: 1px solid color-mix(in srgb, var(--rose) 30%, transparent); border-radius: var(--radius-pill); padding: 5px 12px; display: flex; align-items: center; gap: 7px; font-weight: 600; }
+  .badge-live .dot { width: 7px; height: 7px; background: var(--rose); border-radius: 50%; box-shadow: 0 0 8px var(--rose); animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.85); } }
+
+  h1 { font-size: clamp(1.85rem, 3.2vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 12px; color: var(--text-white); }
+  .lede { font-size: 15px; line-height: 1.65; color: var(--api-muted); max-width: 860px; margin: 0 0 24px; }
+  .lede code { font-family: var(--font-mono); color: var(--rose); background: var(--rose-soft); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  /* MODE SELECTOR */
+  .mode-selector-card { display: flex; justify-content: space-between; align-items: center; background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); padding: 1rem 1.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 14px; }
+  .mode-toggle-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mode-btn { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--api-border); border-radius: 10px; padding: 8px 16px; cursor: pointer; transition: all .2s ease; text-align: left; }
+  .mode-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+  .mode-btn.active { background: rgba(251,113,133,0.12); border-color: var(--rose); box-shadow: 0 0 14px rgba(251,113,133,0.2); }
+  .mode-btn#btn-mode-seguro.active { background: rgba(16,185,129,0.12); border-color: var(--green); box-shadow: 0 0 14px rgba(16,185,129,0.2); }
+  .mode-icon { font-size: 20px; }
+  .mode-btn-text { display: flex; flex-direction: column; }
+  .mode-name { font-size: 13.5px; font-weight: 700; color: var(--text-white); }
+  .mode-desc { font-size: 11px; color: var(--api-muted); }
+
+  .mode-status-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; font-family: var(--font-mono); padding: 6px 12px; border-radius: var(--radius-pill); }
+  .mode-status-badge.danger { background: var(--red-soft); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .mode-status-badge.safe { background: var(--green-soft); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .mode-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* DIAGRAM CARD */
+  .diagram-card { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); padding: 1.6rem; margin-bottom: 1.2rem; box-shadow: 0 12px 35px rgba(0,0,0,0.35); }
+  .diagram-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--api-border-soft); }
+  .meta-left { display: flex; align-items: center; gap: 10px; }
+  .status-pill { font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--api-border); background: rgba(255,255,255,0.03); color: var(--text-secondary); transition: all .25s; }
+  .status-pill.pending { color: var(--amber); background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
+  .status-pill.success { color: var(--green); background: var(--green-soft); border-color: rgba(16,185,129,0.3); }
+  .status-pill.danger { color: #fca5a5; background: var(--red-soft); border-color: rgba(239,68,68,0.3); }
+
+  /* INPUT ZONE */
+  .input-zone { margin-bottom: 24px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 8px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .sqli-input { flex: 1; padding: 10px 14px; font-family: var(--font-mono); font-size: 14px; background: var(--canvas-bg, #0a0d12); border: 1px solid var(--api-border); border-radius: 10px; color: var(--text-primary); transition: border-color .15s, box-shadow .15s; }
+  .sqli-input:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-soft); }
+  .sqli-input::placeholder { color: var(--api-muted-2); }
+
+  button.primary { display: inline-flex; align-items: center; gap: 7px; background: var(--rose); color: #ffffff; border: none; font-size: 13.5px; font-weight: 700; padding: 10px 18px; border-radius: 9px; cursor: pointer; box-shadow: 0 2px 10px rgba(251,113,133,0.35); transition: transform .12s, filter .12s; }
+  button.primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  button.primary:active { transform: translateY(0); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  button.ghost { background: transparent; color: var(--api-muted); border: 1px solid var(--api-border); font-size: 13.5px; font-weight: 600; padding: 8px 14px; border-radius: 9px; cursor: pointer; transition: color .15s, border-color .15s; }
+  button.ghost:hover { color: var(--text-white); border-color: var(--border-hover); }
+
+  .preset-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+  .preset-btn { display: flex; align-items: center; gap: 10px; padding: 10px 16px; text-align: left; min-width: 0; flex: 1; }
+  .preset-icon { font-size: 18px; flex-shrink: 0; }
+  .preset-text { font-size: 12.5px; line-height: 1.4; }
+  .preset-text code { font-family: var(--font-mono); font-size: 11.5px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+  .danger-preset { border-color: rgba(239,68,68,0.3); }
+  .danger-preset:hover { border-color: var(--rose); background: rgba(251,113,133,0.08); }
+
+  /* RESULT ZONE */
+  .result-zone { border-top: 1px solid var(--api-border-soft); padding-top: 20px; }
+  .result-section { margin-bottom: 16px; }
+  .result-section:last-child { margin-bottom: 0; }
+  .result-label { font-size: 12px; font-weight: 600; color: var(--api-muted); margin-bottom: 6px; }
+  .result-label span { font-family: var(--font-mono); color: var(--text-white); }
+
+  .sql-display { font-family: var(--font-mono); font-size: 13px; line-height: 1.6; color: #fbbf24; background: #090c10; border: 1px solid var(--api-border-soft); border-radius: 8px; padding: 12px 14px; margin: 0; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+
+  .result-table-wrapper { overflow-x: auto; border: 1px solid var(--api-border-soft); border-radius: 8px; }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result-table th { text-align: left; padding: 8px 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--api-muted); background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--api-border-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+  .result-table td { padding: 8px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-primary); border-bottom: 1px solid var(--api-border-soft); }
+  .result-table tr:last-child td { border-bottom: none; }
+  .result-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .empty-cell { text-align: center; color: var(--api-muted); font-style: italic; }
+
+  .result-warning { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; background: var(--red-soft); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+  .result-warning.safe { background: var(--green-soft); border-color: rgba(16,185,129,0.3); color: #6ee7b7; }
+  .result-warning code { font-family: var(--font-mono); font-size: 12px; }
+
+  /* SPLIT */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; margin-bottom: 2rem; }
+  @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--api-border-soft); }
+  .panel-head .title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .panel-head .filename { font-family: var(--font-mono); font-size: 11.5px; color: var(--api-muted); }
+
+  pre.code { margin: 0; padding: 14px 16px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; background: #090c10; color: #e2e8f0; overflow-x: auto; }
+  .code .line { display: block; padding: 1px 6px; border-radius: 4px; transition: background .2s, color .2s; }
+  .code .line.active { background: rgba(251,113,133,0.18); color: #ffe4e6; }
+  .kw { color: #f472b6; font-weight: 600; }
+  .str { color: #34d399; }
+  .num { color: #fbbf24; }
+  .cm { color: #64748b; font-style: italic; }
+  .fn { color: #38bdf8; }
+
+  /* EXPLANATION */
+  .explain-body { padding: 1.25rem; }
+  .explain-idle { font-size: 13.5px; line-height: 1.6; color: var(--api-muted); margin-bottom: 1rem; }
+  .explain-tag { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; }
+  .explain-tag.vulnerable { color: var(--rose); background: var(--rose-soft); }
+  .explain-tag.seguro { color: var(--green); background: var(--green-soft); }
+  .explain-tag.error { color: #fca5a5; background: var(--red-soft); }
+  .explain-text { font-size: 14px; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem; }
+  .explain-text code { font-family: var(--font-mono); font-size: 12.5px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+
+  .console-line { background: #090c10; border: 1px solid var(--api-border-soft); border-radius: 6px; padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 1.2rem; }
+  .console-line.danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+  .console-line.success { color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
+
+  .concepts-grid { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--api-border-soft); padding-top: 1.2rem; }
+  .concept-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.55; color: var(--api-muted); }
+  .concept-item strong { color: var(--text-primary); }
+  .concept-item code { font-family: var(--font-mono); font-size: 12px; color: var(--rose); }
+  .concept-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+  .sound-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--api-border); color: var(--api-muted); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: all .15s ease; }
+  .sound-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-white); }
+  .sound-btn.muted { opacity: 0.6; border-style: dashed; }
+
+  @media (max-width: 640px) {
+    .api-page { padding: 0.1rem 0 0.75rem; }
+    .topbar { align-items: flex-start; gap: 12px; flex-direction: column; margin-bottom: 28px; padding-bottom: 20px; }
+    .topbar-actions { width: 100%; justify-content: space-between; }
+    h1 { font-size: 26px; }
+    .diagram-card { padding: 28px 16px 22px; }
+    .preset-buttons { flex-direction: column; }
+    .input-row { flex-direction: column; }
+  }
+</style>
