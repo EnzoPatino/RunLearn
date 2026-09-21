@@ -1,0 +1,673 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="RunLearn — CSRF (Cross-Site Request Forgery)">
+  <div class="api-page">
+    <div class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <div class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <span class="current">CSRF</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </div>
+
+    <h1>CSRF (Cross-Site Request Forgery)</h1>
+    <p class="lede">
+      Un ataque CSRF engaña a tu navegador para que envíe una petición legítima a un sitio donde estás logueado, <strong>sin tu consentimiento</strong>. El sitio malicioso no roba credenciales — simplemente aprovecha que el navegador adjunta las cookies automáticamente.
+    </p>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector-card">
+      <div class="mode-toggle-group">
+        <button type="button" class="mode-btn active" id="btn-mode-vulnerable" data-mode="vulnerable">
+          <span class="mode-icon">🔓</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Sin protección CSRF</span>
+            <span class="mode-desc">Solo valida la cookie de sesión</span>
+          </div>
+        </button>
+        <button type="button" class="mode-btn" id="btn-mode-secure" data-mode="secure">
+          <span class="mode-icon">🛡️</span>
+          <div class="mode-btn-text">
+            <span class="mode-name">Con token CSRF</span>
+            <span class="mode-desc">Requiere token Synchronizer Pattern</span>
+          </div>
+        </button>
+      </div>
+      <div class="mode-status-badge" id="mode-status-badge">
+        <span class="mode-status-dot"></span>
+        <span id="mode-status-text">VULNERABLE — solo cookie de sesión</span>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="setup-card" id="setup-card">
+      <div class="setup-header">
+        <span class="setup-icon">🏦</span>
+        <span class="setup-title">Paso 1: Iniciar sesión en el banco</span>
+      </div>
+      <p class="setup-text">Primero creá una sesión de banco. Esto te da un ID de sesión (como una cookie) y, si activás el modo seguro, un token CSRF.</p>
+      <button class="primary" id="btn-login" type="button">Iniciar sesión en el banco</button>
+      <div class="session-info" id="session-info" style="display:none">
+        <div class="session-row">
+          <span class="session-label">Session ID (cookie):</span>
+          <code class="session-value" id="session-id">—</code>
+        </div>
+        <div class="session-row">
+          <span class="session-label">CSRF Token:</span>
+          <code class="session-value token-value" id="csrf-token">—</code>
+        </div>
+        <div class="session-row">
+          <span class="session-label">Saldo inicial:</span>
+          <span class="session-value balance-value" id="initial-balance">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROWSER TABS -->
+    <div class="tabs-container" id="tabs-container" style="display:none">
+      <!-- TAB: TU BANCO -->
+      <div class="browser-tab bank-tab">
+        <div class="tab-bar">
+          <div class="tab-dots">
+            <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          </div>
+          <div class="tab-url">
+            <span class="tab-lock">🔒</span>
+            <span>banco-seguro.com/cuenta</span>
+          </div>
+        </div>
+        <div class="tab-body">
+          <div class="bank-header">
+            <span class="bank-logo">🏦</span>
+            <span class="bank-name">Mi Banco Online</span>
+            <span class="bank-user" id="bank-user">Usuario: juan@email.com</span>
+          </div>
+          <div class="bank-balance">
+            <span class="balance-label">Saldo disponible</span>
+            <span class="balance-amount" id="bank-balance">$50.000</span>
+          </div>
+          <div class="bank-movements" id="bank-movements">
+            <div class="movement empty-movement">Sin movimientos recientes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: SITIO MALICIOSO -->
+      <div class="browser-tab evil-tab">
+        <div class="tab-bar evil-bar">
+          <div class="tab-dots">
+            <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          </div>
+          <div class="tab-url evil-url">
+            <span class="tab-lock">⚠️</span>
+            <span>sorteo-premios-gratis.com/ganaste</span>
+          </div>
+        </div>
+        <div class="tab-body evil-body">
+          <div class="evil-content" id="evil-content">
+            <div class="evil-header">
+              <span class="evil-icon">🎰</span>
+              <span class="evil-title">¡FELICIDADES! ¡GANASTE!</span>
+            </div>
+            <div class="evil-text">
+              Hacé clic aquí para reclamar tu premio de $5.000.000...
+            </div>
+            <div class="evil-fine-print">*Términos y condiciones aplican./oferta especial.</div>
+          </div>
+          <div class="evil-console" id="evil-console">
+            <div class="console-header">Consola del atacante</div>
+            <div class="console-output" id="console-output"></div>
+          </div>
+          <button class="evil-btn" id="btn-attack" type="button">
+            <span>🎰</span> ¡RECLAMAR MI PREMIO!
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT BANNER -->
+    <div class="result-banner" id="result-banner" style="display:none">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-body">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+      </div>
+    </div>
+
+    <!-- SPLIT: CODE + EXPLANATION -->
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Código del backend</span>
+          <span class="filename">csrf-demo.js</span>
+        </div>
+        <pre class="code"><span class="line" data-key="session"><span class="cm">// Sesión del usuario (cookie automática)</span></span>
+<span class="line" data-key="session"><span class="kw">const</span> session = sessions.get(sessionId);</span>
+<span class="line">&nbsp;</span>
+<span class="line" data-key="vuln"><span class="cm">// ⚠️ VULNERABLE — solo cookie</span></span>
+<span class="line" data-key="vuln"><span class="kw">if</span> (mode === <span class="str">'vulnerable'</span>) {</span>
+<span class="line" data-key="vuln">  <span class="cm">// No valida nada más. Si tenés cookie,</span></span>
+<span class="line" data-key="vuln">  <span class="cm">// la petición se procesa.</span></span>
+<span class="line" data-key="vuln">  procesarTransferencia(session);</span>
+<span class="line" data-key="vuln">}</span>
+<span class="line">&nbsp;</span>
+<span class="line" data-key="secure"><span class="cm">// ✅ SEGURO — synchronizer token</span></span>
+<span class="line" data-key="secure"><span class="kw">if</span> (mode === <span class="str">'seguro'</span>) {</span>
+<span class="line" data-key="secure">  <span class="kw">if</span> (csrfToken !== session.csrfToken) {</span>
+<span class="line" data-key="secure">    <span class="kw">return</span> res.status(<span class="num">403</span>).json({</span>
+<span class="line" data-key="secure">      error: <span class="str">'Token CSRF inválido'</span></span>
+<span class="line" data-key="secure">    });</span>
+<span class="line" data-key="secure">  }</span>
+<span class="line" data-key="secure">  procesarTransferencia(session);</span>
+<span class="line" data-key="secure">}</span>
+<span class="line">&nbsp;</span>
+<span class="line" data-key="why"><span class="cm">// ¿Por qué las cookies no alcanzan?</span></span>
+<span class="line" data-key="why"><span class="cm">// El navegador envía cookies AUTOMÁTICAMENTE</span></span>
+<span class="line" data-key="why"><span class="cm">// a cada petición al mismo dominio.</span></span>
+<span class="line" data-key="why"><span class="cm">// Un &lt;form&gt; o fetch() desde cualquier sitio</span></span>
+<span class="line" data-key="why"><span class="cm">// dispara la cookie si el target es el banco.</span></span></pre>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Qué está pasando</span>
+        </div>
+        <div class="explain-body">
+          <div id="explain-idle" class="explain-idle">
+            Primero iniciá sesión en el banco. Luego hacé clic en <strong>¡RECLAMAR MI PREMIO!</strong> en el sitio malicioso. Observá qué pasa en cada modo.
+          </div>
+          <div id="explain-active" style="display:none">
+            <div class="explain-tag" id="explain-tag">ataque</div>
+            <div class="explain-text" id="explain-text"></div>
+          </div>
+          <div class="console-line" id="console-line" style="display:none"></div>
+
+          <div class="concepts-grid">
+            <div class="concept-item">
+              <div class="concept-icon">🍪</div>
+              <div>
+                <strong>¿Por qué las cookies no alcanzan?</strong> El navegador adjunta las cookies automáticamente a toda petición al mismo dominio. Un formulario oculto o un <code>fetch()</code> desde un sitio malicioso llega al banco con la cookie de sesión intacta — el banco no puede distinguirlo de una petición real.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">🎫</div>
+              <div>
+                <strong>¿Qué es el Synchronizer Token?</strong> Un token aleatorio único que el banco genera al iniciar sesión, lo guarda en el servidor, y lo incluye en cada formulario. El sitio malicioso no puede adivinarlo ni leerlo de otra página — si el token no coincide, la petición se rechaza.
+              </div>
+            </div>
+            <div class="concept-item">
+              <div class="concept-icon">🔐</div>
+              <div>
+                <strong>¿Cómo se previene?</strong> El token CSRF se incluye como campo oculto en cada form o como header personalizado. El sitio malicioso puede hacer la petición, pero <strong>no puede conocer el token</strong> — no puede leer el HTML de tu banco por Same-Origin Policy. Sin el token válido, el servidor rechaza con 403.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+import { initSoundControls } from '../lib/soundControls.js';
+
+(function () {
+  const sound = initSoundControls();
+  let mode = 'vulnerable';
+  let sessionId = null;
+  let csrfToken = null;
+  let balance = 50000;
+
+  // DOM refs
+  const btnVulnerable = document.getElementById('btn-mode-vulnerable');
+  const btnSecure = document.getElementById('btn-mode-secure');
+  const modeStatusBadge = document.getElementById('mode-status-badge');
+  const modeStatusText = document.getElementById('mode-status-text');
+  const btnLogin = document.getElementById('btn-login');
+  const sessionInfo = document.getElementById('session-info');
+  const sessionIdEl = document.getElementById('session-id');
+  const csrfTokenEl = document.getElementById('csrf-token');
+  const initialBalanceEl = document.getElementById('initial-balance');
+  const tabsContainer = document.getElementById('tabs-container');
+  const bankBalance = document.getElementById('bank-balance');
+  const bankMovements = document.getElementById('bank-movements');
+  const evilContent = document.getElementById('evil-content');
+  const consoleOutput = document.getElementById('console-output');
+  const btnAttack = document.getElementById('btn-attack');
+  const resultBanner = document.getElementById('result-banner');
+  const resultIcon = document.getElementById('result-icon');
+  const resultTitle = document.getElementById('result-title');
+  const resultDesc = document.getElementById('result-desc');
+  const explainIdle = document.getElementById('explain-idle');
+  const explainActive = document.getElementById('explain-active');
+  const explainTag = document.getElementById('explain-tag');
+  const explainText = document.getElementById('explain-text');
+  const consoleLine = document.getElementById('console-line');
+  const codeLines = document.querySelectorAll('.line');
+
+  function highlightCode(keys) {
+    codeLines.forEach(line => {
+      const k = line.getAttribute('data-key');
+      line.classList.toggle('active', keys.includes(k));
+    });
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    if (mode === 'vulnerable') {
+      btnVulnerable?.classList.add('active');
+      btnSecure?.classList.remove('active');
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge danger';
+      if (modeStatusText) modeStatusText.textContent = 'VULNERABLE — solo cookie de sesión';
+    } else {
+      btnSecure?.classList.add('active');
+      btnVulnerable?.classList.remove('active');
+      if (modeStatusBadge) modeStatusBadge.className = 'mode-status-badge safe';
+      if (modeStatusText) modeStatusText.textContent = 'SEGURO — requiere token CSRF';
+    }
+    highlightCode(mode === 'vulnerable' ? ['vuln'] : ['secure']);
+    resetTabs();
+  }
+
+  function resetTabs() {
+    if (tabsContainer) tabsContainer.style.display = 'none';
+    if (resultBanner) resultBanner.style.display = 'none';
+    if (evilContent) evilContent.style.display = 'block';
+    if (btnAttack) btnAttack.disabled = false;
+    if (consoleOutput) consoleOutput.innerHTML = '';
+    if (explainIdle) explainIdle.style.display = 'block';
+    if (explainActive) explainActive.style.display = 'none';
+    if (consoleLine) consoleLine.style.display = 'none';
+  }
+
+  async function login() {
+    try {
+      const res = await fetch('/api/csrf-demo/token');
+      const data = await res.json();
+      sessionId = data.sessionId;
+      csrfToken = data.csrfToken;
+      balance = data.balance;
+
+      if (sessionIdEl) sessionIdEl.textContent = sessionId.substring(0, 24) + '...';
+      if (csrfTokenEl) csrfTokenEl.textContent = mode === 'secure' ? csrfToken.substring(0, 24) + '...' : '(no emitido — modo vulnerable)';
+      if (initialBalanceEl) initialBalanceEl.textContent = `$${balance.toLocaleString('es-AR')}`;
+      if (bankBalance) bankBalance.textContent = `$${balance.toLocaleString('es-AR')}`;
+      if (sessionInfo) sessionInfo.style.display = 'flex';
+      if (tabsContainer) tabsContainer.style.display = 'grid';
+
+      if (bankMovements) {
+        bankMovements.innerHTML = '<div class="movement empty-movement">Sin movimientos recientes</div>';
+      }
+
+      highlightCode(['session']);
+      sound.play('playSuccess');
+    } catch {
+      sound.play('playAlert');
+    }
+  }
+
+  async function launchAttack() {
+    if (!sessionId) return;
+    btnAttack.disabled = true;
+    if (evilContent) evilContent.style.display = 'none';
+    if (resultBanner) resultBanner.style.display = 'none';
+
+    sound.play('playAlert');
+
+    // Step 1: attacker site constructs the request
+    addConsoleLine('atk', 'Sitio malicioso detectado tu sesión activa en banco-seguro.com');
+    addConsoleLine('atk', `Construyendo petición POST a /api/csrf-demo/transferir...`);
+    addConsoleLine('atk', `Session ID capturado: ${sessionId.substring(0, 16)}...`);
+
+    if (mode === 'seguro') {
+      addConsoleLine('atk', 'Token CSRF: NO DISPONIBLE (protegido por Same-Origin Policy)');
+    }
+
+    addConsoleLine('atk', 'Disparando petición automática...');
+
+    await sleep(800);
+
+    try {
+      const payload = {
+        sessionId,
+        to: 'cuenta-attacker-99999',
+        amount: 5000,
+        mode,
+      };
+
+      if (mode === 'seguro') {
+        payload.csrfToken = 'token-falso-del-atacante';
+      }
+
+      const res = await fetch('/api/csrf-demo/transferir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Transfer succeeded
+        balance = data.newBalance;
+        if (bankBalance) bankBalance.textContent = `$${balance.toLocaleString('es-AR')}`;
+
+        if (bankMovements) {
+          bankMovements.innerHTML = `
+            <div class="movement danger-movement">
+              <span class="mov-desc">Transferencia automática (ataque CSRF)</span>
+              <span class="mov-amount">-$${data.amount.toLocaleString('es-AR')}</span>
+            </div>
+            <div class="movement empty-movement">Sin movimientos recientes</div>
+          `;
+        }
+
+        addConsoleLine('ok', `Transferencia ejecutada: $${data.amount.toLocaleString('es-AR')} → cuenta-attacker-99999`);
+        addConsoleLine('ok', `Saldo nuevo: $${data.newBalance.toLocaleString('es-AR')}`);
+
+        if (resultBanner) resultBanner.style.display = 'flex';
+        if (resultIcon) resultIcon.textContent = '🚨';
+        if (resultTitle) {
+          resultTitle.textContent = 'Transferencia ejecutada sin tu consentimiento';
+          resultTitle.className = 'result-title danger';
+        }
+        if (resultDesc) resultDesc.textContent = 'El sitio malicioso envió una petición a tu banco. Tu navegador adjuntó la cookie de sesión automáticamente. El banco no pudo distinguir esta petición de una legítima — no había ningún token CSRF que validar.';
+
+        sound.play('playBlocked');
+        highlightCode(['vuln', 'why']);
+
+        if (explainIdle) explainIdle.style.display = 'none';
+        if (explainActive) explainActive.style.display = 'block';
+        if (explainTag) {
+          explainTag.textContent = 'CSRF exitoso — saldo robado';
+          explainTag.className = 'explain-tag danger';
+        }
+        if (explainText) {
+          explainText.innerHTML = `<strong style="color:var(--rose,#fb7185)">La transferencia se ejecutó porque el banco solo validó la cookie:</strong> El navegador la adjuntó automáticamente a la petición del sitio malicioso. El banco no tiene forma de saber que la petición no vino de vos — <code>Same-Origin Policy</code> protege la lectura de respuestas, pero no el envío de peticiones POST con cookies.`;
+        }
+        if (consoleLine) {
+          consoleLine.style.display = 'block';
+          consoleLine.className = 'console-line danger';
+          consoleLine.innerHTML = `[CSRF] Transferencia de $5.000 ejecutada sin consentimiento. Saldo: $${balance.toLocaleString('es-AR')}`;
+        }
+
+      } else {
+        // Transfer rejected
+        addConsoleLine('err', `ERROR ${res.status}: ${data.error}`);
+
+        if (resultBanner) resultBanner.style.display = 'flex';
+        if (resultIcon) resultIcon.textContent = '🛡️';
+        if (resultTitle) {
+          resultTitle.textContent = 'Transferencia rechazada — token CSRF inválido';
+          resultTitle.className = 'result-title safe';
+        }
+        if (resultDesc) resultDesc.textContent = 'El sitio malicioso no tenía el token CSRF válido. El servidor rechazó la petición con 403. Tu saldo está intacto.';
+
+        sound.play('playSuccess');
+        highlightCode(['secure', 'why']);
+
+        if (explainIdle) explainIdle.style.display = 'none';
+        if (explainActive) explainActive.style.display = 'block';
+        if (explainTag) {
+          explainTag.textContent = 'CSRF bloqueado — token validado';
+          explainTag.className = 'explain-tag safe';
+        }
+        if (explainText) {
+          explainText.innerHTML = `<strong style="color:var(--green,#10b981)">El token CSRF detuvo el ataque:</strong> El sitio malicioso no puede conocer el token porque <code>Same-Origin Policy</code> le impide leer el HTML de tu banco. Sin el token válido, el servidor rechaza la petición con <code>403 Forbidden</code>. El synchronizer token es lo que diferencia una petición legítima de una falsificada.`;
+        }
+        if (consoleLine) {
+          consoleLine.style.display = 'block';
+          consoleLine.className = 'console-line success';
+          consoleLine.innerHTML = '[CSRF] Petición rechazada — token CSRF inválido o faltante (403).';
+        }
+      }
+    } catch {
+      addConsoleLine('err', 'Error de conexión con el servidor.');
+    }
+  }
+
+  function addConsoleLine(type, text) {
+    if (!consoleOutput) return;
+    const cls = type === 'ok' ? 'line-ok' : type === 'err' ? 'line-err' : 'line-atk';
+    const prefix = type === 'ok' ? '[OK]' : type === 'err' ? '[ERR]' : '[ATK]';
+    consoleOutput.innerHTML += `<div class="${cls}">${prefix} ${escapeHtml(text)}</div>`;
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return str.replace(/[&<>"']/g, c => map[c]);
+  }
+
+  function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  // Event listeners
+  btnVulnerable?.addEventListener('click', () => setMode('vulnerable'));
+  btnSecure?.addEventListener('click', () => setMode('secure'));
+  btnLogin?.addEventListener('click', login);
+  btnAttack?.addEventListener('click', launchAttack);
+
+  setMode('vulnerable');
+})();
+</script>
+
+<style>
+  .api-page {
+    --api-panel: var(--surface-panel);
+    --api-border: var(--border-subtle);
+    --api-border-soft: var(--border-hairline);
+    --api-muted: var(--text-secondary);
+    --api-muted-2: var(--text-muted);
+    --rose: #fb7185;
+    --rose-soft: rgba(251, 113, 133, 0.18);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.18);
+    --amber: #f59e0b;
+
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 0.35rem 0 1.25rem;
+  }
+
+  /* TOPBAR */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 4px 2px 26px; border-bottom: 1px solid var(--api-border-soft); margin-bottom: 34px; }
+  .topbar-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .brand-link { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--text-primary); text-decoration: none; font-size: 15px; font-weight: 700; }
+  .brand-link:hover { color: var(--text-white); }
+  .brand-mark { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: #fff; background: var(--rose); font-size: 12px; font-weight: 800; box-shadow: 0 0 0 4px var(--rose-soft); }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .home-action { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 7px 12px; border: 1px solid var(--api-border); border-radius: 10px; color: var(--api-muted); background: rgba(255,255,255,0.03); text-decoration: none; font-size: 13px; font-weight: 600; transition: all .15s; }
+  .home-action svg { width: 16px; height: 16px; }
+  .home-action:hover { color: var(--text-primary); border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+  .crumbs { font-size: 13.5px; color: var(--api-muted); display: flex; align-items: center; gap: 6px; }
+  .crumbs .sep { color: var(--api-muted-2); }
+  .crumbs .current { color: var(--text-primary); }
+  .crumbs a { color: var(--api-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--text-primary); }
+  .badge-live { font-size: 12px; color: var(--rose); background: var(--rose-soft); border: 1px solid color-mix(in srgb, var(--rose) 30%, transparent); border-radius: var(--radius-pill); padding: 5px 12px; display: flex; align-items: center; gap: 7px; font-weight: 600; }
+  .badge-live .dot { width: 7px; height: 7px; background: var(--rose); border-radius: 50%; box-shadow: 0 0 8px var(--rose); animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  h1 { font-size: clamp(1.85rem, 3.2vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 12px; color: var(--text-white); }
+  .lede { font-size: 15px; line-height: 1.65; color: var(--api-muted); max-width: 860px; margin: 0 0 24px; }
+  .lede code { font-family: var(--font-mono); color: var(--rose); background: var(--rose-soft); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  /* MODE SELECTOR */
+  .mode-selector-card { display: flex; justify-content: space-between; align-items: center; background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); padding: 1rem 1.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 14px; }
+  .mode-toggle-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mode-btn { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--api-border); border-radius: 10px; padding: 8px 16px; cursor: pointer; transition: all .2s; text-align: left; }
+  .mode-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+  .mode-btn.active { background: rgba(251,113,133,0.12); border-color: var(--rose); box-shadow: 0 0 14px rgba(251,113,133,0.2); }
+  .mode-btn#btn-mode-secure.active { background: rgba(16,185,129,0.12); border-color: var(--green); box-shadow: 0 0 14px rgba(16,185,129,0.2); }
+  .mode-icon { font-size: 20px; }
+  .mode-btn-text { display: flex; flex-direction: column; }
+  .mode-name { font-size: 13.5px; font-weight: 700; color: var(--text-white); }
+  .mode-desc { font-size: 11px; color: var(--api-muted); }
+  .mode-status-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; font-family: var(--font-mono); padding: 6px 12px; border-radius: var(--radius-pill); }
+  .mode-status-badge.danger { background: var(--red-soft); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .mode-status-badge.safe { background: var(--green-soft); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .mode-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* SETUP CARD */
+  .setup-card { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); padding: 1.4rem; margin-bottom: 1.25rem; }
+  .setup-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .setup-icon { font-size: 20px; }
+  .setup-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .setup-text { font-size: 13px; color: var(--api-muted); margin-bottom: 14px; line-height: 1.5; }
+  button.primary { display: inline-flex; align-items: center; gap: 7px; background: var(--rose); color: #fff; border: none; font-size: 13.5px; font-weight: 700; padding: 10px 18px; border-radius: 9px; cursor: pointer; box-shadow: 0 2px 10px rgba(251,113,133,0.35); transition: transform .12s, filter .12s; }
+  button.primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  button.primary:active { transform: translateY(0); }
+
+  .session-info { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--api-border-soft); }
+  .session-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .session-label { color: var(--api-muted); min-width: 120px; flex-shrink: 0; }
+  .session-value { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-primary); background: #090c10; padding: 4px 8px; border-radius: 4px; word-break: break-all; }
+  .token-value { color: #fbbf24; }
+  .balance-value { color: var(--green); font-weight: 700; }
+
+  /* BROWSER TABS */
+  .tabs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+  @media (max-width: 740px) { .tabs-container { grid-template-columns: 1fr; } }
+
+  .browser-tab { border: 1px solid var(--api-border); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .tab-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--api-border-soft); }
+  .tab-dots { display: flex; gap: 5px; }
+  .dot-r, .dot-y, .dot-g { width: 9px; height: 9px; border-radius: 50%; }
+  .dot-r { background: #ef4444; }
+  .dot-y { background: #f59e0b; }
+  .dot-g { background: #22c55e; }
+  .tab-url { font-size: 11.5px; font-family: var(--font-mono); color: var(--api-muted); display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab-lock { font-size: 10px; }
+
+  .tab-body { padding: 16px; min-height: 220px; }
+  .evil-bar { border-bottom-color: rgba(239,68,68,0.3); }
+  .evil-url { color: #fca5a5; }
+
+  /* BANK TAB */
+  .bank-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--api-border-soft); }
+  .bank-logo { font-size: 18px; }
+  .bank-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .bank-user { font-size: 11px; color: var(--api-muted); margin-left: auto; }
+  .bank-balance { text-align: center; padding: 16px 0; }
+  .balance-label { font-size: 12px; color: var(--api-muted); display: block; margin-bottom: 4px; }
+  .balance-amount { font-size: 28px; font-weight: 800; color: var(--text-white); font-family: var(--font-mono); transition: color .3s; }
+  .balance-amount.flash-red { color: var(--red); animation: flashAmount .6s ease; }
+  @keyframes flashAmount { 0%, 100% { color: var(--text-white); } 50% { color: var(--red); } }
+
+  .bank-movements { margin-top: 10px; }
+  .movement { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 6px; font-size: 12.5px; margin-bottom: 4px; }
+  .empty-movement { color: var(--api-muted-2); font-style: italic; }
+  .danger-movement { background: var(--red-soft); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); animation: slideIn .4s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .mov-desc { font-weight: 600; }
+  .mov-amount { font-family: var(--font-mono); font-weight: 700; }
+
+  /* EVIL TAB */
+  .evil-body { background: linear-gradient(135deg, rgba(239,68,68,0.04), rgba(251,113,133,0.02)); }
+  .evil-content { text-align: center; padding: 10px 0 14px; }
+  .evil-header { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+  .evil-icon { font-size: 22px; }
+  .evil-title { font-size: 16px; font-weight: 800; color: var(--rose); animation: pulse 1.2s ease infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+  .evil-text { font-size: 13px; color: var(--api-muted); margin-bottom: 6px; }
+  .evil-fine-print { font-size: 10px; color: var(--api-muted-2); }
+
+  .evil-btn { display: flex; align-items: center; gap: 7px; margin: 10px auto 0; background: linear-gradient(135deg, var(--red), #dc2626); color: #fff; border: none; font-size: 13px; font-weight: 700; padding: 10px 18px; border-radius: 9px; cursor: pointer; transition: transform .12s, filter .12s; }
+  .evil-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .evil-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: none; }
+
+  .evil-console { margin-top: 14px; background: #090c10; border: 1px solid var(--api-border-soft); border-radius: 8px; overflow: hidden; }
+  .console-header { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--api-muted-2); padding: 6px 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--api-border-soft); }
+  .console-output { padding: 8px 10px; max-height: 140px; overflow-y: auto; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; }
+  .line-atk { color: #fbbf24; }
+  .line-ok { color: #34d399; }
+  .line-err { color: #fca5a5; }
+
+  /* RESULT BANNER */
+  .result-banner { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; border-radius: var(--radius-lg); margin-bottom: 1.25rem; animation: slideIn .4s ease; }
+  .result-banner:has(.result-title.danger) { background: var(--red-soft); border: 1px solid rgba(239,68,68,0.3); }
+  .result-banner:has(.result-title.safe) { background: var(--green-soft); border: 1px solid rgba(16,185,129,0.3); }
+  .result-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+  .result-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .result-title.danger { color: #fca5a5; }
+  .result-title.safe { color: #6ee7b7; }
+  .result-desc { font-size: 13px; line-height: 1.55; color: var(--api-muted); }
+
+  /* SPLIT */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; margin-bottom: 2rem; }
+  @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--api-panel); border: 1px solid var(--api-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--api-border-soft); }
+  .panel-head .title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .panel-head .filename { font-family: var(--font-mono); font-size: 11.5px; color: var(--api-muted); }
+
+  pre.code { margin: 0; padding: 14px 16px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; background: #090c10; color: #e2e8f0; overflow-x: auto; }
+  .code .line { display: block; padding: 1px 6px; border-radius: 4px; transition: background .2s, color .2s; }
+  .code .line.active { background: rgba(251,113,133,0.18); color: #ffe4e6; }
+  .kw { color: #f472b6; font-weight: 600; }
+  .str { color: #34d399; }
+  .num { color: #fbbf24; }
+  .cm { color: #64748b; font-style: italic; }
+
+  /* EXPLANATION */
+  .explain-body { padding: 1.25rem; }
+  .explain-idle { font-size: 13.5px; line-height: 1.6; color: var(--api-muted); margin-bottom: 1rem; }
+  .explain-tag { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; background: var(--rose-soft); color: var(--rose); }
+  .explain-tag.danger { background: var(--red-soft); color: #fca5a5; }
+  .explain-tag.safe { background: var(--green-soft); color: #6ee7b7; }
+  .explain-text { font-size: 14px; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem; }
+  .explain-text code { font-family: var(--font-mono); font-size: 12.5px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+  .explain-text strong { color: var(--text-primary); }
+
+  .console-line { background: #090c10; border: 1px solid var(--api-border-soft); border-radius: 6px; padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 1.2rem; }
+  .console-line.danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+  .console-line.success { color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
+
+  .concepts-grid { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--api-border-soft); padding-top: 1.2rem; }
+  .concept-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.55; color: var(--api-muted); }
+  .concept-item strong { color: var(--text-primary); }
+  .concept-item code { font-family: var(--font-mono); font-size: 12px; color: var(--rose); background: var(--rose-soft); padding: 1px 5px; border-radius: 3px; }
+  .concept-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+  .sound-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--api-border); color: var(--api-muted); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: all .15s; }
+  .sound-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-white); }
+  .sound-btn.muted { opacity: 0.6; border-style: dashed; }
+
+  @media (max-width: 640px) {
+    .api-page { padding: 0.1rem 0 0.75rem; }
+    .topbar { align-items: flex-start; gap: 12px; flex-direction: column; margin-bottom: 28px; padding-bottom: 20px; }
+    .topbar-actions { width: 100%; justify-content: space-between; }
+    h1 { font-size: 26px; }
+    .session-row { flex-direction: column; gap: 2px; align-items: flex-start; }
+    .session-label { min-width: auto; }
+    .balance-amount { font-size: 22px; }
+  }
+</style>

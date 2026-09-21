@@ -9,6 +9,7 @@ import transaccionDemoRouter from './routes/transaccion-demo.js';
 import sqliDemoRouter from './routes/sqli-demo.js';
 import hashDemoRouter from './routes/hash-demo.js';
 import jwtDemoRouter from './routes/jwt-demo.js';
+import csrfDemoRouter from './routes/csrf-demo.js';
 import { trackRequest } from './metrics.js';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/transaccion-demo', transaccionDemoRouter);
 app.use('/api/sqli-demo', sqliDemoRouter);
 app.use('/api/hash-demo', hashDemoRouter);
 app.use('/api/jwt-demo', jwtDemoRouter);
+app.use('/api/csrf-demo', csrfDemoRouter);
 
 app.get('/', (req, res) => {
   res.json({
