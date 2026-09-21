@@ -179,13 +179,7 @@ import { initSoundControls } from '../lib/soundControls.js';
 
   const flowPositions = { begin: 0, update_origen: 1, update_destino: 2, commit: 3, rollback: 3 };
 
-  steps.forEach((s, i) => {
-    const seg = document.createElement('div');
-    seg.className = 'seg';
-    seg.dataset.index = i;
-    stepTrack.appendChild(seg);
-  });
-  const segs = stepTrack.querySelectorAll('.seg');
+  let segs = [];
 
   function clearHighlights() {
     allCodeLines.forEach(l => l.classList.remove('active'));
@@ -328,7 +322,7 @@ import { initSoundControls } from '../lib/soundControls.js';
       if (s.isError) seg.dataset.dir = 'error';
       stepTrack.appendChild(seg);
     });
-    const segsNew = stepTrack.querySelectorAll('.seg');
+    segs = stepTrack.querySelectorAll('.seg');
     stepCount.textContent = `0 / ${totalSteps}`;
 
     statusPill.textContent = `Transacción ${mode} — procesando...`;
@@ -386,7 +380,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         consoleLine.innerHTML = `<span class="sql-kw">${def.console}</span>`;
 
         // step track
-        segsNew.forEach((seg, idx) => {
+        segs.forEach((seg, idx) => {
           seg.classList.toggle('done', idx <= stepIdx);
         });
         stepCount.textContent = `${stepIdx + 1} / ${totalSteps}`;
