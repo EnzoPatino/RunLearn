@@ -126,7 +126,7 @@ export default function GithubModule() {
             HTTP {statusInfo.status}
           </div>
           <div className="gh-latency-badge">
-            ⚡ {statusInfo.latency} ms
+            {statusInfo.latency} ms
           </div>
           <div className="gh-rate-badge">
             Límite: {statusInfo.rateLimit} reqs restantes

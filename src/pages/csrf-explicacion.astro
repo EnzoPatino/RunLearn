@@ -18,7 +18,7 @@ import Layout from '../layouts/Layout.astro';
       </div>
       <div class="topbar-actions">
         <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
-          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-icon" aria-hidden="true"></span>
           <span id="sound-text">Sonido activo</span>
         </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
@@ -42,14 +42,14 @@ import Layout from '../layouts/Layout.astro';
     <div class="mode-selector-card">
       <div class="mode-toggle-group">
         <button type="button" class="mode-btn active" id="btn-mode-vulnerable" data-mode="vulnerable">
-          <span class="mode-icon">🔓</span>
+          <svg class="mode-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
           <div class="mode-btn-text">
             <span class="mode-name">Sin protección CSRF</span>
             <span class="mode-desc">Solo valida la cookie de sesión</span>
           </div>
         </button>
         <button type="button" class="mode-btn" id="btn-mode-secure" data-mode="secure">
-          <span class="mode-icon">🛡️</span>
+          <svg class="mode-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <div class="mode-btn-text">
             <span class="mode-name">Con token CSRF</span>
             <span class="mode-desc">Requiere token Synchronizer Pattern</span>
@@ -65,7 +65,7 @@ import Layout from '../layouts/Layout.astro';
     <!-- SETUP -->
     <div class="setup-card" id="setup-card">
       <div class="setup-header">
-        <span class="setup-icon">🏦</span>
+        <svg class="setup-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="21" x2="21" y2="21"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
         <span class="setup-title">Paso 1: Iniciar sesión en el banco</span>
       </div>
       <p class="setup-text">Primero creá una sesión de banco. Esto te da un ID de sesión (como una cookie) y, si activás el modo seguro, un token CSRF.</p>
@@ -95,13 +95,13 @@ import Layout from '../layouts/Layout.astro';
             <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
           </div>
           <div class="tab-url">
-            <span class="tab-lock">🔒</span>
+            <svg class="tab-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <span>banco-seguro.com/cuenta</span>
           </div>
         </div>
         <div class="tab-body">
           <div class="bank-header">
-            <span class="bank-logo">🏦</span>
+            <svg class="bank-logo" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="21" x2="21" y2="21"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
             <span class="bank-name">Mi Banco Online</span>
             <span class="bank-user" id="bank-user">Usuario: juan@email.com</span>
           </div>
@@ -122,14 +122,14 @@ import Layout from '../layouts/Layout.astro';
             <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
           </div>
           <div class="tab-url evil-url">
-            <span class="tab-lock">⚠️</span>
+            <svg class="tab-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span>sorteo-premios-gratis.com/ganaste</span>
           </div>
         </div>
         <div class="tab-body evil-body">
           <div class="evil-content" id="evil-content">
             <div class="evil-header">
-              <span class="evil-icon">🎰</span>
+              <svg class="evil-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               <span class="evil-title">¡FELICIDADES! ¡GANASTE!</span>
             </div>
             <div class="evil-text">
@@ -142,7 +142,7 @@ import Layout from '../layouts/Layout.astro';
             <div class="console-output" id="console-output"></div>
           </div>
           <button class="evil-btn" id="btn-attack" type="button">
-            <span>🎰</span> ¡RECLAMAR MI PREMIO!
+            RECLAMAR PREMIO
           </button>
         </div>
       </div>
@@ -167,14 +167,14 @@ import Layout from '../layouts/Layout.astro';
         <pre class="code"><span class="line" data-key="session"><span class="cm">// Sesión del usuario (cookie automática)</span></span>
 <span class="line" data-key="session"><span class="kw">const</span> session = sessions.get(sessionId);</span>
 <span class="line">&nbsp;</span>
-<span class="line" data-key="vuln"><span class="cm">// ⚠️ VULNERABLE — solo cookie</span></span>
+<span class="line" data-key="vuln"><span class="cm">// VULNERABLE — solo cookie</span></span>
 <span class="line" data-key="vuln"><span class="kw">if</span> (mode === <span class="str">'vulnerable'</span>) {</span>
 <span class="line" data-key="vuln">  <span class="cm">// No valida nada más. Si tenés cookie,</span></span>
 <span class="line" data-key="vuln">  <span class="cm">// la petición se procesa.</span></span>
 <span class="line" data-key="vuln">  procesarTransferencia(session);</span>
 <span class="line" data-key="vuln">}</span>
 <span class="line">&nbsp;</span>
-<span class="line" data-key="secure"><span class="cm">// ✅ SEGURO — synchronizer token</span></span>
+<span class="line" data-key="secure"><span class="cm">// SEGURO — synchronizer token</span></span>
 <span class="line" data-key="secure"><span class="kw">if</span> (mode === <span class="str">'seguro'</span>) {</span>
 <span class="line" data-key="secure">  <span class="kw">if</span> (csrfToken !== session.csrfToken) {</span>
 <span class="line" data-key="secure">    <span class="kw">return</span> res.status(<span class="num">403</span>).json({</span>
@@ -197,7 +197,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
         <div class="explain-body">
           <div id="explain-idle" class="explain-idle">
-            Primero iniciá sesión en el banco. Luego hacé clic en <strong>¡RECLAMAR MI PREMIO!</strong> en el sitio malicioso. Observá qué pasa en cada modo.
+            Primero iniciá sesión en el banco. Luego hacé clic en <strong>RECLAMAR PREMIO</strong> en el sitio malicioso. Observá qué pasa en cada modo.
           </div>
           <div id="explain-active" style="display:none">
             <div class="explain-tag" id="explain-tag">ataque</div>
@@ -207,19 +207,16 @@ import Layout from '../layouts/Layout.astro';
 
           <div class="concepts-grid">
             <div class="concept-item">
-              <div class="concept-icon">🍪</div>
               <div>
                 <strong>¿Por qué las cookies no alcanzan?</strong> El navegador adjunta las cookies automáticamente a toda petición al mismo dominio. Un formulario oculto o un <code>fetch()</code> desde un sitio malicioso llega al banco con la cookie de sesión intacta — el banco no puede distinguirlo de una petición real.
               </div>
             </div>
             <div class="concept-item">
-              <div class="concept-icon">🎫</div>
               <div>
                 <strong>¿Qué es el Synchronizer Token?</strong> Un token aleatorio único que el banco genera al iniciar sesión, lo guarda en el servidor, y lo incluye en cada formulario. El sitio malicioso no puede adivinarlo ni leerlo de otra página — si el token no coincide, la petición se rechaza.
               </div>
             </div>
             <div class="concept-item">
-              <div class="concept-icon">🔐</div>
               <div>
                 <strong>¿Cómo se previene?</strong> El token CSRF se incluye como campo oculto en cada form o como header personalizado. El sitio malicioso puede hacer la petición, pero <strong>no puede conocer el token</strong> — no puede leer el HTML de tu banco por Same-Origin Policy. Sin el token válido, el servidor rechaza con 403.
               </div>
@@ -389,7 +386,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         addConsoleLine('ok', `Saldo nuevo: $${data.newBalance.toLocaleString('es-AR')}`);
 
         if (resultBanner) resultBanner.style.display = 'flex';
-        if (resultIcon) resultIcon.textContent = '🚨';
+        if (resultIcon) resultIcon.textContent = '✕';
         if (resultTitle) {
           resultTitle.textContent = 'Transferencia ejecutada sin tu consentimiento';
           resultTitle.className = 'result-title danger';
@@ -419,7 +416,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         addConsoleLine('err', `ERROR ${res.status}: ${data.error}`);
 
         if (resultBanner) resultBanner.style.display = 'flex';
-        if (resultIcon) resultIcon.textContent = '🛡️';
+        if (resultIcon) resultIcon.textContent = '✓';
         if (resultTitle) {
           resultTitle.textContent = 'Transferencia rechazada — token CSRF inválido';
           resultTitle.className = 'result-title safe';

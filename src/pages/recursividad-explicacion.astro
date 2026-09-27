@@ -18,7 +18,7 @@ import Layout from '../layouts/Layout.astro';
       </div>
       <div class="topbar-actions">
         <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
-          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-icon" aria-hidden="true"></span>
           <span id="sound-text">Sonido activo</span>
         </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
@@ -260,7 +260,7 @@ function setupRecursion() {
       // Empty stack - show empty state
       const empty = document.createElement('div');
       empty.className = 'stack-empty';
-      empty.innerHTML = '<span class="empty-icon">📭</span><span>Pila vacía</span>';
+      empty.innerHTML = '<span>Pila vacía</span>';
       stackContainer.appendChild(empty);
       return;
     }

@@ -38,7 +38,7 @@ import Layout from '../layouts/Layout.astro';
     <div class="mode-selector-card">
       <div class="mode-toggle-group">
         <button type="button" class="mode-btn active" id="btn-mode-unprotected" data-mode="unprotected">
-          <span class="mode-icon">🔓</span>
+          <svg class="mode-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
           <div class="mode-btn-text">
             <span class="mode-name">Sin seguridad</span>
             <span class="mode-desc">Vulnerable a sobrecarga</span>
@@ -46,7 +46,7 @@ import Layout from '../layouts/Layout.astro';
         </button>
 
         <button type="button" class="mode-btn" id="btn-mode-protected" data-mode="protected">
-          <span class="mode-icon">🛡️</span>
+          <svg class="mode-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <div class="mode-btn-text">
             <span class="mode-name">Con seguridad</span>
             <span class="mode-desc">Rate Limiting activo (máx 3 req/10s)</span>
@@ -62,7 +62,6 @@ import Layout from '../layouts/Layout.astro';
 
     <!-- RESUMEN RÁPIDO: QUÉ ESTÁ POR VER -->
     <div class="overview-panel" id="overview-panel">
-      <div class="overview-icon">⚡</div>
       <div class="overview-body">
         <p class="overview-text" id="overview-text">
           <strong>Sin protección:</strong> 6 bots envían peticiones al servidor sin límite. Sin control, lo saturan y se cae.
@@ -99,7 +98,7 @@ import Layout from '../layouts/Layout.astro';
               </div>
               <span class="bot-counter" id="bot-counter-0"></span>
               <span class="bot-status" id="bot-status-0">idle</span>
-              <span class="bot-blocked-badge" id="bot-blocked-0">🚫 429</span>
+              <span class="bot-blocked-badge" id="bot-blocked-0">Bloqueado (429)</span>
             </div>
 
             <div class="bot-node" id="bot-1" data-ip="192.168.1.102">
@@ -118,7 +117,7 @@ import Layout from '../layouts/Layout.astro';
               </div>
               <span class="bot-counter" id="bot-counter-1"></span>
               <span class="bot-status" id="bot-status-1">idle</span>
-              <span class="bot-blocked-badge" id="bot-blocked-1">🚫 429</span>
+              <span class="bot-blocked-badge" id="bot-blocked-1">Bloqueado (429)</span>
             </div>
 
             <div class="bot-node" id="bot-2" data-ip="192.168.1.103">
@@ -137,7 +136,7 @@ import Layout from '../layouts/Layout.astro';
               </div>
               <span class="bot-counter" id="bot-counter-2"></span>
               <span class="bot-status" id="bot-status-2">idle</span>
-              <span class="bot-blocked-badge" id="bot-blocked-2">🚫 429</span>
+              <span class="bot-blocked-badge" id="bot-blocked-2">Bloqueado (429)</span>
             </div>
 
             <div class="bot-node" id="bot-3" data-ip="192.168.1.104">
@@ -156,7 +155,7 @@ import Layout from '../layouts/Layout.astro';
               </div>
               <span class="bot-counter" id="bot-counter-3"></span>
               <span class="bot-status" id="bot-status-3">idle</span>
-              <span class="bot-blocked-badge" id="bot-blocked-3">🚫 429</span>
+              <span class="bot-blocked-badge" id="bot-blocked-3">Bloqueado (429)</span>
             </div>
 
             <div class="bot-node" id="bot-4" data-ip="192.168.1.105">
@@ -175,7 +174,7 @@ import Layout from '../layouts/Layout.astro';
               </div>
               <span class="bot-counter" id="bot-counter-4"></span>
               <span class="bot-status" id="bot-status-4">idle</span>
-              <span class="bot-blocked-badge" id="bot-blocked-4">🚫 429</span>
+              <span class="bot-blocked-badge" id="bot-blocked-4">Bloqueado (429)</span>
             </div>
 
             <div class="bot-node" id="bot-5" data-ip="192.168.1.106">
@@ -194,7 +193,7 @@ import Layout from '../layouts/Layout.astro';
               </div>
               <span class="bot-counter" id="bot-counter-5"></span>
               <span class="bot-status" id="bot-status-5">idle</span>
-              <span class="bot-blocked-badge" id="bot-blocked-5">🚫 429</span>
+              <span class="bot-blocked-badge" id="bot-blocked-5">Bloqueado (429)</span>
             </div>
           </div>
         </div>
@@ -288,7 +287,7 @@ import Layout from '../layouts/Layout.astro';
         </button>
         <button class="ghost" id="btn-reset-sim">Reiniciar</button>
         <button class="sound-btn" id="btn-toggle-sound" title="Alternar efectos sonoros">
-          <span id="sound-icon">🔊</span>
+          <span id="sound-icon" aria-hidden="true"></span>
           <span id="sound-text">Sonido activo</span>
         </button>
       </div>
@@ -366,21 +365,18 @@ import Layout from '../layouts/Layout.astro';
 
           <div class="concepts-grid">
             <div class="concept-item">
-              <div class="concept-icon">⏱️</div>
               <div>
                 <strong>¿Qué es Rate Limiting?</strong> Es una técnica que cuenta cuántas peticiones realiza una misma dirección IP dentro de una ventana de tiempo (ej. 10s). Si excede el cupo, responde de inmediato con <code>HTTP 429 Too Many Requests</code> sin gastar CPU ni tocar la base de datos.
               </div>
             </div>
 
             <div class="concept-item">
-              <div class="concept-icon">💥</div>
               <div>
                 <strong>¿Por qué se cae sin protección?</strong> Cada petición no controlada consume memoria, abre sockets y ocupa un turno en el Event Loop. Si un atacante dispara cientos de peticiones, el servidor agota sus recursos y los usuarios legítimos quedan sin servicio.
               </div>
             </div>
 
             <div class="concept-item">
-              <div class="concept-icon">🛡️</div>
               <div>
                 <strong>Otras defensas en la industria:</strong>
                 <ul class="defenses-list">

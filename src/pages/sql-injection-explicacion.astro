@@ -18,7 +18,7 @@ import Layout from '../layouts/Layout.astro';
       </div>
       <div class="topbar-actions">
         <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
-          <span id="sound-icon" aria-hidden="true">🔊</span>
+          <span id="sound-icon" aria-hidden="true"></span>
           <span id="sound-text">Sonido activo</span>
         </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
@@ -42,14 +42,14 @@ import Layout from '../layouts/Layout.astro';
     <div class="mode-selector-card">
       <div class="mode-toggle-group">
         <button type="button" class="mode-btn active" id="btn-mode-vulnerable" data-mode="vulnerable">
-          <span class="mode-icon">🔓</span>
+          <svg class="mode-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
           <div class="mode-btn-text">
             <span class="mode-name">Modo vulnerable</span>
             <span class="mode-desc">Concatenación directa en SQL</span>
           </div>
         </button>
         <button type="button" class="mode-btn" id="btn-mode-seguro" data-mode="seguro">
-          <span class="mode-icon">🛡️</span>
+          <svg class="mode-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <div class="mode-btn-text">
             <span class="mode-name">Modo seguro</span>
             <span class="mode-desc">Query parametrizada ($1)</span>
@@ -79,11 +79,9 @@ import Layout from '../layouts/Layout.astro';
         </div>
         <div class="preset-buttons">
           <button class="ghost preset-btn" id="btn-preset-normal">
-            <span class="preset-icon">✅</span>
             <span class="preset-text">Búsqueda normal<br /><code>"Ada Lovelace"</code></span>
           </button>
           <button class="ghost preset-btn danger-preset" id="btn-preset-inject">
-            <span class="preset-icon">💉</span>
             <span class="preset-text">Payload de inyección<br /><code>' OR '1'='1</code></span>
           </button>
         </div>
@@ -115,12 +113,12 @@ import Layout from '../layouts/Layout.astro';
           <span class="title">Código del endpoint</span>
           <span class="filename" id="code-filename">routes/sqli-demo.js</span>
         </div>
-        <pre class="code" id="code-block"><span class="line" data-key="vuln"><span class="cm">// ⚠️ VULNERABLE — solo para demo</span></span>
+        <pre class="code" id="code-block"><span class="line" data-key="vuln"><span class="cm">// VULNERABLE — solo para demo</span></span>
 <span class="line" data-key="vuln"><span class="kw">const</span> sql = <span class="str">`SELECT * FROM people</span></span>
 <span class="line" data-key="vuln"><span class="str">  WHERE nombre = '</span>${'<span class="kw">{input}</span>'}<span class="str">'`</span>;</span>
 <span class="line" data-key="vuln"><span class="kw">const</span> result = <span class="kw">await</span> query(sql);</span>
 <span class="line">&nbsp;</span>
-<span class="line" data-key="safe"><span class="cm">// ✅ SEGURO — query parametrizada</span></span>
+<span class="line" data-key="safe"><span class="cm">// SEGURO — query parametrizada</span></span>
 <span class="line" data-key="safe"><span class="kw">const</span> sql = <span class="str">'SELECT * FROM people</span></span>
 <span class="line" data-key="safe"><span class="str">  WHERE nombre = </span><span class="num">$1</span><span class="str">'</span>;</span>
 <span class="line" data-key="safe"><span class="kw">const</span> result = <span class="kw">await</span> query(sql, [input]);</span></pre>
@@ -142,19 +140,16 @@ import Layout from '../layouts/Layout.astro';
 
           <div class="concepts-grid">
             <div class="concept-item">
-              <div class="concept-icon">💉</div>
               <div>
                 <strong>¿Qué hace <code>' OR '1'='1</code>?</strong> Cierra la cadena original con <code>'</code>, agrega una condición <code>OR '1'='1'</code> (siempre verdadera), y cierra con <code>'</code>. La consulta se convierte en <code>WHERE nombre = '' OR '1'='1'</code>, que devuelve todas las filas.
               </div>
             </div>
             <div class="concept-item">
-              <div class="concept-icon">🛡️</div>
               <div>
                 <strong>¿Por qué la parametrización lo previene?</strong> Con <code>$1</code>, PostgreSQL trata el input como un valor literal, no como parte del SQL. El payload <code>' OR '1'='1</code> se busca como nombre exacto, no como código SQL.
               </div>
             </div>
             <div class="concept-item">
-              <div class="concept-icon">⚠️</div>
               <div>
                 <strong>Consecuencias reales:</strong> SQL Injection puede permitir leer todos los datos de una base, modificar o borrar registros, e incluso tomar control del servidor. Es una de las vulnerabilidades más antiguas y peligrosas de la web.
               </div>
@@ -276,11 +271,11 @@ import { initSoundControls } from '../lib/soundControls.js';
       if (resultWarning) {
         if (mode === 'vulnerable' && data.rowCount > 1) {
           resultWarning.style.display = 'block';
-          resultWarning.innerHTML = `<strong>⚠️ Inyección detectada:</strong> La consulta devolvió <strong>${data.rowCount} filas</strong> en vez de 1. El payload modificó la lógica de la consulta.`;
+          resultWarning.innerHTML = `<strong>Inyección detectada:</strong> La consulta devolvió <strong>${data.rowCount} filas</strong> en vez de 1. El payload modificó la lógica de la consulta.`;
         } else if (mode === 'seguro' && data.rowCount === 0) {
           resultWarning.style.display = 'block';
           resultWarning.className = 'result-warning safe';
-          resultWarning.innerHTML = `<strong>✅ Protegido:</strong> La consulta parametrizada buscó el nombre literalmente y no encontró coincidencias. El payload fue ignorado como código SQL.`;
+          resultWarning.innerHTML = `<strong>Protegido:</strong> La consulta parametrizada buscó el nombre literalmente y no encontró coincidencias. El payload fue ignorado como código SQL.`;
         } else {
           resultWarning.style.display = 'none';
         }

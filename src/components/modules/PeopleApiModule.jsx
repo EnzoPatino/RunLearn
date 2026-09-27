@@ -274,7 +274,7 @@ export default function PeopleApiModule() {
       {/* Auth toolbar */}
       <div style={styles.authBar}>
         <div style={styles.authInfo}>
-          <span style={styles.authLabel}>🔐 requireAuth:</span>
+          <span style={styles.authLabel}>requireAuth:</span>
           {token ? (
             <span style={styles.authActive}>Token JWT activo ({token.slice(0, 14)}...)</span>
           ) : (
@@ -290,7 +290,7 @@ export default function PeopleApiModule() {
               style={styles.btnQuickAuth}
               title="Crea una sesión de prueba rápida en el backend y asigna el Bearer Token"
             >
-              🔑 Obtener Token Demo
+              Obtener Token Demo
             </button>
           ) : (
             <>
@@ -321,7 +321,7 @@ export default function PeopleApiModule() {
 
       {authNotice && (
         <div style={styles.noticeBox}>
-          <span>ℹ️ {authNotice}</span>
+          <span>{authNotice}</span>
           <button onClick={() => setAuthNotice('')} style={styles.noticeClose}>×</button>
         </div>
       )}
@@ -434,7 +434,7 @@ export default function PeopleApiModule() {
               {loading ? (
                 <span>Ejecutando petición...</span>
               ) : (
-                <span>🚀 Enviar {currentOp.method} Request</span>
+                <span>Enviar {currentOp.method} Request</span>
               )}
             </button>
           </div>
@@ -473,7 +473,7 @@ export default function PeopleApiModule() {
                   ))}
                   {!sentRequest.headers['Authorization'] && (
                     <div style={styles.headerMissingLine}>
-                      # ⚠️ Cabecera Authorization ausente (Se provocará 401)
+                      # Cabecera Authorization ausente (Se provocará 401)
                     </div>
                   )}
 
@@ -527,7 +527,7 @@ export default function PeopleApiModule() {
                 >
                   {receivedResponse.status} {receivedResponse.statusText}
                 </span>
-                <span style={styles.latencyPill}>⚡ {receivedResponse.latencyMs} ms</span>
+                <span style={styles.latencyPill}>{receivedResponse.latencyMs} ms</span>
               </div>
             )}
           </div>

@@ -301,19 +301,16 @@ import Layout from '../layouts/Layout.astro';
 
           <div class="concepts-grid">
             <div class="concept-item">
-              <div class="concept-icon">⏱️</div>
               <div>
                 <strong>process.uptime():</strong> Mide los segundos exactos transcurridos desde que arrancó el proceso Node.js. Si el servidor se reinicia, vuelve a cero.
               </div>
             </div>
             <div class="concept-item">
-              <div class="concept-icon">📈</div>
               <div>
                 <strong>Contador en Memoria:</strong> <code>totalRequests++</code> es una variable en la RAM del servidor. Es ultra rápida (sin I/O de disco) y refleja la carga viva del proceso.
               </div>
             </div>
             <div class="concept-item">
-              <div class="concept-icon">🔌</div>
               <div>
                 <strong>Pools de Conexión:</strong> Postgres y Redis no abren y cierran sockets por petición; mantienen un pool permanente para responder en milisegundos.
               </div>
