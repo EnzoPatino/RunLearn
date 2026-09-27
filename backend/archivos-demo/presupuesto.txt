@@ -1,0 +1,8 @@
+PRESUPUESTO (ejemplo)
+=====================
+
+Alquiler servidor:   $0   (corre en tu maquina)
+Dominio:             $0   (es una demo)
+Cafe del desarrollador: $8.50
+
+Archivo de ejemplo inofensivo dentro de backend/archivos-demo/.

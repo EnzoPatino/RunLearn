@@ -10,6 +10,8 @@ import sqliDemoRouter from './routes/sqli-demo.js';
 import hashDemoRouter from './routes/hash-demo.js';
 import jwtDemoRouter from './routes/jwt-demo.js';
 import csrfDemoRouter from './routes/csrf-demo.js';
+import corsDemoRouter from './routes/cors-demo.js';
+import pathTraversalDemoRouter from './routes/path-traversal-demo.js';
 import { trackRequest } from './metrics.js';
 
 const app = express();
@@ -30,6 +32,8 @@ app.use('/api/sqli-demo', sqliDemoRouter);
 app.use('/api/hash-demo', hashDemoRouter);
 app.use('/api/jwt-demo', jwtDemoRouter);
 app.use('/api/csrf-demo', csrfDemoRouter);
+app.use('/api/cors-demo', corsDemoRouter);
+app.use('/api/path-traversal-demo', pathTraversalDemoRouter);
 
 app.get('/', (req, res) => {
   res.json({

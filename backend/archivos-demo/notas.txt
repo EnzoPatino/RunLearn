@@ -1,0 +1,7 @@
+NOTAS DE CLASE
+==============
+
+1. Path traversal = manipular la ruta para salir del directorio permitido.
+2. El clasico payload es ../ (subir un nivel) repetido.
+3. La defensa no es "buscar .." y cortar: es resolver la ruta absoluta
+   y verificar que siga dentro del directorio base.

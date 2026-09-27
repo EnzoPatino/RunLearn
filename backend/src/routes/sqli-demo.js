@@ -10,9 +10,9 @@ const router = Router();
  * Modo vulnerable: concatena el input directamente en el string SQL.
  * Modo seguro: usa query parametrizada ($1).
  *
- * ⚠️ El modo "vulnerable" es INTENCIONALMENTE inseguro para
- *    propósitos educativos. NUNCA usar concatenación de strings
- *    en código real.
+ * El modo "vulnerable" es INTENCIONALMENTE inseguro para
+ * propósitos educativos. NUNCA usar concatenación de strings
+ * en código real.
  */
 router.post('/', async (req, res) => {
   try {
@@ -35,11 +35,11 @@ router.post('/', async (req, res) => {
     let result;
 
     if (mode === 'vulnerable') {
-      // ⚠️ VULNERABLE A SQL INJECTION — solo para demo educativa
+      // VULNERABLE A SQL INJECTION — solo para demo educativa
       sql = `SELECT id, nombre, email, rol FROM people WHERE nombre = '${searchTerm}'`;
       result = await query(sql);
     } else {
-      // ✅ SEGURO: query parametrizada
+      // SEGURO: query parametrizada
       sql = 'SELECT id, nombre, email, rol FROM people WHERE nombre = $1';
       result = await query(sql, [searchTerm]);
     }

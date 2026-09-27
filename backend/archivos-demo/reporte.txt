@@ -1,0 +1,9 @@
+REPORTE SEMANAL - RunLearn
+==========================
+
+- Tareas completadas: 12
+- Tareas pendientes: 3
+- Incidencias: ninguna
+
+Este archivo vive dentro de backend/archivos-demo/, la unica carpeta
+que este endpoint deberia poder leer.
