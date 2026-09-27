@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — Cómo funciona el Servidor">
@@ -108,6 +109,13 @@ import Layout from '../layouts/Layout.astro';
         <span class="step-count" id="step-count">0 / 5</span>
       </div>
     </div>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="server-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="El panel de telemetría sondea periódicamente GET /api/metrics en el puerto 5000."
+    />
 
     <!-- SECCIÓN DE TELEMETRÍA EN VIVO -->
     <section class="live-dashboard" aria-label="Telemetría en Vivo del Servidor">
@@ -323,6 +331,14 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
+
 (function () {
   const steps = [
     {
@@ -527,7 +543,7 @@ import Layout from '../layouts/Layout.astro';
   // ============================================================
   // POLLING EN VIVO DE /api/metrics
   // ============================================================
-  const API_BASE = (window as any).RUNLEARN_API_URL || 'http://localhost:5000';
+  const API_BASE = getApiBaseUrl();
   let serverUptimeSeconds = 0;
   let lastServerFetchTime = Date.now();
   let pollIntervalTimer: any = null;
@@ -577,16 +593,17 @@ import Layout from '../layouts/Layout.astro';
 
   async function fetchServerMetrics(isManual = false) {
     try {
-      const res = await fetch(`${API_BASE}/api/metrics`, {
+      const res = await fetchWithTimeout(`${API_BASE}/api/metrics`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
-      });
+      }, 4000);
 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
 
       const data = await res.json();
+      hideBackendErrorBanner('server-backend-error');
       serverUptimeSeconds = typeof data.uptime === 'number' ? data.uptime : 0;
       lastServerFetchTime = Date.now();
 
@@ -649,6 +666,9 @@ import Layout from '../layouts/Layout.astro';
       }
 
     } catch (err: any) {
+      const errMsg = getErrorMessage(err);
+      showBackendErrorBanner('server-backend-error', errMsg);
+
       if (statusIndicator) {
         statusIndicator.className = 'status-indicator offline';
       }
@@ -656,7 +676,7 @@ import Layout from '../layouts/Layout.astro';
         statusText.textContent = 'DESCONECTADO · Asegurate de que el backend en :5000 esté corriendo';
       }
       if (rawJsonEl) {
-        rawJsonEl.textContent = `Error al conectar con ${API_BASE}/api/metrics:\n${err?.message || err}`;
+        rawJsonEl.textContent = `Error al conectar con ${API_BASE}/api/metrics:\n${errMsg}`;
       }
     }
   }
@@ -685,6 +705,12 @@ import Layout from '../layouts/Layout.astro';
   btnManualPing?.addEventListener('click', () => {
     btnManualPing.classList.add('active-click');
     setTimeout(() => btnManualPing.classList.remove('active-click'), 300);
+    fetchServerMetrics(true);
+  });
+
+  // Reintento desde el banner de error
+  const retryBtn = document.querySelector('[data-retry-target="server-backend-error"]');
+  retryBtn?.addEventListener('click', () => {
     fetchServerMetrics(true);
   });
 

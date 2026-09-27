@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — Caché con Redis">
@@ -103,6 +104,13 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </div>
 
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="cache-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo requiere la API REST de RunLearn y el contenedor Redis en ejecución."
+    />
+
     <div class="split">
       <div class="panel">
         <div class="panel-head">
@@ -140,11 +148,18 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
 
 (function () {
   const sound = initSoundControls();
 
-  const API_BASE = 'http://localhost:5000/api/cache-demo';
+  const API_BASE = `${getApiBaseUrl()}/api/cache-demo`;
   const SAMPLE_KEYS = ['user:42', 'curso:7', 'config:app', 'stats:visitas'];
   let keyIndex = 0;
 
@@ -269,8 +284,10 @@ import { initSoundControls } from '../lib/soundControls.js';
     const startFetch = performance.now();
 
     try {
-      const res = await fetch(`${API_BASE}/${key}`);
+      const res = await fetchWithTimeout(`${API_BASE}/${key}`, {}, 5000);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      hideBackendErrorBanner('cache-backend-error');
       const elapsed = performance.now() - startFetch;
 
       await new Promise(r => setTimeout(r, 600));
@@ -355,11 +372,13 @@ import { initSoundControls } from '../lib/soundControls.js';
       }
 
     } catch (err) {
+      const errMsg = getErrorMessage(err);
+      showBackendErrorBanner('cache-backend-error', errMsg);
       statusPill.textContent = 'Error de conexión';
       statusPill.className = 'status-pill danger';
       explainTag.textContent = 'error';
       explainTag.className = 'explain-tag danger';
-      explainText.innerHTML = `No se pudo conectar al backend. Asegurate de que Docker esté corriendo (<strong>docker compose up</strong>).`;
+      explainText.innerHTML = `<strong>Error de conexión:</strong> ${errMsg}`;
       sound.play('playBlocked');
     }
 
@@ -392,6 +411,7 @@ import { initSoundControls } from '../lib/soundControls.js';
 
   btnConsult.addEventListener('click', runSimulation);
   btnReset.addEventListener('click', reset);
+  document.querySelector('[data-retry-target="cache-backend-error"]')?.addEventListener('click', runSimulation);
 
   reset();
 })();

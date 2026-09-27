@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — CORS (Cross-Origin Resource Sharing)">
@@ -61,6 +62,13 @@ import Layout from '../layouts/Layout.astro';
         <span id="mode-status-text">RESTRINGIDO — ACAO sólo para el portal</span>
       </div>
     </div>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="cors-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo comprueba encabezados CORS reales enviados por Express en /api/cors-demo."
+    />
 
     <!-- BROWSER TABS -->
     <div class="tabs-container">
@@ -262,12 +270,18 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+} from '../lib/apiClient.js';
 
 (function () {
   function setupCorsDemo() {
     const sound = initSoundControls();
 
-    const API_BASE = (window.RUNLEARN_API_URL || 'http://localhost:5000') + '/api/cors-demo';
+    const API_BASE = `${getApiBaseUrl()}/api/cors-demo`;
     const API_ORIGIN = new URL(API_BASE).origin;
     const EXTERNAL_ORIGIN = 'https://sitio-externo.com';
     const STEP_COUNT = 5;
@@ -415,17 +429,24 @@ import { initSoundControls } from '../lib/soundControls.js';
 
     async function doFetch(url) {
       try {
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url, {}, 5000);
         if (res.status === 404) return { error: 'http', status: 404 };
         const data = await res.json();
         if (!data || data.ok !== true) return { error: 'http', status: res.status };
+        hideBackendErrorBanner('cors-backend-error');
         return { ok: true, data };
-      } catch {
+      } catch (err: any) {
+        if (err?.isTimeout) {
+          showBackendErrorBanner('cors-backend-error', 'Tiempo de espera agotado al conectar con el servidor.');
+          return { error: 'network', isTimeout: true };
+        }
         // ¿Fue CORS o el backend está caído?
         try {
-          await fetch(url, { mode: 'no-cors' });
+          await fetchWithTimeout(url, { mode: 'no-cors' }, 3000);
+          hideBackendErrorBanner('cors-backend-error');
           return { error: 'cors' };
         } catch {
+          showBackendErrorBanner('cors-backend-error', 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.');
           return { error: 'network' };
         }
       }
@@ -762,6 +783,10 @@ import { initSoundControls } from '../lib/soundControls.js';
     btnReset?.addEventListener('click', () => {
       if (running) return;
       resetAll();
+    });
+
+    document.querySelector('[data-retry-target="cors-backend-error"]')?.addEventListener('click', () => {
+      runSimulation('portal');
     });
 
     setMode('restrictivo');

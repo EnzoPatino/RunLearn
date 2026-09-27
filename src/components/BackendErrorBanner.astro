@@ -1,0 +1,243 @@
+---
+interface Props {
+  id?: string;
+  message?: string;
+  hint?: string;
+  showCommand?: boolean;
+  showRetry?: boolean;
+  retryText?: string;
+  class?: string;
+  style?: string;
+}
+
+const {
+  id = 'backend-error-banner',
+  message = 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.',
+  hint = 'Asegurate de iniciar el backend con Docker Compose o verificar que el puerto 5000 esté disponible.',
+  showCommand = true,
+  showRetry = true,
+  retryText = 'Reintentar conexión',
+  class: className = '',
+  style: styleProp = '',
+} = Astro.props;
+---
+
+<div
+  id={id}
+  class={`backend-error-banner ${className}`}
+  role="alert"
+  aria-live="polite"
+  style={`display: none; ${styleProp}`}
+>
+  <div class="beb-icon-col" aria-hidden="true">
+    <div class="beb-icon-glow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    </div>
+  </div>
+
+  <div class="beb-body">
+    <div class="beb-header">
+      <span class="beb-badge">CONEXIÓN INTERRUMPIDA</span>
+      <span class="beb-port">localhost:5000</span>
+    </div>
+    <p class="beb-message">{message}</p>
+    {hint && <p class="beb-hint">{hint}</p>}
+    {showCommand && (
+      <div class="beb-command-box">
+        <span class="beb-command-label">Comando para iniciar:</span>
+        <code class="beb-command-code">cd backend &amp;&amp; docker compose up -d</code>
+      </div>
+    )}
+  </div>
+
+  {showRetry && (
+    <div class="beb-actions">
+      <button type="button" class="beb-retry-btn" data-retry-target={id}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+        <span>{retryText}</span>
+      </button>
+    </div>
+  )}
+</div>
+
+<style>
+  .backend-error-banner {
+    display: none;
+    align-items: flex-start;
+    gap: 1.25rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(18, 22, 29, 0.95) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: var(--radius-card, 16px);
+    padding: 1.25rem 1.5rem;
+    margin: 1.25rem 0;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(239, 68, 68, 0.12);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-family: var(--font-main, sans-serif);
+    animation: bebSlideDown 0.25s var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+
+  @keyframes bebSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .beb-icon-col {
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .beb-icon-glow {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f87171;
+  }
+
+  .beb-icon-glow svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .beb-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .beb-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .beb-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill, 9999px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .beb-port {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: var(--text-muted, #64748b);
+  }
+
+  .beb-message {
+    color: var(--text-white, #ffffff);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.45;
+    margin: 0 0 0.35rem 0;
+  }
+
+  .beb-hint {
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.825rem;
+    line-height: 1.4;
+    margin: 0 0 0.6rem 0;
+  }
+
+  .beb-command-box {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    margin-top: 0.4rem;
+    width: fit-content;
+  }
+
+  .beb-command-label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #64748b);
+  }
+
+  .beb-command-code {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    color: #38bdf8;
+    background: transparent;
+    padding: 0;
+    border: none;
+    user-select: all;
+  }
+
+  .beb-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .beb-retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-white, #ffffff);
+    font-size: 0.825rem;
+    font-weight: 600;
+    padding: 0.55rem 0.95rem;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+  }
+
+  .beb-retry-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .beb-retry-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media (max-width: 640px) {
+    .backend-error-banner {
+      flex-direction: column;
+      gap: 0.85rem;
+      padding: 1rem;
+    }
+    .beb-actions {
+      width: 100%;
+    }
+    .beb-retry-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>

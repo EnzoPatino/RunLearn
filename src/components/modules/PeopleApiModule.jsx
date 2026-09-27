@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { fetchWithTimeout, getApiBaseUrl, isBackendConnectionError, getErrorMessage } from '../../lib/apiClient.js';
+import BackendErrorNotice from './BackendErrorNotice.jsx';
 
 const DEFAULT_API_BASE = 'http://localhost:5000';
 
@@ -57,10 +59,11 @@ const OPERATIONS = [
 
 export default function PeopleApiModule() {
   const [activeOp, setActiveOp] = useState('LIST');
-  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
+  const [apiBase, setApiBase] = useState(getApiBaseUrl);
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [isBackendHealthy, setIsBackendHealthy] = useState(null);
+  const [backendError, setBackendError] = useState(null);
 
   // Form fields
   const [paramId, setParamId] = useState('1');
@@ -81,30 +84,28 @@ export default function PeopleApiModule() {
       if (stored) {
         setToken(stored);
       }
-      const customApi = (window.RUNLEARN_API_URL || window.API_URL);
-      if (customApi) {
-        setApiBase(customApi);
-      }
+      setApiBase(getApiBaseUrl());
     }
   }, []);
 
+  const checkHealth = async () => {
+    try {
+      const res = await fetchWithTimeout(`${apiBase}/api/health`, { method: 'GET' }, 4000);
+      setIsBackendHealthy(res.ok);
+      if (res.ok) {
+        setBackendError(null);
+      } else {
+        setBackendError('El endpoint de salud del backend respondió con error.');
+      }
+    } catch (err) {
+      setIsBackendHealthy(false);
+      setBackendError(getErrorMessage(err));
+    }
+  };
+
   // Check health on mount
   useEffect(() => {
-    let isMounted = true;
-    async function checkHealth() {
-      try {
-        const res = await fetch(`${apiBase}/api/health`, { method: 'GET' });
-        if (isMounted) {
-          setIsBackendHealthy(res.ok);
-        }
-      } catch {
-        if (isMounted) {
-          setIsBackendHealthy(false);
-        }
-      }
-    }
     checkHealth();
-    return () => { isMounted = false; };
   }, [apiBase]);
 
   // Quick demo login / token generator
@@ -116,11 +117,15 @@ export default function PeopleApiModule() {
       const testEmail = `demo_${Date.now().toString().slice(-4)}@runlearn.dev`;
       const testPass = 'devpassword123';
 
-      const res = await fetch(`${apiBase}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: testEmail, password: testPass }),
-      });
+      const res = await fetchWithTimeout(
+        `${apiBase}/api/auth/register`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: testEmail, password: testPass }),
+        },
+        5000
+      );
 
       const data = await res.json();
       if (data.token) {
@@ -129,11 +134,18 @@ export default function PeopleApiModule() {
           localStorage.setItem('token', data.token);
         }
         setAuthNotice(`Token generado exitosamente para ${testEmail}`);
+        setBackendError(null);
+        setIsBackendHealthy(true);
       } else {
         setAuthNotice(data.error || 'No se pudo obtener el token');
       }
     } catch (err) {
-      setAuthNotice(`Error de conexión con el backend: ${err.message}`);
+      const errMsg = getErrorMessage(err);
+      setAuthNotice(errMsg);
+      if (isBackendConnectionError(err)) {
+        setIsBackendHealthy(false);
+        setBackendError(errMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -202,7 +214,7 @@ export default function PeopleApiModule() {
         fetchOptions.body = JSON.stringify(liveBodyPayload);
       }
 
-      const res = await fetch(currentUrl, fetchOptions);
+      const res = await fetchWithTimeout(currentUrl, fetchOptions, 6000);
       const endTime = performance.now();
       const latencyMs = Math.round(endTime - startTime);
 
@@ -213,6 +225,9 @@ export default function PeopleApiModule() {
       } catch {
         responseBody = text;
       }
+
+      setBackendError(null);
+      setIsBackendHealthy(true);
 
       setReceivedResponse({
         status: res.status,
@@ -225,14 +240,20 @@ export default function PeopleApiModule() {
       });
     } catch (err) {
       const endTime = performance.now();
+      const errMsg = getErrorMessage(err);
+      if (isBackendConnectionError(err)) {
+        setIsBackendHealthy(false);
+        setBackendError(errMsg);
+      }
+
       setReceivedResponse({
         status: 0,
-        statusText: 'Network / Connection Error',
+        statusText: err?.isTimeout ? 'Timeout' : 'Network / Connection Error',
         ok: false,
         latencyMs: Math.round(endTime - startTime),
         headers: {},
-        body: { error: err.message, hint: 'Asegurate de que el backend en http://localhost:5000 esté corriendo.' },
-        rawText: JSON.stringify({ error: err.message, hint: 'Verifica la conexión con el servidor backend' }, null, 2),
+        body: { error: errMsg, hint: 'Asegurate de que el backend en http://localhost:5000 esté corriendo.' },
+        rawText: JSON.stringify({ error: errMsg, hint: 'Verificá que el backend esté corriendo en http://localhost:5000' }, null, 2),
       });
     } finally {
       setLoading(false);
@@ -270,6 +291,15 @@ export default function PeopleApiModule() {
           </div>
         </div>
       </div>
+
+      {/* Backend connection failure notice banner */}
+      {(backendError || isBackendHealthy === false) && (
+        <BackendErrorNotice
+          message={backendError || 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.'}
+          onRetry={checkHealth}
+          onDismiss={() => setBackendError(null)}
+        />
+      )}
 
       {/* Auth toolbar */}
       <div style={styles.authBar}>

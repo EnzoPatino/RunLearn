@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — Path Traversal">
@@ -61,6 +62,13 @@ import Layout from '../layouts/Layout.astro';
         <span id="mode-status-text">VULNERABLE — la ruta se arma sin validar</span>
       </div>
     </div>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="pt-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo consulta el endpoint /api/path-traversal-demo en el backend."
+    />
 
     <!-- DIAGRAMA + INPUT -->
     <div class="diagram-card">
@@ -222,12 +230,19 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
 
 (function () {
   function setupPathTraversalDemo() {
     const sound = initSoundControls();
 
-    const API_BASE = (window.RUNLEARN_API_URL || 'http://localhost:5000') + '/api/path-traversal-demo';
+    const API_BASE = `${getApiBaseUrl()}/api/path-traversal-demo`;
     const STEP_COUNT = 4;
     const GAP = 1300;
 
@@ -375,10 +390,12 @@ import { initSoundControls } from '../lib/soundControls.js';
       const url =
         API_BASE + '?archivo=' + encodeURIComponent(nombre) + '&mode=' + encodeURIComponent(mode);
       try {
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url, {}, 5000);
         const data = await res.json().catch(() => null);
+        hideBackendErrorBanner('pt-backend-error');
         return { url, status: res.status, data };
-      } catch {
+      } catch (err: any) {
+        showBackendErrorBanner('pt-backend-error', getErrorMessage(err));
         return { url, status: 0, data: null };
       }
     }
@@ -765,6 +782,10 @@ import { initSoundControls } from '../lib/soundControls.js';
     btnReset?.addEventListener('click', () => {
       if (running) return;
       resetAll();
+    });
+
+    document.querySelector('[data-retry-target="pt-backend-error"]')?.addEventListener('click', () => {
+      runFlow((ptInput?.value || '').trim() || 'reporte.txt');
     });
 
     setMode('vulnerable');

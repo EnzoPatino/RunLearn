@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — SQL Injection">
@@ -61,6 +62,13 @@ import Layout from '../layouts/Layout.astro';
         <span id="mode-status-text">VULNERABLE — input concatenado directamente al SQL</span>
       </div>
     </div>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="sqli-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo requiere la API REST de RunLearn y PostgreSQL corriendo en Docker."
+    />
 
     <!-- INTERACTIVE ZONE -->
     <div class="diagram-card">
@@ -163,12 +171,19 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
 
 (function () {
   const sound = initSoundControls();
   let mode = 'vulnerable';
 
-  const API_BASE = 'http://localhost:5000/api/sqli-demo';
+  const API_BASE = `${getApiBaseUrl()}/api/sqli-demo`;
 
   // DOM
   const btnVulnerable = document.getElementById('btn-mode-vulnerable');
@@ -237,16 +252,19 @@ import { initSoundControls } from '../lib/soundControls.js';
     sound.play('playStep');
 
     try {
-      const res = await fetch(API_BASE, {
+      const res = await fetchWithTimeout(API_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: searchInput.trim(), mode }),
-      });
-      const data = await res.json();
+      }, 5000);
 
       if (!res.ok) {
-        throw new Error(data.error || 'Error desconocido');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
       }
+
+      const data = await res.json();
+      hideBackendErrorBanner('sqli-backend-error');
 
       // Show SQL
       if (sqlDisplay) sqlDisplay.textContent = data.sql;
@@ -338,7 +356,9 @@ import { initSoundControls } from '../lib/soundControls.js';
           statusPill.className = 'status-pill';
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      const errMsg = getErrorMessage(err);
+      showBackendErrorBanner('sqli-backend-error', errMsg);
       if (statusPill) {
         statusPill.textContent = 'Error de conexión';
         statusPill.className = 'status-pill danger';
@@ -350,7 +370,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         explainTag.className = 'explain-tag error';
       }
       if (explainText) {
-        explainText.innerHTML = `No se pudo conectar al backend. Asegurate de que Docker esté corriendo (<code>docker compose up -d</code>). Error: ${err.message}`;
+        explainText.innerHTML = `<strong>Error de conexión:</strong> ${errMsg}`;
       }
       sound.play('playAlert');
     } finally {
@@ -372,6 +392,10 @@ import { initSoundControls } from '../lib/soundControls.js';
   btnPresetInject?.addEventListener('click', () => {
     if (sqliInput) sqliInput.value = "' OR '1'='1";
     runQuery("' OR '1'='1");
+  });
+
+  document.querySelector('[data-retry-target="sqli-backend-error"]')?.addEventListener('click', () => {
+    runQuery(sqliInput?.value || 'Ada Lovelace');
   });
 
   // Initialize

@@ -773,6 +773,8 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 </style>
 
 <script>
+  import { fetchWithTimeout, getApiBaseUrl } from '../lib/apiClient.js';
+
   function getStoredToken() {
     try {
       return (
@@ -852,24 +854,19 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       return;
     }
 
-    const apiBase =
-      (window as any).RUNLEARN_API_URL ||
-      (window as any).API_URL ||
-      import.meta.env?.PUBLIC_API_URL ||
-      'http://localhost:5000';
-
+    const apiBase = getApiBaseUrl();
     const candidateUrls = Array.from(new Set([`${apiBase}/api/auth/me`, '/api/auth/me']));
     let resolved = false;
 
     for (const url of candidateUrls) {
       try {
-        const response = await fetch(url, {
+        const response = await fetchWithTimeout(url, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
           },
-        });
+        }, 3500);
 
         if (response.status === 401 || response.status === 403) {
           clearStoredToken();

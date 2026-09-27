@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — CSRF (Cross-Site Request Forgery)">
@@ -61,6 +62,13 @@ import Layout from '../layouts/Layout.astro';
         <span id="mode-status-text">VULNERABLE — solo cookie de sesión</span>
       </div>
     </div>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="csrf-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo se conecta a la API de demostración bancaria en /api/csrf-demo."
+    />
 
     <!-- SETUP -->
     <div class="setup-card" id="setup-card">
@@ -230,9 +238,17 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
 
 (function () {
   const sound = initSoundControls();
+  const API_BASE = `${getApiBaseUrl()}/api/csrf-demo`;
   let mode = 'vulnerable';
   let sessionId = null;
   let csrfToken = null;
@@ -302,8 +318,11 @@ import { initSoundControls } from '../lib/soundControls.js';
 
   async function login() {
     try {
-      const res = await fetch('/api/csrf-demo/token');
+      const res = await fetchWithTimeout(`${API_BASE}/token`, {}, 5000);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      hideBackendErrorBanner('csrf-backend-error');
+
       sessionId = data.sessionId;
       csrfToken = data.csrfToken;
       balance = data.balance;
@@ -321,7 +340,9 @@ import { initSoundControls } from '../lib/soundControls.js';
 
       highlightCode(['session']);
       sound.play('playSuccess');
-    } catch {
+    } catch (err: any) {
+      const errMsg = getErrorMessage(err);
+      showBackendErrorBanner('csrf-backend-error', errMsg);
       sound.play('playAlert');
     }
   }
@@ -359,13 +380,14 @@ import { initSoundControls } from '../lib/soundControls.js';
         payload.csrfToken = 'token-falso-del-atacante';
       }
 
-      const res = await fetch('/api/csrf-demo/transferir', {
+      const res = await fetchWithTimeout(`${API_BASE}/transferir`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      });
+      }, 5000);
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      hideBackendErrorBanner('csrf-backend-error');
 
       if (res.ok) {
         // Transfer succeeded
@@ -441,8 +463,10 @@ import { initSoundControls } from '../lib/soundControls.js';
           consoleLine.innerHTML = '[CSRF] Petición rechazada — token CSRF inválido o faltante (403).';
         }
       }
-    } catch {
-      addConsoleLine('err', 'Error de conexión con el servidor.');
+    } catch (err: any) {
+      const errMsg = getErrorMessage(err);
+      showBackendErrorBanner('csrf-backend-error', errMsg);
+      addConsoleLine('err', `Error de conexión con el servidor: ${errMsg}`);
     }
   }
 
@@ -468,6 +492,7 @@ import { initSoundControls } from '../lib/soundControls.js';
   btnSecure?.addEventListener('click', () => setMode('secure'));
   btnLogin?.addEventListener('click', login);
   btnAttack?.addEventListener('click', launchAttack);
+  document.querySelector('[data-retry-target="csrf-backend-error"]')?.addEventListener('click', login);
 
   setMode('vulnerable');
 })();

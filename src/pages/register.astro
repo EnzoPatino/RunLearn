@@ -2,29 +2,33 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Iniciar Sesión – DevPlatform">
+<Layout title="Crear Cuenta – DevPlatform">
   <div class="login-wrapper">
     <div class="login-card">
-      <h1 class="login-title">Iniciar Sesión</h1>
-      <p class="login-subtitle">Accede a tu dashboard</p>
+      <h1 class="login-title">Crear Cuenta</h1>
+      <p class="login-subtitle">Registrate para acceder a tu dashboard</p>
 
-      <form id="loginForm" class="login-form" novalidate>
+      <form id="registerForm" class="login-form" novalidate>
         <div class="field">
           <label for="email">Correo electrónico</label>
           <input id="email" name="email" type="email" placeholder="tu@email.com" required autocomplete="email" />
         </div>
         <div class="field">
           <label for="password">Contraseña</label>
-          <input id="password" name="password" type="password" placeholder="Tu contraseña" required autocomplete="current-password" />
+          <input id="password" name="password" type="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label for="passwordConfirm">Confirmar contraseña</label>
+          <input id="passwordConfirm" name="passwordConfirm" type="password" placeholder="Repetí tu contraseña" required minlength="8" autocomplete="new-password" />
         </div>
 
         <div id="errorMsg" class="error" hidden></div>
 
-        <button type="submit" class="btn-login">Entrar</button>
+        <button type="submit" class="btn-login">Crear cuenta</button>
       </form>
 
       <p class="login-switch">
-        ¿No tenés cuenta? <a href="/register">Registrate</a>
+        ¿Ya tenés cuenta? <a href="/login">Iniciá sesión</a>
       </p>
     </div>
   </div>
@@ -176,11 +180,17 @@ import Layout from '../layouts/Layout.astro';
 <script>
   import { fetchWithTimeout, getApiBaseUrl, getErrorMessage } from '../lib/apiClient.js';
 
-  function setupLoginForm() {
-    const form = document.getElementById('loginForm') as HTMLFormElement | null;
+  function setupRegisterForm() {
+    const form = document.getElementById('registerForm') as HTMLFormElement | null;
     const errorMsg = document.getElementById('errorMsg');
     if (!form || form.dataset.initialized === 'true') return;
     form.dataset.initialized = 'true';
+
+    function showError(message: string) {
+      if (!errorMsg) return;
+      errorMsg.textContent = message;
+      errorMsg.hidden = false;
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -191,58 +201,67 @@ import Layout from '../layouts/Layout.astro';
 
       const emailInput = document.getElementById('email') as HTMLInputElement | null;
       const passwordInput = document.getElementById('password') as HTMLInputElement | null;
+      const confirmInput = document.getElementById('passwordConfirm') as HTMLInputElement | null;
       const email = emailInput?.value.trim() || '';
       const password = passwordInput?.value || '';
+      const passwordConfirm = confirmInput?.value || '';
+
+      if (!email || !password || !passwordConfirm) {
+        showError('Completá todos los campos.');
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        showError('Las contraseñas no coinciden.');
+        return;
+      }
 
       const btn = form.querySelector('.btn-login') as HTMLButtonElement | null;
       if (btn) {
         btn.disabled = true;
-        btn.textContent = 'Entrando...';
+        btn.textContent = 'Creando cuenta...';
       }
 
       const apiBase = getApiBaseUrl();
 
       try {
-        const res = await fetchWithTimeout(`${apiBase}/api/auth/login`, {
+        const res = await fetchWithTimeout(`${apiBase}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         }, 6000);
 
-        if (res.status === 401) {
+        if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          if (errorMsg) {
-            errorMsg.textContent = data.message || 'Credenciales inválidas';
-            errorMsg.hidden = false;
-          }
+          showError(data.error || data.message || 'No se pudo crear la cuenta.');
           return;
         }
 
-        if (!res.ok) throw new Error('Error en el servidor');
-
         const data = await res.json();
+        if (!data?.token) {
+          showError('No se pudo crear la cuenta. Inténtalo de nuevo.');
+          return;
+        }
+
         localStorage.setItem('token', data.token);
         window.dispatchEvent(new CustomEvent('auth-change'));
         window.location.href = '/';
       } catch (err) {
-        if (errorMsg) {
-          errorMsg.textContent = getErrorMessage(err, 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.');
-          errorMsg.hidden = false;
-        }
+        showError(getErrorMessage(err, 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.'));
       } finally {
         if (btn) {
           btn.disabled = false;
-          btn.textContent = 'Entrar';
+          btn.textContent = 'Crear cuenta';
         }
       }
     });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupLoginForm);
+    document.addEventListener('DOMContentLoaded', setupRegisterForm);
   } else {
-    setupLoginForm();
+    setupRegisterForm();
   }
 
-  document.addEventListener('astro:page-load', setupLoginForm);
+  document.addEventListener('astro:page-load', setupRegisterForm);
 </script>

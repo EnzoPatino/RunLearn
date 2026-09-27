@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — Transacciones SQL">
@@ -105,6 +106,13 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </div>
 
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="tx-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo requiere la API REST y el contenedor PostgreSQL con la tabla cuentas_demo."
+    />
+
     <div class="split">
       <div class="panel">
         <div class="panel-head">
@@ -143,11 +151,18 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
 
 (function () {
   const sound = initSoundControls();
 
-  const API_BASE = 'http://localhost:5000/api/transaccion-demo';
+  const API_BASE = `${getApiBaseUrl()}/api/transaccion-demo`;
   const FEE = 150;
 
   const btnSuccess = document.getElementById('btn-success');
@@ -331,12 +346,16 @@ import { initSoundControls } from '../lib/soundControls.js';
     const startFetch = performance.now();
 
     try {
-      const res = await fetch(API_BASE, {
+      const res = await fetchWithTimeout(API_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ forzarError })
-      });
+      }, 5000);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       const result = await res.json();
+      hideBackendErrorBanner('tx-backend-error');
 
       explainIdle.style.display = 'none';
       explainActive.style.display = 'block';
@@ -414,11 +433,13 @@ import { initSoundControls } from '../lib/soundControls.js';
       packet.classList.remove('visible');
 
     } catch (err) {
+      const errMsg = getErrorMessage(err);
+      showBackendErrorBanner('tx-backend-error', errMsg);
       statusPill.textContent = 'Error de conexión';
       statusPill.className = 'status-pill danger';
       explainTag.textContent = 'error';
       explainTag.className = 'explain-tag danger';
-      explainText.innerHTML = 'No se pudo conectar al backend. Asegurate de que Docker esté corriendo.';
+      explainText.innerHTML = `<strong>Error de conexión:</strong> ${errMsg}`;
       sound.play('playBlocked');
     }
 
@@ -429,6 +450,7 @@ import { initSoundControls } from '../lib/soundControls.js';
   btnSuccess.addEventListener('click', () => run(false));
   btnFail.addEventListener('click', () => run(true));
   btnReset.addEventListener('click', reset);
+  document.querySelector('[data-retry-target="tx-backend-error"]')?.addEventListener('click', () => run(false));
 
   reset();
 })();

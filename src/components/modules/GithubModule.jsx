@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchWithTimeout } from '../../lib/apiClient.js';
 
 const SUGGESTED_USERS = ['torvalds', 'facebook', 'vercel', 'withastro', 'google'];
 
@@ -24,11 +25,15 @@ export default function GithubModule() {
 
     try {
       const url = `https://api.github.com/users/${encodeURIComponent(targetUser)}/repos?sort=updated&per_page=12`;
-      const res = await fetch(url, {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
+      const res = await fetchWithTimeout(
+        url,
+        {
+          headers: {
+            Accept: 'application/vnd.github.v3+json',
+          },
         },
-      });
+        8000
+      );
 
       const latency = Math.round(performance.now() - start);
       const remaining = res.headers.get('x-ratelimit-remaining');
@@ -58,7 +63,13 @@ export default function GithubModule() {
         setSelectedRepo(data[0]);
       }
     } catch (err) {
-      setError(err.message || 'Error al conectar con la API de GitHub');
+      if (err?.isTimeout) {
+        setError('Tiempo de espera agotado al conectar con la API de GitHub. Verificá tu conexión a internet o intentá más tarde.');
+      } else if (err?.isNetworkError || (err instanceof TypeError && err.message?.includes('fetch'))) {
+        setError('No se pudo conectar con la API de GitHub. Verificá tu conexión a internet o intentá más tarde.');
+      } else {
+        setError(err.message || 'Error al conectar con la API de GitHub');
+      }
       setRepos([]);
     } finally {
       setLoading(false);
@@ -189,14 +200,32 @@ export default function GithubModule() {
       {/* Alerta de error si ocurre */}
       {error && (
         <div className="gh-error-banner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <div>
+          <div style={{ flex: 1 }}>
             <strong>Error en la petición:</strong> {error}
           </div>
+          <button
+            type="button"
+            onClick={() => fetchRepos(username)}
+            className="gh-retry-btn"
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#ffffff',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              marginLeft: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Reintentar
+          </button>
         </div>
       )}
 

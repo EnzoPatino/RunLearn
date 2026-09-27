@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
 ---
 
 <Layout title="RunLearn — JWT Inseguro">
@@ -78,6 +79,13 @@ import Layout from '../layouts/Layout.astro';
         <span id="mode-status-text">VULNERABLE — Firma generada con secreto débil susceptible a fuerza bruta instantánea</span>
       </div>
     </div>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="jwt-backend-error"
+      message="No se pudo conectar con el servidor. Verificá que el backend esté corriendo."
+      hint="Este módulo se conecta a /api/jwt-demo para verificar tokens criptográficamente. Mientras tanto, se activa la simulación local."
+    />
 
     <!-- TOKEN INSPECTOR CARD (jwt.io style) -->
     <div class="workbench-card">
@@ -359,15 +367,19 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 import { initSoundControls } from '../lib/soundControls.js';
+import {
+  fetchWithTimeout,
+  getApiBaseUrl,
+  showBackendErrorBanner,
+  hideBackendErrorBanner,
+  getErrorMessage,
+} from '../lib/apiClient.js';
 
 function setupJwtDemo() {
   const sound = initSoundControls();
 
   // API Base
-  const apiBase =
-    (window as any).RUNLEARN_API_URL ||
-    (window as any).API_URL ||
-    'http://localhost:5000';
+  const apiBase = getApiBaseUrl();
 
   let currentMode: 'secreto-debil' | 'alg-none' | 'seguro' = 'secreto-debil';
   let isAttacking = false;
@@ -529,21 +541,28 @@ function setupJwtDemo() {
   // Fetch or mock the initial token for the mode
   async function loadInitialToken() {
     try {
-      const res = await fetch(`${apiBase}/api/jwt-demo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: currentMode, action: 'generate' }),
-      });
+      const res = await fetchWithTimeout(
+        `${apiBase}/api/jwt-demo`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: currentMode, action: 'generate' }),
+        },
+        4000
+      );
 
       if (res.ok) {
         const data = await res.json();
+        hideBackendErrorBanner('jwt-backend-error');
         updateTokenDisplay(data);
         return;
       }
-    } catch {}
-
-    // Fallback if backend is not reachable
-    renderLocalTokenFallback();
+      throw new Error(`HTTP ${res.status}`);
+    } catch (err: any) {
+      showBackendErrorBanner('jwt-backend-error', getErrorMessage(err));
+      // Fallback if backend is not reachable
+      renderLocalTokenFallback();
+    }
   }
 
   function updateTokenDisplay(data: any) {
@@ -670,16 +689,25 @@ function setupJwtDemo() {
 
     let attackResult: any = null;
     try {
-      const res = await fetch(`${apiBase}/api/jwt-demo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: currentMode, action: 'attack', token: currentToken }),
-      });
+      const res = await fetchWithTimeout(
+        `${apiBase}/api/jwt-demo`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: currentMode, action: 'attack', token: currentToken }),
+        },
+        5000
+      );
 
       if (res.ok) {
         attackResult = await res.json();
+        hideBackendErrorBanner('jwt-backend-error');
+      } else {
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch {}
+    } catch (err: any) {
+      showBackendErrorBanner('jwt-backend-error', getErrorMessage(err));
+    }
 
     // Fallback if backend offline
     if (!attackResult) {
@@ -829,6 +857,10 @@ function setupJwtDemo() {
   // Attack buttons
   btnForgeAdmin?.addEventListener('click', performAttack);
   btnResetDemo?.addEventListener('click', () => selectMode(currentMode));
+
+  document.querySelector('[data-retry-target="jwt-backend-error"]')?.addEventListener('click', () => {
+    loadInitialToken();
+  });
 
   // Initialize
   selectMode('secreto-debil');
