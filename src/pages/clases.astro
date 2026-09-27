@@ -262,8 +262,12 @@ import { categoriasClases, clasesRecientes } from '../data/clases.js';
 
   .classes-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
+  }
+
+  .class-grid-item {
+    min-width: 0;
   }
 
   .class-grid-item.is-hidden {
@@ -276,7 +280,7 @@ import { categoriasClases, clasesRecientes } from '../data/clases.js';
     }
 
     .classes-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -291,7 +295,7 @@ import { categoriasClases, clasesRecientes } from '../data/clases.js';
     }
 
     .classes-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.65rem;
     }
 
