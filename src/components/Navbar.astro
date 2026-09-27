@@ -57,24 +57,99 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   <!-- Right: Utility Controls & Menu -->
   <div class="navbar__right">
-    <div class="navbar__search-hint" title="Búsqueda rápida">
+    <button class="navbar__search-hint" id="navbar-search-btn" type="button" aria-label="Buscar clases" aria-haspopup="dialog">
       <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
         <circle cx="8.5" cy="8.5" r="5.5" />
         <line x1="12.5" y1="12.5" x2="17" y2="17" stroke-linecap="round" />
       </svg>
       <kbd class="kbd-shortcut">⌘K</kbd>
-    </div>
+    </button>
 
-    <button class="navbar__menu-btn" type="button" aria-label="Abrir panel de opciones" aria-expanded="false">
+    <button class="navbar__menu-btn" id="navbar-menu-btn" type="button" aria-label="Abrir panel de opciones" aria-expanded="false" aria-controls="navbar-menu">
       <span class="line line--top"></span>
       <span class="line line--mid"></span>
       <span class="line line--bot"></span>
     </button>
   </div>
+
+  <!-- Menú lateral / dropdown del botón hamburguesa -->
+  <div class="navbar__menu" id="navbar-menu" role="menu" hidden>
+    <a class="navbar__menu-link" role="menuitem" href="/">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+      </svg>
+      <span>Inicio</span>
+    </a>
+
+    <a class="navbar__menu-link" role="menuitem" href="/clases">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+      </svg>
+      <span>Clases</span>
+      <span class="navbar__menu-badge">{clases.length}</span>
+    </a>
+
+    <a class="navbar__menu-link navbar__menu-link--action" role="menuitem" href="/#crear">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+      </svg>
+      <span>Crear Clase</span>
+    </a>
+
+    <div class="navbar__menu-separator" role="separator"></div>
+
+    <button class="navbar__menu-link navbar__menu-sound" id="menu-sound-btn" type="button" role="menuitemcheckbox" aria-pressed="false">
+      <span id="menu-sound-icon" class="navbar__menu-sound-icon" aria-hidden="true"></span>
+      <span id="menu-sound-text">Sonido activo</span>
+    </button>
+  </div>
 </header>
+
+<!-- Modal de búsqueda (se mueve a <body> por script para escapar del backdrop-filter) -->
+<div class="search-modal" id="search-modal" hidden>
+  <div class="search-modal__backdrop" data-search-close></div>
+
+  <div class="search-modal__dialog" role="dialog" aria-modal="true" aria-label="Buscar clases">
+    <div class="search-modal__field">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5" />
+        <line x1="12.5" y1="12.5" x2="17" y2="17" stroke-linecap="round" />
+      </svg>
+      <input
+        class="search-modal__input"
+        id="search-input"
+        type="text"
+        placeholder="Buscar por título o categoría…"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Buscar por título o categoría"
+        aria-controls="search-results"
+      />
+      <button class="search-modal__close" id="search-close" type="button" aria-label="Cerrar búsqueda">Esc</button>
+    </div>
+
+    <div class="search-modal__meta">
+      <span id="search-count">{clases.length} clases</span>
+      <span class="search-modal__meta-hint">título o categoría</span>
+    </div>
+
+    <ul class="search-results" id="search-results" role="listbox" aria-label="Resultados"></ul>
+
+    <div class="search-empty" id="search-empty" hidden>
+      Sin resultados para «<span id="search-empty-query"></span>». Probá con <em>Seguridad</em>, <em>Backend</em> o <em>Docker</em>.
+    </div>
+
+    <div class="search-modal__footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+      <span><kbd>↵</kbd> abrir</span>
+      <span><kbd>Esc</kbd> cerrar</span>
+    </div>
+  </div>
+</div>
 
 <style>
   .navbar {
+    position: relative;
     background: rgba(18, 22, 29, 0.85);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-card);
@@ -257,6 +332,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     border-radius: 8px;
     cursor: pointer;
     color: var(--text-muted);
+    font-family: inherit;
     transition: all var(--ease-fast);
   }
 
@@ -322,8 +398,341 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     margin-left: 0;
   }
 
+  /* ---------- Menú hamburguesa ---------- */
+  .navbar__menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 248px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.5rem;
+    background: rgba(18, 22, 29, 0.97);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    box-shadow: 0 22px 50px -12px rgba(0, 0, 0, 0.75);
+    z-index: 60;
+    animation: navbar-menu-in 0.16s var(--ease-fast);
+  }
+
+  .navbar__menu[hidden] {
+    display: none;
+  }
+
+  @keyframes navbar-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .navbar__menu-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--ease-fast);
+  }
+
+  .navbar__menu-link svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    opacity: 0.8;
+  }
+
+  .navbar__menu-link:hover,
+  .navbar__menu-link:focus-visible {
+    color: var(--text-white);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-hairline);
+    outline: none;
+  }
+
+  .navbar__menu-link:hover svg {
+    opacity: 1;
+  }
+
+  .navbar__menu-link--action {
+    color: #60a5fa;
+  }
+
+  .navbar__menu-link--action:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .navbar__menu-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+  }
+
+  .navbar__menu-separator {
+    height: 1px;
+    margin: 0.4rem 0.35rem;
+    background: var(--border-hairline);
+  }
+
+  .navbar__menu-sound-icon {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+  }
+
+  .navbar__menu-sound-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .navbar__menu-sound.muted {
+    opacity: 0.62;
+    border-style: dashed;
+    border-color: var(--border-hairline);
+  }
+
+  /* ---------- Modal de búsqueda ---------- */
+  .search-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12vh 1rem 2rem;
+  }
+
+  .search-modal[hidden] {
+    display: none;
+  }
+
+  .search-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 7, 10, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: search-fade-in 0.15s var(--ease-fast);
+  }
+
+  .search-modal__dialog {
+    position: relative;
+    width: min(100%, 560px);
+    max-height: min(70vh, 560px);
+    display: flex;
+    flex-direction: column;
+    background: rgba(18, 22, 29, 0.98);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    box-shadow: 0 30px 70px -18px rgba(0, 0, 0, 0.85);
+    overflow: hidden;
+    animation: search-dialog-in 0.16s var(--ease-spring);
+  }
+
+  @keyframes search-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes search-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .search-modal__field {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-hairline);
+    color: var(--text-muted);
+  }
+
+  .search-modal__input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .search-modal__input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .search-modal__close {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--ease-fast);
+  }
+
+  .search-modal__close:hover,
+  .search-modal__close:focus-visible {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+    outline: none;
+  }
+
+  .search-modal__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0.4rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    flex: 1;
+  }
+
+  .search-result a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: inherit;
+    text-decoration: none;
+    transition: background var(--ease-fast), border-color var(--ease-fast);
+  }
+
+  .search-result.is-active a,
+  .search-result a:hover {
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+
+  .search-result__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .search-result__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result__meta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result__arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all var(--ease-spring);
+  }
+
+  .search-result.is-active .search-result__arrow,
+  .search-result a:hover .search-result__arrow {
+    opacity: 1;
+    transform: translateX(0);
+    color: #60a5fa;
+  }
+
+  .search-empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .search-empty em {
+    color: var(--text-secondary);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .search-modal__footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.55rem 1rem;
+    border-top: 1px solid var(--border-hairline);
+    background: rgba(255, 255, 255, 0.02);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .search-modal__footer kbd {
+    font-family: inherit;
+    padding: 0.05rem 0.3rem;
+    margin-right: 0.2rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: var(--text-secondary);
+  }
+
   @media (max-width: 960px) {
-    .navbar__search-hint {
+    .navbar__search-hint .kbd-shortcut {
       display: none;
     }
   }
@@ -345,6 +754,20 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     .nav-pill {
       padding: 0.4rem 0.75rem;
       font-size: 0.8125rem;
+    }
+
+    .navbar__menu {
+      right: 0;
+      left: 0;
+      width: auto;
+    }
+
+    .search-modal {
+      padding: 8vh 0.75rem 1rem;
+    }
+
+    .search-modal__footer {
+      display: none;
     }
   }
 </style>
@@ -485,4 +908,202 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   });
 
   window.addEventListener('auth-change', loadUserProfile);
+</script>
+
+<script>
+  import { clases } from '../data/clases.js';
+  import { initSoundControls } from '../lib/soundControls.js';
+
+  const searchModal = document.getElementById('search-modal');
+  const searchInput = document.getElementById('search-input');
+  const searchResults = document.getElementById('search-results');
+  const searchCount = document.getElementById('search-count');
+  const searchEmpty = document.getElementById('search-empty');
+  const searchEmptyQuery = document.getElementById('search-empty-query');
+  const searchBtn = document.getElementById('navbar-search-btn');
+  const searchCloseBtn = document.getElementById('search-close');
+  const menuBtn = document.getElementById('navbar-menu-btn');
+  const menu = document.getElementById('navbar-menu');
+
+  // El modal usa position:fixed y vive dentro de .dashboard, cuyo
+  // backdrop-filter crea un containing block: lo movemos a <body>.
+  if (searchModal && searchModal.parentElement !== document.body) {
+    document.body.appendChild(searchModal);
+  }
+
+  initSoundControls({
+    buttonId: 'menu-sound-btn',
+    iconId: 'menu-sound-icon',
+    textId: 'menu-sound-text',
+    activeText: 'Sonido activo',
+    mutedText: 'Silenciado',
+  });
+
+  const normalize = (value) =>
+    String(value)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+  let matches = [];
+  let activeIndex = 0;
+
+  function updateActive() {
+    const items = searchResults.querySelectorAll('.search-result');
+    items.forEach((item, index) => {
+      const isActive = index === activeIndex;
+      item.classList.toggle('is-active', isActive);
+      const link = item.querySelector('a');
+      if (link) link.setAttribute('aria-selected', String(isActive));
+      if (isActive) item.scrollIntoView?.({ block: 'nearest' });
+    });
+  }
+
+  function renderResults(query) {
+    const q = normalize(query.trim());
+    matches = q
+      ? clases.filter((clase) => normalize(clase.title).includes(q) || normalize(clase.category).includes(q))
+      : clases.slice();
+    activeIndex = 0;
+
+    searchResults.innerHTML = '';
+
+    for (const clase of matches) {
+      const item = document.createElement('li');
+      item.className = 'search-result';
+      item.setAttribute('role', 'presentation');
+
+      const link = document.createElement('a');
+      link.href = clase.route;
+      link.setAttribute('role', 'option');
+
+      const body = document.createElement('div');
+      body.className = 'search-result__body';
+
+      const title = document.createElement('span');
+      title.className = 'search-result__title';
+      title.textContent = clase.title;
+
+      const meta = document.createElement('span');
+      meta.className = 'search-result__meta';
+      meta.textContent = `${clase.category} · ${clase.description}`;
+
+      const arrow = document.createElement('span');
+      arrow.className = 'search-result__arrow';
+      arrow.textContent = '→';
+
+      body.append(title, meta);
+      link.append(body, arrow);
+      item.append(link);
+      searchResults.append(item);
+    }
+
+    const total = matches.length;
+    searchCount.textContent = `${total} ${total === 1 ? 'clase' : 'clases'}`;
+    searchEmpty.hidden = total > 0;
+    searchResults.hidden = total === 0;
+    if (total === 0) searchEmptyQuery.textContent = query.trim();
+
+    updateActive();
+  }
+
+  function openSearch() {
+    if (!searchModal) return;
+    closeMenu();
+    searchModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    searchInput.value = '';
+    renderResults('');
+    requestAnimationFrame(() => searchInput.focus());
+  }
+
+  function closeSearch() {
+    if (!searchModal || searchModal.hidden) return;
+    searchModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  function toggleSearch() {
+    if (!searchModal) return;
+    if (searchModal.hidden) openSearch();
+    else closeSearch();
+  }
+
+  function openMenu() {
+    if (!menu || !menuBtn) return;
+    menu.hidden = false;
+    menuBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    if (!menu || !menuBtn) return;
+    if (menu.hidden) return;
+    menu.hidden = true;
+    menuBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleMenu() {
+    if (!menu) return;
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  }
+
+  searchBtn?.addEventListener('click', toggleSearch);
+  searchCloseBtn?.addEventListener('click', closeSearch);
+  searchModal?.querySelector('[data-search-close]')?.addEventListener('click', closeSearch);
+
+  searchInput?.addEventListener('input', () => renderResults(searchInput.value));
+
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (matches.length) activeIndex = (activeIndex + 1) % matches.length;
+      updateActive();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (matches.length) activeIndex = (activeIndex - 1 + matches.length) % matches.length;
+      updateActive();
+    } else if (event.key === 'Enter') {
+      const target = matches[activeIndex];
+      if (target) {
+        event.preventDefault();
+        window.location.href = target.route;
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSearch();
+    }
+  });
+
+  searchResults?.addEventListener('click', (event) => {
+    if (event.target.closest('a')) closeSearch();
+  });
+
+  menuBtn?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleMenu();
+  });
+
+  menu?.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!menu || menu.hidden) return;
+    if (menu.contains(event.target) || menuBtn?.contains(event.target)) return;
+    closeMenu();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const key = event.key.toLowerCase();
+    if ((event.metaKey || event.ctrlKey) && key === 'k') {
+      event.preventDefault();
+      toggleSearch();
+      return;
+    }
+    if (event.key === 'Escape') {
+      closeSearch();
+      closeMenu();
+    }
+  });
 </script>

@@ -9,6 +9,7 @@ export const clases = [
     colorAccent: "#38bdf8",
     dateAdded: "2026-09-15",
     status: "completo",
+    featured: true,
   },
   {
     id: "docker",
@@ -20,6 +21,7 @@ export const clases = [
     colorAccent: "#38bdf8",
     dateAdded: "2026-09-15",
     status: "completo",
+    featured: true,
   },
   {
     id: "algoritmo",
@@ -31,6 +33,7 @@ export const clases = [
     colorAccent: "#fb923c",
     dateAdded: "2026-09-18",
     status: "completo",
+    featured: true,
   },
   {
     id: "servidor",
@@ -42,6 +45,7 @@ export const clases = [
     colorAccent: "#f97316",
     dateAdded: "2026-09-18",
     status: "completo",
+    featured: true,
   },
   {
     id: "github",
@@ -53,6 +57,7 @@ export const clases = [
     colorAccent: "#e2e8f0",
     dateAdded: "2026-09-18",
     status: "completo",
+    featured: true,
   },
   {
     id: "bots",
@@ -64,6 +69,7 @@ export const clases = [
     colorAccent: "#fb7185",
     dateAdded: "2026-09-18",
     status: "completo",
+    featured: true,
   },
   {
     id: "ssr-vs-csr",
@@ -75,6 +81,7 @@ export const clases = [
     colorAccent: "#38bdf8",
     dateAdded: "2026-09-19",
     status: "completo",
+    featured: true,
   },
   {
     id: "colas",
@@ -86,6 +93,7 @@ export const clases = [
     colorAccent: "#22c55e",
     dateAdded: "2026-09-19",
     status: "completo",
+    featured: true,
   },
   {
     id: "http",
@@ -184,6 +192,28 @@ export const clases = [
     route: "/csrf-explicacion",
     colorAccent: "#06b6d4",
     dateAdded: "2026-09-21",
+    status: "completo",
+  },
+  {
+    id: "cors",
+    title: "CORS",
+    category: "Seguridad",
+    icon: "globe",
+    description: "Cross-Origin Resource Sharing",
+    route: "/cors-explicacion",
+    colorAccent: "#818cf8",
+    dateAdded: "2026-09-24",
+    status: "completo",
+  },
+  {
+    id: "path-traversal",
+    title: "Path Traversal",
+    category: "Seguridad",
+    icon: "folder",
+    description: "Escape de rutas y validación",
+    route: "/path-traversal-explicacion",
+    colorAccent: "#e11d48",
+    dateAdded: "2026-09-25",
     status: "completo",
   },
 ];

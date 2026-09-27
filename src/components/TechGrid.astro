@@ -2,11 +2,14 @@
 // src/components/TechGrid.astro
 import TechCard from './TechCard.astro';
 import { clases } from '../data/clases.js';
+
+const destacadas = clases.filter((clase) => clase.featured);
+const totalClases = clases.length;
 ---
 
 <section class="bento-section" aria-label="Módulos de Tecnologías">
   <div class="tech-grid">
-    {clases.map((clase) => (
+    {destacadas.map((clase) => (
       <TechCard
         id={clase.id}
         badge={clase.category}
@@ -18,6 +21,15 @@ import { clases } from '../data/clases.js';
       />
     ))}
   </div>
+
+  <a class="tech-grid__all" href="/clases">
+    <span class="tech-grid__all-text">Ver todas las clases</span>
+    <span class="tech-grid__all-count">{totalClases}</span>
+    <svg class="tech-grid__all-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M4 10h11" stroke-linecap="round" />
+      <path d="M11 6l4 4-4 4" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </a>
 </section>
 
 <style>
@@ -25,6 +37,52 @@ import { clases } from '../data/clases.js';
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
+  }
+
+  .tech-grid__all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    margin-top: 1rem;
+    padding: 0.85rem 1.25rem;
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all var(--ease-fast);
+  }
+
+  .tech-grid__all:hover,
+  .tech-grid__all:focus-visible {
+    color: var(--text-white);
+    border-color: var(--brand-blue);
+    background: rgba(59, 130, 246, 0.1);
+    outline: none;
+  }
+
+  .tech-grid__all-count {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-hairline);
+    color: var(--text-primary);
+  }
+
+  .tech-grid__all-arrow {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--ease-spring);
+  }
+
+  .tech-grid__all:hover .tech-grid__all-arrow {
+    transform: translateX(3px);
   }
 
   @media (max-width: 960px) {
@@ -37,6 +95,12 @@ import { clases } from '../data/clases.js';
     .tech-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 0.65rem;
+    }
+
+    .tech-grid__all {
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
     }
   }
 </style>
