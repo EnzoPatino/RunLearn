@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { fetchWithTimeout, getApiBaseUrl, isBackendConnectionError, getErrorMessage } from '../../lib/apiClient.js';
 import BackendErrorNotice from './BackendErrorNotice.jsx';
 
-const DEFAULT_API_BASE = 'http://localhost:5000';
-
 const OPERATIONS = [
   {
     id: 'LIST',
@@ -59,7 +57,7 @@ const OPERATIONS = [
 
 export default function PeopleApiModule() {
   const [activeOp, setActiveOp] = useState('LIST');
-  const [apiBase, setApiBase] = useState(getApiBaseUrl);
+  const [apiBase] = useState(getApiBaseUrl);
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [isBackendHealthy, setIsBackendHealthy] = useState(null);
@@ -84,7 +82,6 @@ export default function PeopleApiModule() {
       if (stored) {
         setToken(stored);
       }
-      setApiBase(getApiBaseUrl());
     }
   }, []);
 

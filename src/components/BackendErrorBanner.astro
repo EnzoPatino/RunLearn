@@ -20,6 +20,12 @@ const {
   class: className = '',
   style: styleProp = '',
 } = Astro.props;
+const configuredApiUrl = import.meta.env.PUBLIC_API_URL?.replace(/\/$/, '');
+const productionApiMissing = import.meta.env.PROD && !configuredApiUrl;
+const apiLabel = configuredApiUrl?.replace(/^https?:\/\//, '') || (productionApiMissing ? 'API no configurada' : 'localhost:5000');
+const resolvedHint = productionApiMissing
+  ? 'Publicá el backend por separado y configurá PUBLIC_API_URL en las variables de Vercel para habilitar esta demostración.'
+  : hint;
 ---
 
 <div
@@ -42,11 +48,11 @@ const {
   <div class="beb-body">
     <div class="beb-header">
       <span class="beb-badge">CONEXIÓN INTERRUMPIDA</span>
-      <span class="beb-port">localhost:5000</span>
+      <span class="beb-port">{apiLabel}</span>
     </div>
     <p class="beb-message">{message}</p>
-    {hint && <p class="beb-hint">{hint}</p>}
-    {showCommand && (
+    {resolvedHint && <p class="beb-hint">{resolvedHint}</p>}
+    {showCommand && !productionApiMissing && (
       <div class="beb-command-box">
         <span class="beb-command-label">Comando para iniciar:</span>
         <code class="beb-command-code">cd backend &amp;&amp; docker compose up -d</code>

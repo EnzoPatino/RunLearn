@@ -45,11 +45,11 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
         </a>
       </li>
       <li>
-        <a href="#crear" class="nav-pill nav-pill--action">
+        <a href="/register" class="nav-pill nav-pill--action">
           <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
           </svg>
-          <span>Crear Clase</span>
+          <span>Crear cuenta</span>
         </a>
       </li>
     </ul>
@@ -89,12 +89,24 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       <span class="navbar__menu-badge">{clases.length}</span>
     </a>
 
-    <a class="navbar__menu-link navbar__menu-link--action" role="menuitem" href="/#crear">
+    <a class="navbar__menu-link navbar__menu-link--action" role="menuitem" href="/register">
       <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
       </svg>
-      <span>Crear Clase</span>
+      <span>Crear cuenta</span>
     </a>
+
+    <div class="navbar__menu-separator" role="separator"></div>
+
+    <a class="navbar__menu-link navbar-auth-link" id="navbar-login-link" role="menuitem" href="/login">
+      <span>Iniciar sesión</span>
+    </a>
+    <a class="navbar__menu-link navbar-auth-link" id="navbar-register-link" role="menuitem" href="/register">
+      <span>Crear cuenta</span>
+    </a>
+    <button class="navbar__menu-link navbar-auth-link" id="navbar-logout-btn" type="button" role="menuitem" hidden>
+      <span>Cerrar sesión</span>
+    </button>
 
     <div class="navbar__menu-separator" role="separator"></div>
 
@@ -450,6 +462,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     transition: all var(--ease-fast);
   }
 
+  .navbar-auth-link[hidden] {
+    display: none;
+  }
+
   .navbar__menu-link svg {
     width: 16px;
     height: 16px;
@@ -773,40 +789,16 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 </style>
 
 <script>
-  import { fetchWithTimeout, getApiBaseUrl } from '../lib/apiClient.js';
-
-  function getStoredToken() {
-    try {
-      return (
-        localStorage.getItem('token') ||
-        localStorage.getItem('jwt') ||
-        localStorage.getItem('authToken') ||
-        localStorage.getItem('access_token') ||
-        sessionStorage.getItem('token') ||
-        sessionStorage.getItem('jwt') ||
-        ''
-      );
-    } catch (_) {
-      return '';
-    }
-  }
-
-  function clearStoredToken() {
-    try {
-      localStorage.removeItem('token');
-      localStorage.removeItem('jwt');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('access_token');
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('jwt');
-    } catch (_) {}
-  }
+  import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 
   function renderLoggedOut() {
     const avatar = document.getElementById('navbar-avatar');
     const status = document.getElementById('navbar-avatar-status');
     const welcome = document.getElementById('navbar-welcome');
     const userTitle = document.getElementById('navbar-user-title');
+    const loginLink = document.getElementById('navbar-login-link');
+    const registerLink = document.getElementById('navbar-register-link');
+    const logoutButton = document.getElementById('navbar-logout-btn');
 
     if (avatar) {
       avatar.classList.add('navbar__avatar--offline');
@@ -822,6 +814,9 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (userTitle) {
       userTitle.textContent = 'No logueado';
     }
+    if (loginLink) loginLink.hidden = !isSupabaseConfigured;
+    if (registerLink) registerLink.hidden = !isSupabaseConfigured;
+    if (logoutButton) logoutButton.hidden = true;
   }
 
   function renderLoggedIn(user) {
@@ -829,6 +824,9 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     const status = document.getElementById('navbar-avatar-status');
     const welcome = document.getElementById('navbar-welcome');
     const userTitle = document.getElementById('navbar-user-title');
+    const loginLink = document.getElementById('navbar-login-link');
+    const registerLink = document.getElementById('navbar-register-link');
+    const logoutButton = document.getElementById('navbar-logout-btn');
 
     if (avatar) {
       avatar.classList.remove('navbar__avatar--offline');
@@ -839,72 +837,44 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       status.title = 'En línea';
     }
     if (welcome) {
-      welcome.textContent = user?.rol ? `Rol: ${user.rol}` : 'Espacio de Trabajo';
+      welcome.textContent = user?.user_metadata?.rol ? `Rol: ${user.user_metadata.rol}` : 'Espacio de Trabajo';
     }
     if (userTitle) {
       userTitle.textContent = user?.email || 'DevMaster Pro';
     }
+    if (loginLink) loginLink.hidden = true;
+    if (registerLink) registerLink.hidden = true;
+    if (logoutButton) logoutButton.hidden = false;
   }
 
-  async function loadUserProfile() {
-    const token = getStoredToken();
+  if (document.documentElement.dataset.supabaseNavbarInitialized !== 'true') {
+    document.documentElement.dataset.supabaseNavbarInitialized = 'true';
 
-    if (!token) {
+    if (!isSupabaseConfigured || !supabase) {
       renderLoggedOut();
-      return;
-    }
+    } else {
+      supabase.auth.getSession().then(({ data, error }) => {
+        if (error || !data.session?.user) renderLoggedOut();
+        else renderLoggedIn(data.session.user);
+      });
 
-    const apiBase = getApiBaseUrl();
-    const candidateUrls = Array.from(new Set([`${apiBase}/api/auth/me`, '/api/auth/me']));
-    let resolved = false;
+      supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) renderLoggedIn(session.user);
+        else renderLoggedOut();
+      });
 
-    for (const url of candidateUrls) {
-      try {
-        const response = await fetchWithTimeout(url, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        }, 3500);
+      window.addEventListener('auth-change', async () => {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) renderLoggedIn(data.session.user);
+        else renderLoggedOut();
+      });
 
-        if (response.status === 401 || response.status === 403) {
-          clearStoredToken();
-          renderLoggedOut();
-          resolved = true;
-          return;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          const user = data?.user || data;
-          renderLoggedIn(user);
-          resolved = true;
-          break;
-        }
-      } catch (_) {
-        // En caso de fallo de red en la URL candidata, se continúa sin tirar error
-      }
-    }
-
-    if (!resolved) {
-      renderLoggedOut();
+      document.getElementById('navbar-logout-btn')?.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      });
     }
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadUserProfile);
-  } else {
-    loadUserProfile();
-  }
-
-  window.addEventListener('storage', (event) => {
-    if (!event.key || ['token', 'jwt', 'authToken', 'access_token'].includes(event.key)) {
-      loadUserProfile();
-    }
-  });
-
-  window.addEventListener('auth-change', loadUserProfile);
 </script>
 
 <script>

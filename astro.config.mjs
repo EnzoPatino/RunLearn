@@ -3,6 +3,7 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
+  output: 'static',
   integrations: [react()],
   redirects: {
     '/docker': '/docker-explicacion',
@@ -13,4 +14,3 @@ export default defineConfig({
     '/bots': '/bots-explicacion',
   },
 });
-

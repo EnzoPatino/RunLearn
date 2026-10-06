@@ -6,7 +6,9 @@ import React from 'react';
 export default function BackendErrorNotice({
   title = 'CONEXIÓN INTERRUMPIDA',
   message = 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.',
-  hint = 'Asegurate de iniciar el backend con Docker Compose o revisar que el puerto 5000 esté disponible.',
+  hint = import.meta.env.PROD
+    ? 'Publicá el backend por separado y configurá PUBLIC_API_URL en las variables de Vercel para habilitar esta demostración.'
+    : 'Asegurate de iniciar el backend con Docker Compose o revisar que el puerto 5000 esté disponible.',
   command = 'cd backend && docker compose up -d',
   showCommand = true,
   onRetry = null,
@@ -14,6 +16,11 @@ export default function BackendErrorNotice({
   retryLabel = 'Reintentar conexión',
   style = {},
 }) {
+  const productionApiMissing = import.meta.env.PROD && !import.meta.env.PUBLIC_API_URL;
+  const apiLabel = import.meta.env.PUBLIC_API_URL
+    ? import.meta.env.PUBLIC_API_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    : productionApiMissing ? 'API no configurada' : 'localhost:5000';
+
   return (
     <div style={{ ...styles.banner, ...style }} role="alert">
       <div style={styles.iconCol}>
@@ -37,11 +44,11 @@ export default function BackendErrorNotice({
       <div style={styles.body}>
         <div style={styles.header}>
           <span style={styles.badge}>{title}</span>
-          <span style={styles.port}>localhost:5000</span>
+          <span style={styles.port}>{apiLabel}</span>
         </div>
         <p style={styles.message}>{message}</p>
         {hint && <p style={styles.hint}>{hint}</p>}
-        {showCommand && command && (
+        {showCommand && command && !productionApiMissing && (
           <div style={styles.commandBox}>
             <span style={styles.commandLabel}>Comando sugerido:</span>
             <code style={styles.commandCode}>{command}</code>

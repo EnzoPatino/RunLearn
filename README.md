@@ -1,72 +1,69 @@
-# RunLearn (DevPlatform)
+# RunLearn
 
-Dashboard y aula virtual para desarrolladores. Interfaz oscura con estética tipo bento grid inspirada en herramientas como Linear o Raycast, pensada para organizar módulos de aprendizaje (APIs, Docker, bases de datos, etc.) y dar seguimiento al progreso de clases o apuntes activos.
-
-Construido sobre **Astro 5** con componentes modulares y CSS nativo basado en tokens de diseño.
-
----
+Aula virtual interactiva para aprender programación web dinámica. Incluye un dashboard de módulos educativos, páginas explicativas con simulaciones y una API Express independiente para las demostraciones que necesitan backend.
 
 ## Stack
 
-- **Framework:** [Astro 5](https://astro.build/)
-- **Estilos:** CSS moderno (variables CSS, flexbox, grid, glassmorphism, responsive)
-- **Tipografía:** Plus Jakarta Sans & JetBrains Mono (vía Google Fonts)
-- **Modo:** Renderizado estático (SSG)
+- Astro 5 con salida estática para Vercel.
+- React solo en los módulos interactivos.
+- Supabase Auth para registro, inicio y cierre de sesión.
+- Express, PostgreSQL y Redis en `backend/` para las demos que requieren servicios reales.
+- Node.js 22, fijado en `.nvmrc` y en `package.json`.
 
----
-
-## Inicio rápido
-
-### Requisitos
-
-- Node.js 18.x o superior
-- npm (o pnpm / yarn)
-
-### Instalación y ejecución local
+## Ejecutar localmente
 
 ```bash
-# 1. Instalar dependencias
+nvm use
 npm install
-
-# 2. Levantar servidor de desarrollo (por defecto en localhost:4321)
+cp .env.example .env
 npm run dev
-
-# 3. Compilar para producción
-npm run build
-
-# 4. Probar la versión de producción localmente
-npm run preview
 ```
 
----
+Sin las variables de Supabase, las páginas educativas siguen disponibles, pero el registro e inicio de sesión muestran un mensaje de configuración. Para activarlos, completar en `.env`:
 
-## Estructura del proyecto
-
-```text
-RunLearn/
-├── src/
-│   ├── components/            # Componentes de interfaz Astro
-│   │   ├── CourseCard.astro      # Tarjeta individual de curso/apunte con barra de progreso
-│   │   ├── CoursesTray.astro     # Contenedor de cursos en progreso
-│   │   ├── Navbar.astro          # Barra superior (perfil, tabs, buscador y menú)
-│   │   ├── SectionDivider.astro  # Separador de secciones con contador y dot dinámico
-│   │   ├── TechCard.astro        # Tarjeta tecnológica interactiva (hover, badge, glow)
-│   │   └── TechGrid.astro        # Grilla bento de módulos tecnológicos
-│   ├── layouts/
-│   │   └── Layout.astro          # Shell principal HTML, fuentes y luces ambientales
-│   ├── pages/
-│   │   └── index.astro           # Página principal del dashboard
-│   └── styles/
-│       └── global.css            # Tokens de diseño, reset, fondos y estilos globales
-├── astro.config.mjs           # Configuración de Astro
-├── package.json
-└── .gitignore
+```env
+PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=<anon-o-publishable-key>
 ```
 
----
+Ambos valores se publican en el bundle del navegador. No poner aquí `service_role`, claves secretas ni contraseñas. La autenticación utiliza Supabase Auth y no requiere crear tablas adicionales. Si se agregan tablas de cursos, progreso o perfiles, activar RLS y definir sus políticas antes de exponerlas desde el navegador.
 
-## Sistema de diseño y estilos
+En Supabase, habilitar Email/Password en **Authentication → Providers → Email**. Configurar **Authentication → URL Configuration** con la URL del sitio y permitir las URLs locales y de producción para los enlaces de confirmación de correo. Si se exige confirmación de email, el alta mostrará que hay que revisar el correo; el usuario podrá iniciar sesión después de confirmar.
 
-- **Tokens globales:** Definidos en `:root` dentro de `src/styles/global.css` (paleta de colores por tecnología, elevaciones, bordes, radios y transiciones elásticas).
-- **Fondos y ambientación:** Fondo `#07080b` con patrón de puntos finos (`dot-matrix`) y luces difusas ambientales (`.ambient-glow`).
-- **Diseño fluido al 100%:** El dashboard se expande aprovechando todo el ancho de pantalla (`viewport`), reorganizando los módulos en columnas adaptativas según la resolución (desktop, tablet y móvil).
+## Desplegar el frontend en Vercel
+
+Importar el repositorio en Vercel y usar:
+
+- Framework preset: Astro (o Other).
+- Install command: `npm install`.
+- Build command: `npm run build`.
+- Output directory: `dist`.
+- Node.js: 22.x.
+
+Agregar `PUBLIC_SUPABASE_URL` y `PUBLIC_SUPABASE_ANON_KEY` en las variables de entorno de Vercel para Production, Preview y Development según corresponda. Volver a desplegar después de cambiarlas. Agregar el dominio final a las URLs permitidas de Supabase.
+
+## Demos con backend
+
+Vercel publica el frontend estático; no ejecuta el Docker Compose con Express, PostgreSQL y Redis. Las simulaciones que llaman endpoints como `/api/people`, `/api/metrics` o `/api/csrf-demo` requieren publicar `backend/` junto con sus servicios en un host de backend. Configurar luego `PUBLIC_API_URL` con la URL HTTPS de esa API en Vercel. El backend debe permitir CORS desde el dominio de RunLearn y contar con sus propias variables de entorno seguras.
+
+Para ejecutar el backend localmente:
+
+```bash
+cd backend
+cp .env.example .env
+docker compose up -d --build
+```
+
+En local, `PUBLIC_API_URL` puede omitirse y el frontend usa `http://localhost:5000`.
+
+## Contenido y alcance actual
+
+Las clases y sus rutas viven en `src/data/clases.js`; el contenido es estático y está versionado con el frontend. El acceso Supabase cubre cuentas de usuario. La creación de clases por usuarios, el guardado de progreso y la administración dinámica de contenidos aún requieren esquema de base de datos, políticas RLS y sus pantallas asociadas.
+
+## Comandos
+
+```bash
+npm run dev       # desarrollo en localhost:4321
+npm run build     # compilación de producción a dist/
+npm run preview   # previsualización local de dist/
+```

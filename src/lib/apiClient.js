@@ -14,17 +14,20 @@ export const BACKEND_TIMEOUT_MESSAGE =
 
 /**
  * Obtiene la URL base del backend según el entorno.
- * Prioriza RUNLEARN_API_URL en window, luego API_URL, PUBLIC_API_URL y fallback a localhost:5000.
+ * Prioriza RUNLEARN_API_URL en window, luego API_URL y PUBLIC_API_URL.
+ * Solo usa localhost:5000 como fallback en desarrollo; producción requiere PUBLIC_API_URL.
  */
 export function getApiBaseUrl() {
+  let configuredUrl = '';
   if (typeof window !== 'undefined') {
     const win = window;
-    if (win.RUNLEARN_API_URL) return win.RUNLEARN_API_URL;
-    if (win.API_URL) return win.API_URL;
+    configuredUrl = win.RUNLEARN_API_URL || win.API_URL || '';
   }
-  if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
-    return import.meta.env.PUBLIC_API_URL;
+  if (!configuredUrl && typeof import.meta !== 'undefined') {
+    configuredUrl = import.meta.env?.PUBLIC_API_URL || '';
   }
+  if (configuredUrl) return configuredUrl.replace(/\/$/, '');
+  if (typeof import.meta !== 'undefined' && import.meta.env?.PROD) return '';
   return DEFAULT_BACKEND_URL;
 }
 

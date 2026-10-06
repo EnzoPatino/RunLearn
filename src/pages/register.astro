@@ -23,6 +23,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
 
         <div id="errorMsg" class="error" hidden></div>
+        <div id="successMsg" class="success" role="status" aria-live="polite" hidden></div>
 
         <button type="submit" class="btn-login">Crear cuenta</button>
       </form>
@@ -125,6 +126,17 @@ import Layout from '../layouts/Layout.astro';
     text-align: center;
   }
 
+  .success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #86efac;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    text-align: center;
+  }
+
   .btn-login {
     background: var(--brand-blue);
     color: var(--text-white);
@@ -178,11 +190,12 @@ import Layout from '../layouts/Layout.astro';
 </style>
 
 <script>
-  import { fetchWithTimeout, getApiBaseUrl, getErrorMessage } from '../lib/apiClient.js';
+  import { getSupabaseAuthError, isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 
   function setupRegisterForm() {
     const form = document.getElementById('registerForm') as HTMLFormElement | null;
     const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
     if (!form || form.dataset.initialized === 'true') return;
     form.dataset.initialized = 'true';
 
@@ -192,11 +205,21 @@ import Layout from '../layouts/Layout.astro';
       errorMsg.hidden = false;
     }
 
+    function showSuccess(message: string) {
+      if (!successMsg) return;
+      successMsg.textContent = message;
+      successMsg.hidden = false;
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (errorMsg) {
         errorMsg.hidden = true;
         errorMsg.textContent = '';
+      }
+      if (successMsg) {
+        successMsg.hidden = true;
+        successMsg.textContent = '';
       }
 
       const emailInput = document.getElementById('email') as HTMLInputElement | null;
@@ -222,32 +245,27 @@ import Layout from '../layouts/Layout.astro';
         btn.textContent = 'Creando cuenta...';
       }
 
-      const apiBase = getApiBaseUrl();
-
       try {
-        const res = await fetchWithTimeout(`${apiBase}/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }, 6000);
+        if (!isSupabaseConfigured || !supabase) {
+          throw new Error('Falta configurar PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY.');
+        }
 
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          showError(data.error || data.message || 'No se pudo crear la cuenta.');
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+
+        if (data.session) {
+          window.dispatchEvent(new CustomEvent('auth-change'));
+          window.location.href = '/';
           return;
         }
 
-        const data = await res.json();
-        if (!data?.token) {
-          showError('No se pudo crear la cuenta. Inténtalo de nuevo.');
-          return;
-        }
-
-        localStorage.setItem('token', data.token);
-        window.dispatchEvent(new CustomEvent('auth-change'));
-        window.location.href = '/';
+        showSuccess('Cuenta creada. Revisá tu correo para confirmar la dirección antes de iniciar sesión.');
       } catch (err) {
-        showError(getErrorMessage(err, 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.'));
+        showError(getSupabaseAuthError(err, 'No se pudo crear la cuenta.'));
       } finally {
         if (btn) {
           btn.disabled = false;

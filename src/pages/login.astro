@@ -18,7 +18,7 @@ import Layout from '../layouts/Layout.astro';
           <input id="password" name="password" type="password" placeholder="Tu contraseña" required autocomplete="current-password" />
         </div>
 
-        <div id="errorMsg" class="error" hidden></div>
+        <div id="errorMsg" class="error" role="alert" aria-live="polite" hidden></div>
 
         <button type="submit" class="btn-login">Entrar</button>
       </form>
@@ -174,7 +174,7 @@ import Layout from '../layouts/Layout.astro';
 </style>
 
 <script>
-  import { fetchWithTimeout, getApiBaseUrl, getErrorMessage } from '../lib/apiClient.js';
+  import { getSupabaseAuthError, isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 
   function setupLoginForm() {
     const form = document.getElementById('loginForm') as HTMLFormElement | null;
@@ -200,33 +200,18 @@ import Layout from '../layouts/Layout.astro';
         btn.textContent = 'Entrando...';
       }
 
-      const apiBase = getApiBaseUrl();
-
       try {
-        const res = await fetchWithTimeout(`${apiBase}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }, 6000);
-
-        if (res.status === 401) {
-          const data = await res.json().catch(() => ({}));
-          if (errorMsg) {
-            errorMsg.textContent = data.message || 'Credenciales inválidas';
-            errorMsg.hidden = false;
-          }
-          return;
+        if (!isSupabaseConfigured || !supabase) {
+          throw new Error('Falta configurar PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY.');
         }
 
-        if (!res.ok) throw new Error('Error en el servidor');
-
-        const data = await res.json();
-        localStorage.setItem('token', data.token);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
         window.dispatchEvent(new CustomEvent('auth-change'));
         window.location.href = '/';
       } catch (err) {
         if (errorMsg) {
-          errorMsg.textContent = getErrorMessage(err, 'No se pudo conectar con el servidor. Verificá que el backend esté corriendo.');
+          errorMsg.textContent = getSupabaseAuthError(err, 'No se pudo iniciar sesión.');
           errorMsg.hidden = false;
         }
       } finally {
