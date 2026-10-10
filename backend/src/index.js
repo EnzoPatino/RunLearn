@@ -1,9 +1,9 @@
-import dotenv from 'dotenv';
+// dotenv debe cargarse antes de evaluar cualquier módulo que lea process.env.
+import 'dotenv/config';
 import app from './app.js';
 import { runMigrations } from './db/migrate.js';
 
-dotenv.config();
-
+// Render asigna el puerto dinámicamente; local/docker usa 5000.
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
 runMigrations().catch((err) => {

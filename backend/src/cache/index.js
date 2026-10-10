@@ -3,10 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379', 10),
-  password: process.env.REDIS_PASSWORD || undefined,
+const baseOptions = {
   maxRetriesPerRequest: 3,
   retryStrategy(times) {
     const delay = Math.min(times * 200, 2000);
@@ -15,7 +12,19 @@ const redisConfig = {
   lazyConnect: true,
 };
 
-export const redis = new Redis(process.env.REDIS_URL || redisConfig);
+const redisUrl = process.env.REDIS_URL?.trim();
+
+// Producción (Render + Upstash): REDIS_URL, típicamente rediss:// (TLS).
+// ioredis habilita TLS automáticamente cuando el esquema es rediss://.
+// Desarrollo local (docker-compose): REDIS_HOST / REDIS_PORT.
+export const redis = redisUrl
+  ? new Redis(redisUrl, baseOptions)
+  : new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      password: process.env.REDIS_PASSWORD || undefined,
+      ...baseOptions,
+    });
 
 redis.on('error', (err) => {
   console.warn('[Redis] Advertencia de conexión:', err.message);

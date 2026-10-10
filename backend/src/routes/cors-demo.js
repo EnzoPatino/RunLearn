@@ -6,7 +6,7 @@ const router = Router();
 // En producción se amplía con la env CORS_PORTAL_ORIGINS (separada por comas).
 const PORTAL_ORIGINS = (
   process.env.CORS_PORTAL_ORIGINS ||
-  'http://localhost:4321,http://127.0.0.1:4321,http://localhost:4173,https://runlearn.vercel.app'
+  'http://localhost:4321,http://127.0.0.1:4321,http://localhost:4173,https://run-learn.vercel.app,https://runlearn.vercel.app'
 )
   .split(',')
   .map((s) => s.trim())

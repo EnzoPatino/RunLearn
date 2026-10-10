@@ -16,8 +16,23 @@ import { trackRequest } from './metrics.js';
 
 const app = express();
 
+// Orígenes permitidos. Default '*' (cualquier origen, incluido https://run-learn.vercel.app).
+// En producción puede acotarse con CORS_ORIGINS="https://run-learn.vercel.app,http://localhost:4321".
+const corsOrigins = (process.env.CORS_ORIGINS || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 // Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: corsOrigins.includes('*') ? '*' : corsOrigins,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    // Incluye Authorization para las peticiones autenticadas con Bearer JWT.
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    optionsSuccessStatus: 204,
+  })
+);
 app.use(express.json());
 app.use(trackRequest);
 
