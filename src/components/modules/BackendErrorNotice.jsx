@@ -1,4 +1,5 @@
 import React from 'react';
+import { getApiBaseUrl } from '../../lib/apiClient.js';
 
 /**
  * Componente React reutilizable para avisos de error de conexión con el backend o servicios externos.
@@ -17,9 +18,7 @@ export default function BackendErrorNotice({
   style = {},
 }) {
   const productionApiMissing = import.meta.env.PROD && !import.meta.env.PUBLIC_API_URL;
-  const apiLabel = import.meta.env.PUBLIC_API_URL
-    ? import.meta.env.PUBLIC_API_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')
-    : productionApiMissing ? 'API no configurada' : 'localhost:5000';
+  const apiLabel = getApiBaseUrl().replace(/^https?:\/\//, '').replace(/\/$/, '') || 'API no configurada';
 
   return (
     <div style={{ ...styles.banner, ...style }} role="alert">

@@ -243,14 +243,17 @@ export default function PeopleApiModule() {
         setBackendError(errMsg);
       }
 
+      const hint = apiBase
+        ? `Verificá que el backend esté corriendo en ${apiBase}`
+        : 'Configurá PUBLIC_API_URL con la URL pública del backend.';
       setReceivedResponse({
         status: 0,
         statusText: err?.isTimeout ? 'Timeout' : 'Network / Connection Error',
         ok: false,
         latencyMs: Math.round(endTime - startTime),
         headers: {},
-        body: { error: errMsg, hint: 'Asegurate de que el backend en http://localhost:5000 esté corriendo.' },
-        rawText: JSON.stringify({ error: errMsg, hint: 'Verificá que el backend esté corriendo en http://localhost:5000' }, null, 2),
+        body: { error: errMsg, hint },
+        rawText: JSON.stringify({ error: errMsg, hint }, null, 2),
       });
     } finally {
       setLoading(false);

@@ -1,4 +1,6 @@
 ---
+import { getApiBaseUrl, DEFAULT_BACKEND_URL } from '../lib/apiClient.js';
+
 interface Props {
   id?: string;
   message?: string;
@@ -20,9 +22,11 @@ const {
   class: className = '',
   style: styleProp = '',
 } = Astro.props;
-const configuredApiUrl = import.meta.env.PUBLIC_API_URL?.replace(/\/$/, '');
-const productionApiMissing = import.meta.env.PROD && !configuredApiUrl;
-const apiLabel = configuredApiUrl?.replace(/^https?:\/\//, '') || (productionApiMissing ? 'API no configurada' : 'localhost:5000');
+const configuredApiUrl = getApiBaseUrl();
+const productionApiMissing = import.meta.env.PROD && !import.meta.env.PUBLIC_API_URL;
+const apiLabel =
+  configuredApiUrl.replace(/^https?:\/\//, '').replace(/\/$/, '') ||
+  (productionApiMissing ? 'API no configurada' : DEFAULT_BACKEND_URL);
 const resolvedHint = productionApiMissing
   ? 'Publicá el backend por separado y configurá PUBLIC_API_URL en las variables de Vercel para habilitar esta demostración.'
   : hint;

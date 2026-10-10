@@ -128,7 +128,7 @@ import BackendErrorBanner from '../components/BackendErrorBanner.astro';
           <span class="sync-info" id="sync-info">Sondeando cada 3s</span>
         </div>
         <div class="live-header-actions">
-          <span class="endpoint-badge">GET http://localhost:5000/api/metrics</span>
+          <span class="endpoint-badge" id="endpoint-badge">GET /api/metrics</span>
           <span class="timestamp-chip" id="last-sync-chip">Última sinc: --:--:--</span>
         </div>
       </div>
@@ -544,6 +544,10 @@ import {
   // POLLING EN VIVO DE /api/metrics
   // ============================================================
   const API_BASE = getApiBaseUrl();
+  const endpointBadge = document.getElementById('endpoint-badge');
+  if (endpointBadge) {
+    endpointBadge.textContent = `GET ${API_BASE}/api/metrics`;
+  }
   let serverUptimeSeconds = 0;
   let lastServerFetchTime = Date.now();
   let pollIntervalTimer: any = null;
@@ -673,7 +677,9 @@ import {
         statusIndicator.className = 'status-indicator offline';
       }
       if (statusText) {
-        statusText.textContent = 'DESCONECTADO · Asegurate de que el backend en :5000 esté corriendo';
+        statusText.textContent = API_BASE
+          ? `DESCONECTADO · Verificá que el backend en ${API_BASE} esté corriendo`
+          : 'DESCONECTADO · Configurá PUBLIC_API_URL con la URL del backend';
       }
       if (rawJsonEl) {
         rawJsonEl.textContent = `Error al conectar con ${API_BASE}/api/metrics:\n${errMsg}`;

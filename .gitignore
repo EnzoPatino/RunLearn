@@ -17,6 +17,10 @@ pnpm-debug.log*
 .env.development
 .env.local
 .env.*.local
+backend/.env
+backend/.env.local
+backend/.env.*.local
+.vercel/
 
 # IDEs y editores
 .vscode/
