@@ -45,11 +45,11 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
         </a>
       </li>
       <li>
-        <a href="/register" class="nav-pill nav-pill--action">
+        <a href="/login" id="navbar-main-auth-link" class="nav-pill nav-pill--action navbar-auth-link">
           <svg class="pill-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            <path d="M10 3H5a2 2 0 00-2 2v10a2 2 0 002 2h5M13 7l4 3-4 3M7 10h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <span>Crear cuenta</span>
+          <span>Iniciar sesión</span>
         </a>
       </li>
     </ul>
@@ -66,9 +66,9 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     </button>
 
     <button class="navbar__menu-btn" id="navbar-menu-btn" type="button" aria-label="Abrir panel de opciones" aria-expanded="false" aria-controls="navbar-menu">
-      <span class="line line--top"></span>
-      <span class="line line--mid"></span>
-      <span class="line line--bot"></span>
+      <svg class="navbar__menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
     </button>
   </div>
 
@@ -372,6 +372,8 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .navbar__menu-btn {
     width: 44px;
     height: 40px;
+    flex: 0 0 44px;
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
@@ -390,24 +392,20 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     border-color: var(--border-hover);
   }
 
-  .line {
+  .navbar__menu-icon {
     display: block;
     width: 20px;
-    height: 2px;
-    background-color: var(--text-secondary);
-    border-radius: 2px;
-    transition: transform var(--ease-spring), width var(--ease-spring), background-color var(--ease-fast);
+    height: 20px;
+    overflow: visible;
+    fill: none;
+    stroke: var(--text-secondary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: stroke var(--ease-fast);
   }
 
-  .line--mid { width: 15px; align-self: flex-start; margin-left: 12px; }
-
-  .navbar__menu-btn:hover .line {
-    background-color: var(--text-white);
-  }
-
-  .navbar__menu-btn:hover .line--mid {
-    width: 20px;
-    margin-left: 0;
+  .navbar__menu-btn:hover .navbar__menu-icon {
+    stroke: var(--text-white);
   }
 
   /* ---------- Menú hamburguesa ---------- */
@@ -463,6 +461,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   }
 
   .navbar-auth-link[hidden] {
+    display: none;
+  }
+
+  .nav-pill[hidden] {
     display: none;
   }
 
@@ -799,6 +801,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     const loginLink = document.getElementById('navbar-login-link');
     const registerLink = document.getElementById('navbar-register-link');
     const logoutButton = document.getElementById('navbar-logout-btn');
+    const mainAuthLink = document.getElementById('navbar-main-auth-link');
 
     if (avatar) {
       avatar.classList.add('navbar__avatar--offline');
@@ -814,9 +817,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (userTitle) {
       userTitle.textContent = 'No logueado';
     }
-    if (loginLink) loginLink.hidden = !isSupabaseConfigured;
-    if (registerLink) registerLink.hidden = !isSupabaseConfigured;
+    if (loginLink) loginLink.hidden = false;
+    if (registerLink) registerLink.hidden = false;
     if (logoutButton) logoutButton.hidden = true;
+    if (mainAuthLink) mainAuthLink.hidden = false;
   }
 
   function renderLoggedIn(user) {
@@ -827,6 +831,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     const loginLink = document.getElementById('navbar-login-link');
     const registerLink = document.getElementById('navbar-register-link');
     const logoutButton = document.getElementById('navbar-logout-btn');
+    const mainAuthLink = document.getElementById('navbar-main-auth-link');
 
     if (avatar) {
       avatar.classList.remove('navbar__avatar--offline');
@@ -845,6 +850,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (loginLink) loginLink.hidden = true;
     if (registerLink) registerLink.hidden = true;
     if (logoutButton) logoutButton.hidden = false;
+    if (mainAuthLink) mainAuthLink.hidden = true;
   }
 
   if (document.documentElement.dataset.supabaseNavbarInitialized !== 'true') {
