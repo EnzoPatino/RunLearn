@@ -15,15 +15,18 @@ import "../styles/global.css";
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
 
-  <!-- Google Fonts: Inter Display & Text -->
+  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
     rel="stylesheet"
   />
 </head>
 <body>
+  <!-- Interactive flashlight cursor grid -->
+  <div class="spot" id="spot" aria-hidden="true"></div>
+
   <!-- Ambient Lighting Effects -->
   <div class="ambient-glow ambient-glow--top" aria-hidden="true"></div>
   <div class="ambient-glow ambient-glow--bottom" aria-hidden="true"></div>
@@ -34,5 +37,17 @@ import "../styles/global.css";
       <slot />
     </main>
   </div>
+
+  <script>
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.addEventListener('pointermove', (e) => {
+        const spot = document.getElementById('spot');
+        if (spot) {
+          spot.style.setProperty('--sx', e.clientX + 'px');
+          spot.style.setProperty('--sy', e.clientY + 'px');
+        }
+      });
+    }
+  </script>
 </body>
 </html>

@@ -2,13 +2,935 @@
 // src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
-import TechGrid from '../components/TechGrid.astro';
+import { clases, roadmapPhases } from '../data/clases.js';
+
+const totalClases = clases.length;
+const totalCategorias = 9;
+
+// Formateamos las clases para el marquee
+const marqueeItems = [...clases, ...clases];
 ---
 
-<Layout title="DevPlatform – Dashboard & Aula Virtual">
-  <!-- 1. Header / Navbar -->
+<Layout title="RunLearn – Aula Interactiva de Backend & Arquitectura">
   <Navbar />
 
-  <!-- 2. Tecnologías Bento Grid (destacadas) -->
-  <TechGrid />
+  <section id="home" class="home-section">
+    <!-- Hero Principal -->
+    <div class="hero">
+      <div class="hero__copy">
+        <div class="eyebrow">Aula interactiva</div>
+        <h1>Aprendé backend <em id="rw">viéndolo</em> funcionar.</h1>
+        <p class="lead">
+          Nada de magia. Ejecutás cada paso y mirás qué pasa en el cliente, el servidor y la base de datos. Hasta cuando algo sale mal.
+        </p>
+        <div class="btns">
+          <a class="btn p" href="/clases">Explorar las clases →</a>
+          <a class="btn" href="#probalo">Probar un ataque</a>
+        </div>
+      </div>
+
+      <!-- Diagrama de flujo HTTP interactivo -->
+      <div class="flow" aria-label="Demostración en vivo de una petición HTTP">
+        <div class="fl">
+          <span>petición en vivo</span>
+          <span id="sl">petición normal</span>
+        </div>
+        <div class="nodes">
+          <div class="node hot" id="n0">cliente</div>
+          <div class="node" id="n1">api</div>
+          <div class="node" id="n2">db</div>
+          <span class="pkt" id="pkt"></span>
+        </div>
+        <div class="log" id="log" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- Marquee Infinito -->
+    <div class="mq" aria-hidden="true">
+      <div id="mq">
+        {marqueeItems.map((item) => (
+          <span>{item.title}</span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Estadísticas con contadores -->
+    <div class="stats rv">
+      <div>
+        <b class="cnt" data-to={totalClases}>0</b>
+        <span>clases interactivas</span>
+      </div>
+      <div>
+        <b class="cnt" data-to={totalCategorias}>0</b>
+        <span>categorías: seguridad, backend, DevOps…</span>
+      </div>
+      <div>
+        <b class="cnt" data-to="0">0</b>
+        <span>magia: todo se explica por dentro</span>
+      </div>
+    </div>
+
+    <!-- Cómo funciona -->
+    <h2 class="h2 rv">Cómo funciona</h2>
+    <div class="steps rv">
+      <div class="step">
+        <i>01</i>
+        <h3>Elegí una clase</h3>
+        <p>Seguridad, bases de datos, Docker, algoritmos. Cada una es un tema concreto de 5 a 10 minutos.</p>
+      </div>
+      <div class="step">
+        <i>02</i>
+        <h3>Ejecutá la simulación</h3>
+        <p>Probá el ataque o el flujo con tus propios datos, paso a paso y sin romper nada.</p>
+      </div>
+      <div class="step">
+        <i>03</i>
+        <h3>Mirá por dentro</h3>
+        <p>Consultas SQL, headers y respuestas reales mientras pasan, con código fuente abierto.</p>
+      </div>
+    </div>
+
+    <!-- Sandbox interactivo: SQL Injection -->
+    <div class="try rv" id="probalo">
+      <div class="try__controls">
+        <div class="eyebrow">Probalo ahora</div>
+        <h2 class="h2" style="margin-top: 10px;">Hackeá esta base de datos.</h2>
+        <p class="lead" style="margin-bottom: 14px;">
+          SQL Injection. Escribí tu propia entrada o tocá un ejemplo, y cambiá el modo para ver cómo se defiende un servidor bien hecho.
+        </p>
+
+        <div class="seg" role="group" aria-label="Modo de consulta">
+          <button type="button" data-m="vuln" aria-pressed="true">Vulnerable</button>
+          <button type="button" data-m="safe" aria-pressed="false">Seguro</button>
+        </div>
+
+        <input
+          class="field"
+          id="ti"
+          value="' OR 1=1 --"
+          aria-label="Nombre a buscar"
+          autocomplete="off"
+          spellcheck="false"
+        />
+
+        <div class="pre" aria-label="Ejemplos rápidos">
+          <button type="button" data-p="ana">ana</button>
+          <button type="button" data-p="' OR 1=1 --">' OR 1=1 --</button>
+          <button type="button" data-p="'">'</button>
+        </div>
+      </div>
+
+      <pre class="q" id="tq" aria-live="polite"></pre>
+    </div>
+
+    <!-- Ruta de aprendizaje recomendada -->
+    <h2 class="h2 rv">Una ruta para no perderte</h2>
+    <div class="road rv" id="road">
+      {roadmapPhases.map((fase, i) => (
+        <div class="st">
+          <div class="dot">{i + 1}</div>
+          <h3>{fase.title}</h3>
+          <p>{fase.subtitle}</p>
+          <div class="road-chips">
+            {fase.classes.map((nombreClase) => {
+              const claseObj = clases.find((c) => c.title.toLowerCase() === nombreClase.toLowerCase());
+              const href = claseObj ? claseObj.route : "/clases";
+              return (
+                <a class="rc" href={href} data-n={nombreClase}>
+                  {nombreClase}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Llamado a la acción -->
+    <div class="cta rv">
+      <h2>{totalClases} clases esperando.</h2>
+      <a class="btn" href="/clases">Ver todas las clases →</a>
+    </div>
+
+    <!-- Footer minimalista unificado -->
+    <footer>
+      <span>RunLearn · aprendé cómo funciona todo por dentro.</span>
+      <span>Hecho con Astro, Node y bastante café.</span>
+    </footer>
+  </section>
 </Layout>
+
+<style>
+  .home-section {
+    width: 100%;
+    position: relative;
+    animation: pg .5s both;
+  }
+
+  @keyframes pg {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 56px;
+    margin-top: 10px;
+  }
+
+  .flow {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .fl {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--m);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mut);
+    margin-bottom: 14px;
+  }
+
+  .fl span:last-child {
+    color: var(--lime);
+    font-weight: 600;
+  }
+
+  .nodes {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    margin: 6px 0 20px;
+  }
+
+  .nodes::before {
+    content: "";
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    top: 50%;
+    border-top: 1px dashed var(--mut);
+    opacity: .45;
+  }
+
+  .node {
+    position: relative;
+    z-index: 1;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-family: var(--m);
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--mut);
+    transition: border-color .25s, color .25s, box-shadow .25s;
+    text-transform: lowercase;
+  }
+
+  .node.hot {
+    border-color: var(--lime);
+    color: var(--lime);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--lime) 35%, transparent);
+  }
+
+  .pkt {
+    position: absolute;
+    top: 50%;
+    left: 24px;
+    width: 12px;
+    height: 12px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 14px var(--lime);
+    transition: left .55s cubic-bezier(.6, 0, .3, 1), background .3s, box-shadow .3s;
+    z-index: 2;
+  }
+
+  .log {
+    font-family: var(--m);
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #cfd5c4;
+    background: #070806;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    min-height: 130px;
+    overflow-x: auto;
+  }
+
+  :global(.log div) {
+    animation: log-in .3s ease both;
+  }
+
+  @keyframes log-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  :global(.log .k) {
+    color: var(--lime);
+  }
+
+  :global(.log .bad) {
+    color: var(--bad);
+  }
+
+  :global(.log .mut) {
+    color: var(--mut);
+  }
+
+  .mq {
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+    margin-bottom: 56px;
+    padding: 14px 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  .mq div {
+    display: flex;
+    gap: 34px;
+    width: max-content;
+    animation: mq-scroll 40s linear infinite;
+  }
+
+  .mq:hover div {
+    animation-play-state: paused;
+  }
+
+  .mq span {
+    font-family: var(--m);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--mut);
+    white-space: nowrap;
+  }
+
+  .mq span::after {
+    content: "/";
+    color: var(--lime);
+    margin-left: 34px;
+  }
+
+  @keyframes mq-scroll {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--card);
+    margin-bottom: 72px;
+  }
+
+  .stats div {
+    padding: 26px;
+    border-right: 1px solid var(--line);
+  }
+
+  .stats div:last-child {
+    border-right: 0;
+  }
+
+  .stats b {
+    display: block;
+    font-size: clamp(34px, 5vw, 56px);
+    letter-spacing: -.04em;
+    line-height: 1;
+    color: var(--lime);
+    font-family: var(--f);
+  }
+
+  .stats span {
+    color: var(--mut);
+    font-size: 14px;
+  }
+
+  .h2 {
+    font-family: var(--f);
+    font-size: clamp(26px, 3.6vw, 38px);
+    letter-spacing: -.03em;
+    margin: 0 0 20px;
+    color: var(--fg);
+    font-weight: 700;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 72px;
+  }
+
+  .step {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 22px;
+    transition: border-color .25s, transform .25s;
+  }
+
+  .step:hover {
+    border-color: var(--lime);
+    transform: translateY(-4px);
+  }
+
+  .step i {
+    font-family: var(--m);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--lime);
+    font-style: normal;
+  }
+
+  .step h3 {
+    margin: 10px 0 6px;
+    font-size: 22px;
+    letter-spacing: -.02em;
+    font-family: var(--f);
+    font-weight: 700;
+  }
+
+  .step p {
+    margin: 0;
+    color: var(--mut);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .try {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 28px;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: clamp(20px, 4vw, 40px);
+    margin-bottom: 72px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 3px;
+    background: var(--bg);
+  }
+
+  .seg button {
+    all: unset;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--mut);
+    box-sizing: border-box;
+    transition: background-color .15s, color .15s;
+  }
+
+  .seg button[aria-pressed="true"] {
+    background: var(--bad);
+    color: #fff;
+  }
+
+  .seg button[data-m="safe"][aria-pressed="true"] {
+    background: var(--lime);
+    color: var(--ink);
+  }
+
+  .field {
+    width: 100%;
+    min-height: 44px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--fg);
+    padding: 0 14px;
+    font-family: var(--m);
+    font-size: 14px;
+    margin: 12px 0 8px;
+    box-sizing: border-box;
+  }
+
+  .field:focus {
+    border-color: var(--lime);
+    outline: none;
+  }
+
+  .pre {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pre button {
+    all: unset;
+    cursor: pointer;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    border: 1px dashed var(--mut);
+    border-radius: 99px;
+    font-family: var(--m);
+    font-size: 13px;
+    color: var(--mut);
+    box-sizing: border-box;
+    transition: color .15s, border-color .15s;
+  }
+
+  .pre button:hover {
+    color: var(--lime);
+    border-color: var(--lime);
+  }
+
+  .q {
+    font-family: var(--m);
+    font-size: 13.5px;
+    line-height: 1.7;
+    background: #070806;
+    color: #cfd5c4;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    min-height: 190px;
+  }
+
+  :global(.inj) {
+    color: var(--bad);
+    background: color-mix(in srgb, var(--bad) 16%, transparent);
+    border-radius: 4px;
+    padding: 0 3px;
+  }
+
+  :global(.ok) {
+    color: #34d399;
+  }
+
+  .road {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 72px;
+  }
+
+  .road::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 17px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--lime), color-mix(in srgb, var(--lime) 20%, transparent));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.6s .3s;
+  }
+
+  .road.in::before {
+    transform: scaleX(1);
+  }
+
+  .st .dot {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--lime);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--m);
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--lime) 40%, transparent);
+  }
+
+  .st h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    letter-spacing: -.02em;
+    font-family: var(--f);
+    font-weight: 700;
+  }
+
+  .st p {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: var(--mut);
+  }
+
+  .road-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .rc {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    font-family: var(--m);
+    font-size: 12.5px;
+    color: var(--fg);
+    background: var(--card);
+    transition: border-color .2s, color .2s, transform .2s;
+    text-decoration: none;
+  }
+
+  .rc:hover {
+    border-color: var(--lime);
+    color: var(--lime);
+    transform: translateY(-2px);
+  }
+
+  .cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    background: var(--lime);
+    color: var(--ink);
+    border-radius: 24px;
+    padding: clamp(24px, 4vw, 44px);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .cta::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 35%, #fff6 50%, transparent 65%);
+    transform: translateX(-100%);
+    animation: shimmer 4s 1s infinite;
+  }
+
+  @keyframes shimmer {
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  .cta h2 {
+    margin: 0;
+    font-size: clamp(26px, 4vw, 44px);
+    letter-spacing: -.03em;
+    max-width: 18ch;
+    line-height: 1;
+    font-family: var(--f);
+    font-weight: 700;
+  }
+
+  .cta .btn {
+    background: var(--ink);
+    color: var(--lime);
+    border-color: var(--ink);
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta .btn:hover {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+  }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--mut);
+    font-size: 13px;
+  }
+
+  @media (max-width: 960px) {
+    .hero,
+    .try {
+      grid-template-columns: 1fr;
+    }
+    .steps {
+      grid-template-columns: 1fr;
+    }
+    .road {
+      grid-template-columns: 1fr 1fr;
+    }
+    .road::before {
+      display: none;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .stats {
+      grid-template-columns: 1fr;
+    }
+    .stats div {
+      border-right: 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .road {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import sounds from '../lib/sounds.js';
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 1. Palabra rotativa en hero */
+  const words = ['viéndolo', 'rompiéndolo', 'hackeándolo', 'probándolo'];
+  let wordIndex = 0;
+  if (!reducedMotion) {
+    setInterval(() => {
+      const el = $('rw');
+      if (!el) return;
+      el.classList.add('out');
+      setTimeout(() => {
+        el.textContent = words[++wordIndex % words.length];
+        el.classList.remove('out');
+      }, 260);
+    }, 2600);
+  }
+
+  /* 2. Simulación de peticiones HTTP en vivo */
+  const scenarios = [
+    [
+      'petición normal',
+      '#c6f432',
+      [
+        [0, '<span class="k">→</span> POST /api/people'],
+        [1, '  validando JWT… ok'],
+        [2, '  INSERT INTO people… 4 ms'],
+        [1, '  <span class="k">201 Created</span> {"id":7}'],
+        [0, '<span class="k">←</span> respuesta en 38 ms']
+      ]
+    ],
+    [
+      'token vencido',
+      '#fb7185',
+      [
+        [0, '→ GET /api/people'],
+        [1, '  validando JWT…'],
+        [1, '  <span class="bad">token expirado</span>'],
+        [0, '<span class="bad">← 401 Unauthorized</span>']
+      ]
+    ],
+    [
+      'bot haciendo spam',
+      '#fbbf24',
+      [
+        [0, '→ GET /login  ×500'],
+        [1, '  rate limit: 100/min'],
+        [1, '  <span class="bad">bloqueando IP 203.0.113.9</span>'],
+        [0, '<span class="bad">← 429 Too Many Requests</span>']
+      ]
+    ]
+  ];
+
+  let currentScenario = 0;
+  let currentStep = 0;
+  let lastNode = 0;
+  const logEl = $('log');
+  const packetEl = $('pkt');
+
+  function positionPacket(nodeIndex) {
+    if (!packetEl || !packetEl.parentElement) return;
+    lastNode = nodeIndex;
+    const width = packetEl.parentElement.clientWidth - 64;
+    packetEl.style.left = (26 + width * nodeIndex / 2) + 'px';
+    ['n0', 'n1', 'n2'].forEach((id, idx) => {
+      const el = $(id);
+      if (el) el.classList.toggle('hot', idx === nodeIndex);
+    });
+  }
+
+  function tickSimulation() {
+    if (!logEl || !packetEl) return;
+    const [name, color, stepList] = scenarios[currentScenario];
+    if (currentStep === 0) {
+      logEl.innerHTML = '';
+      const sl = $('sl');
+      if (sl) {
+        sl.textContent = name;
+        sl.style.color = color;
+      }
+      packetEl.style.background = color;
+      packetEl.style.boxShadow = '0 0 14px ' + color;
+    }
+
+    const [nodeIdx, htmlText] = stepList[currentStep];
+    positionPacket(nodeIdx);
+
+    const line = document.createElement('div');
+    line.innerHTML = htmlText;
+    logEl.append(line);
+
+    currentStep++;
+    if (currentStep >= stepList.length) {
+      currentStep = 0;
+      currentScenario = (currentScenario + 1) % scenarios.length;
+    }
+  }
+
+  if (reducedMotion) {
+    tickSimulation();
+  } else {
+    tickSimulation();
+    setInterval(tickSimulation, 1300);
+    window.addEventListener('resize', () => positionPacket(lastNode));
+  }
+
+  /* 3. Reveal con IntersectionObserver y Contadores */
+  function countUp(el) {
+    const target = +el.dataset.to;
+    if (reducedMotion || !target) {
+      el.textContent = target;
+      return;
+    }
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      startTimestamp = startTimestamp || timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / 1100, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - progress, 3)));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        entry.target.querySelectorAll('.cnt').forEach(countUp);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.rv:not(.in)').forEach((el) => observer.observe(el));
+
+  /* 4. SQL Injection Sandbox interactivo */
+  let mode = 'vuln';
+  const sampleUsers = [
+    ['Ana', 'ana@runlearn.dev'],
+    ['Bruno', 'bruno@runlearn.dev'],
+    ['Carla', 'carla@runlearn.dev'],
+    ['Diego', 'diego@runlearn.dev'],
+    ['Elena', 'elena@runlearn.dev']
+  ];
+
+  function evaluateQuery() {
+    const input = $('ti');
+    const output = $('tq');
+    if (!input || !output) return;
+
+    const val = input.value;
+    const isInjection = /'\s*or\s+['"]?(\w+)['"]?\s*=\s*['"]?\1/i.test(val);
+    const matched = sampleUsers.filter((u) => u[0].toLowerCase() === val.toLowerCase().trim());
+    const singleMatch = matched.length
+      ? `<span class="ok">✓ 1 fila devuelta</span>\n${matched[0][1]}`
+      : '<span class="mut">0 filas devueltas</span>';
+
+    let queryText = '';
+    let resultText = '';
+
+    if (mode === 'vuln') {
+      queryText = `SELECT * FROM people\nWHERE nombre = '<span class="inj">${esc(val)}</span>';`;
+      if (isInjection) {
+        resultText = `<span class="bad">⚠ 5 filas: el atacante leyó toda la tabla de usuarios</span>\n` + sampleUsers.map((u) => u[1]).join('\n');
+      } else if (val.includes("'")) {
+        resultText = `<span class="bad">ERROR: syntax error near "'"</span>`;
+      } else {
+        resultText = singleMatch;
+      }
+    } else {
+      queryText = `SELECT * FROM people\nWHERE nombre = $1;\n<span class="mut">-- $1 = '${esc(val)}'  (se trata como dato literal, jamás como código SQL)</span>`;
+      if (matched.length) {
+        resultText = singleMatch;
+      } else if (val.includes("'") || isInjection) {
+        resultText = '<span class="ok">✓ 0 filas · la entrada se trató estrictamente como texto seguro</span>';
+      } else {
+        resultText = singleMatch;
+      }
+    }
+
+    output.innerHTML = queryText + '\n\n' + resultText;
+  }
+
+  document.querySelector('.seg')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-m]');
+    if (!btn) return;
+    mode = btn.dataset.m;
+    document.querySelectorAll('.seg [data-m]').forEach((x) => x.setAttribute('aria-pressed', x === btn));
+    try {
+      if (mode === 'safe') sounds.playSuccess();
+      else sounds.playBlocked();
+    } catch {}
+    evaluateQuery();
+  });
+
+  document.querySelector('.pre')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-p]');
+    if (btn) {
+      const input = $('ti');
+      if (input) {
+        input.value = btn.dataset.p;
+        evaluateQuery();
+        try { sounds.playStep(); } catch {}
+      }
+    }
+  });
+
+  $('ti')?.addEventListener('input', () => {
+    evaluateQuery();
+  });
+
+  evaluateQuery();
+</script>
