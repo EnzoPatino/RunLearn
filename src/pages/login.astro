@@ -194,6 +194,14 @@ import Layout from '../layouts/Layout.astro';
       const email = emailInput?.value.trim() || '';
       const password = passwordInput?.value || '';
 
+      if (!email || !password) {
+        if (errorMsg) {
+          errorMsg.textContent = 'Ingresá tu correo electrónico y contraseña.';
+          errorMsg.hidden = false;
+        }
+        return;
+      }
+
       const btn = form.querySelector('.btn-login') as HTMLButtonElement | null;
       if (btn) {
         btn.disabled = true;

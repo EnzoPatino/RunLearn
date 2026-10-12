@@ -23,6 +23,9 @@ export function getSupabaseAuthError(error, fallback) {
   if (message.includes('password should be at least')) return 'La contraseña debe tener al menos 8 caracteres.';
   if (message.includes('rate limit')) return 'Hubo demasiados intentos. Esperá un momento y volvé a probar.';
   if (message.includes('fetch') || message.includes('network')) return 'No se pudo conectar con Supabase. Revisá la conexión e intentá de nuevo.';
+  if (message.includes('falta configurar public_supabase_url')) {
+    return 'El acceso todavía no está configurado en este despliegue. Avisale al administrador.';
+  }
 
   return error?.message || fallback;
 }

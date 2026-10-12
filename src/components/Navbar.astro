@@ -423,14 +423,15 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    place-items: center;
     align-items: center;
     justify-content: center;
-    gap: 4.5px;
     cursor: pointer;
     padding: 0;
     transition: all var(--ease-fast);
+    appearance: none;
+    -webkit-appearance: none;
   }
 
   .navbar__menu-btn:hover {
@@ -440,9 +441,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   .navbar__menu-icon {
     display: block;
-    width: 20px;
-    height: 20px;
-    overflow: visible;
+    width: 21px;
+    height: 21px;
+    flex: none;
+    overflow: hidden;
     fill: none;
     stroke: var(--text-secondary);
     stroke-width: 2;
