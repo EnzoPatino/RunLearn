@@ -204,6 +204,7 @@ import Layout from '../layouts/Layout.astro';
     const successMsg = document.getElementById('successMsg');
     if (!form || form.dataset.initialized === 'true') return;
     form.dataset.initialized = 'true';
+    let isSubmitting = false;
 
     function showError(message: string) {
       if (!errorMsg) return;
@@ -219,6 +220,7 @@ import Layout from '../layouts/Layout.astro';
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (isSubmitting) return;
       if (errorMsg) {
         errorMsg.hidden = true;
         errorMsg.textContent = '';
@@ -248,8 +250,10 @@ import Layout from '../layouts/Layout.astro';
       const btn = form.querySelector('.btn-login') as HTMLButtonElement | null;
       if (btn) {
         btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
         btn.textContent = 'Creando cuenta...';
       }
+      isSubmitting = true;
 
       try {
         if (!isSupabaseConfigured || !supabase) {
@@ -275,8 +279,10 @@ import Layout from '../layouts/Layout.astro';
       } finally {
         if (btn) {
           btn.disabled = false;
+          btn.removeAttribute('aria-busy');
           btn.textContent = 'Crear cuenta';
         }
+        isSubmitting = false;
       }
     });
   }

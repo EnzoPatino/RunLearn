@@ -62,7 +62,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
         <circle cx="8.5" cy="8.5" r="5.5" />
         <line x1="12.5" y1="12.5" x2="17" y2="17" stroke-linecap="round" />
       </svg>
-      <kbd class="kbd-shortcut">⌘K</kbd>
+      <kbd class="kbd-shortcut"><span class="shortcut-mac">⌘</span><span class="shortcut-other">Ctrl</span>K</kbd>
     </button>
 
     <button class="navbar__menu-btn" id="navbar-menu-btn" type="button" aria-label="Abrir panel de opciones" aria-expanded="false" aria-controls="navbar-menu">
@@ -73,7 +73,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   </div>
 
   <!-- Menú lateral / dropdown del botón hamburguesa -->
-  <div class="navbar__menu" id="navbar-menu" role="menu" hidden>
+  <div class="navbar__menu" id="navbar-menu" role="menu" aria-label="Opciones de navegación" hidden>
     <a class="navbar__menu-link" role="menuitem" href="/">
       <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
@@ -418,6 +418,17 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   .navbar__menu-btn:hover .navbar__menu-icon {
     stroke: var(--text-white);
+  }
+
+  .shortcut-other { display: none; }
+
+  @media (hover: none) and (pointer: coarse) {
+    .navbar__search-hint .kbd-shortcut { display: none; }
+  }
+
+  @media (max-width: 960px) {
+    .shortcut-mac { display: none; }
+    .shortcut-other { display: inline; }
   }
 
   .navbar :focus-visible,
@@ -1105,6 +1116,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   document.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
     if ((event.metaKey || event.ctrlKey) && key === 'k') {
+      if (event.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) return;
       event.preventDefault();
       toggleSearch();
       return;
@@ -1112,6 +1124,22 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (event.key === 'Escape') {
       closeSearch();
       closeMenu();
+    }
+  });
+
+  menu?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const items = [...menu.querySelectorAll('a:not([hidden]), button:not([hidden])')]
+      .filter((item) => !item.hasAttribute('disabled'));
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
     }
   });
 </script>

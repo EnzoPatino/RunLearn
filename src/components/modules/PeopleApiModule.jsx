@@ -78,7 +78,12 @@ export default function PeopleApiModule() {
   // Initial load: get token from localStorage if exists
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('token');
+      let stored = null;
+      try {
+        stored = localStorage.getItem('token');
+      } catch {
+        setAuthNotice('El navegador bloqueó el almacenamiento local; el token no persistirá al recargar.');
+      }
       if (stored) {
         setToken(stored);
       }
@@ -127,10 +132,18 @@ export default function PeopleApiModule() {
       const data = await res.json();
       if (data.token) {
         setToken(data.token);
+        let tokenStored = false;
         if (typeof window !== 'undefined') {
-          localStorage.setItem('token', data.token);
+          try {
+            localStorage.setItem('token', data.token);
+            tokenStored = true;
+          } catch {
+            tokenStored = false;
+          }
         }
-        setAuthNotice(`Token generado exitosamente para ${testEmail}`);
+        setAuthNotice(tokenStored
+          ? `Token generado exitosamente para ${testEmail}`
+          : 'Token activo en esta sesión, pero el navegador impidió guardarlo localmente.');
         setBackendError(null);
         setIsBackendHealthy(true);
       } else {
@@ -181,6 +194,7 @@ export default function PeopleApiModule() {
 
   // Execute the CRUD operation
   const handleExecute = async () => {
+    if (loading) return;
     setLoading(true);
     setReceivedResponse(null);
 

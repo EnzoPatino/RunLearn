@@ -12,7 +12,16 @@ function isValidEmail(email) {
 }
 
 function isValidId(id) {
-  return /^\d+$/.test(String(id).trim());
+  return /^[1-9]\d*$/.test(String(id).trim()) && Number.isSafeInteger(Number(id));
+}
+
+function cleanTextField(value, field, maxLength) {
+  if (typeof value !== 'string') return { error: `El campo "${field}" debe ser texto.` };
+  const cleanValue = value.trim();
+  if (!cleanValue || cleanValue.length > maxLength) {
+    return { error: `El campo "${field}" debe tener entre 1 y ${maxLength} caracteres.` };
+  }
+  return { value: cleanValue };
 }
 
 /**
@@ -65,13 +74,14 @@ router.post('/', async (req, res, next) => {
   try {
     const { nombre, email, rol = 'estudiante' } = req.body || {};
 
-    const cleanNombre = typeof nombre === 'string' ? nombre.trim() : '';
-    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-    const cleanRol = typeof rol === 'string' && rol.trim().length > 0 ? rol.trim() : 'estudiante';
-
-    if (!cleanNombre) {
-      return res.status(400).json({ error: 'El campo "nombre" es obligatorio' });
-    }
+    const nombreResult = cleanTextField(nombre, 'nombre', 255);
+    const emailResult = cleanTextField(email, 'email', 255);
+    const rolResult = cleanTextField(rol, 'rol', 50);
+    const invalidField = [nombreResult, emailResult, rolResult].find((result) => result.error);
+    if (invalidField) return res.status(400).json({ error: invalidField.error });
+    const cleanNombre = nombreResult.value;
+    const cleanEmail = emailResult.value.toLowerCase();
+    const cleanRol = rolResult.value;
 
     if (!isValidEmail(cleanEmail)) {
       return res.status(400).json({ error: 'El campo "email" debe tener un formato válido' });
@@ -117,20 +127,17 @@ router.put('/:id', async (req, res, next) => {
       return res.status(400).json({ error: 'Debe proveer al menos un campo para actualizar (nombre, email o rol)' });
     }
 
-    const cleanNombre = nombre !== undefined ? String(nombre).trim() : null;
-    const cleanEmail = email !== undefined ? String(email).trim().toLowerCase() : null;
-    const cleanRol = rol !== undefined ? String(rol).trim() : null;
-
-    if (cleanNombre !== null && cleanNombre.length === 0) {
-      return res.status(400).json({ error: 'El campo "nombre" no puede estar vacío' });
-    }
+    const nombreResult = nombre !== undefined ? cleanTextField(nombre, 'nombre', 255) : null;
+    const emailResult = email !== undefined ? cleanTextField(email, 'email', 255) : null;
+    const rolResult = rol !== undefined ? cleanTextField(rol, 'rol', 50) : null;
+    const invalidField = [nombreResult, emailResult, rolResult].find((result) => result?.error);
+    if (invalidField) return res.status(400).json({ error: invalidField.error });
+    const cleanNombre = nombreResult?.value ?? null;
+    const cleanEmail = emailResult ? emailResult.value.toLowerCase() : null;
+    const cleanRol = rolResult?.value ?? null;
 
     if (cleanEmail !== null && !isValidEmail(cleanEmail)) {
       return res.status(400).json({ error: 'El campo "email" debe tener un formato válido' });
-    }
-
-    if (cleanRol !== null && cleanRol.length === 0) {
-      return res.status(400).json({ error: 'El campo "rol" no puede estar vacío' });
     }
 
     const result = await query(
