@@ -1,30 +1,111 @@
 # RunLearn
 
-Aula virtual interactiva para aprender programación web dinámica. Incluye un catálogo bento de 19 módulos técnicos, páginas explicativas interactivas con simulaciones paso a paso y una API REST Express independiente para las demostraciones que requieren backend y persistencia.
+**RunLearn es un aula virtual interactiva para aprender cómo funciona la web por dentro.** En lugar de limitarse a presentar definiciones, permite recorrer simulaciones paso a paso y observar qué ocurre en el navegador, el servidor y la base de datos.
 
-## Stack
+El proyecto está pensado para estudiantes que comienzan a explorar desarrollo web, backend, seguridad y DevOps. Las demostraciones muestran conceptos como peticiones HTTP, consultas SQL, transacciones, autenticación, caché y contenedores.
 
-- **Frontend:** Astro 5 con salida estática desplegado en Vercel.
-- **Interactividad UI:** React islands (`client:load`) en módulos con estado complejo (`PeopleApiModule`, `GithubModule`, `BackendErrorNotice`).
-- **Autenticación:** Supabase Auth (`@supabase/supabase-js`) para registro, inicio y cierre de sesión.
-- **Backend API:** Node.js 22 + Express en `backend/` con soporte para Render o Docker Compose.
-- **Persistencia & Caché:** PostgreSQL (local con Docker o producción con Supabase) y Redis (local con Docker o producción con Upstash).
-- **Node.js:** Versión 22 fijada en `.nvmrc` y en `engines` de `package.json`.
+## Qué se puede aprender
 
-## Ejecutar localmente
+- Seguir una petición desde la interfaz hasta una API y su respuesta.
+- Comparar una consulta SQL vulnerable con una consulta parametrizada.
+- Observar `BEGIN`, `COMMIT` y `ROLLBACK` en una transacción.
+- Distinguir un acierto y un fallo de caché (`HIT` y `MISS`) con Redis.
+- Explorar conceptos de JWT, CSRF, CORS, XSS, hashing y recorrido de rutas.
+- Practicar lógica y algoritmos con simulaciones controladas.
 
-### 1. Frontend
+Las vistas explicativas combinan diagramas, código o consola, controles paso a paso y explicaciones. Las funciones que necesitan servicios externos muestran un aviso si el backend no está disponible; las simulaciones locales continúan funcionando.
+
+### Flujo de una demostración conectada
+
+```mermaid
+sequenceDiagram
+    actor Alumno
+    participant Web as Astro en el navegador
+    participant API as API Express
+    participant DB as PostgreSQL
+    participant Cache as Redis
+    Alumno->>Web: Ejecuta una simulación
+    Web->>API: Envía una petición HTTP
+    API->>DB: Consulta o actualiza datos
+    API->>Cache: Lee o guarda caché (si corresponde)
+    API-->>Web: Devuelve estado y resultado
+    Web-->>Alumno: Muestra pasos, datos y explicación
+```
+
+## Tecnologías
+
+| Área | Tecnología | Uso |
+| --- | --- | --- |
+| Sitio web | Astro 5, salida estática | Páginas, navegación y catálogo de clases |
+| Interfaz reactiva | React 19 | Islas para el explorador CRUD y el módulo de GitHub |
+| Estilos | CSS propio y Bootstrap CSS | Diseño adaptable y componentes visuales |
+| API | Node.js 22 y Express 4 | Endpoints educativos y operaciones de demostración |
+| Base de datos | PostgreSQL | Usuarios del backend, personas y datos de simulación |
+| Caché | Redis | Demostración de caché y estado de servicios |
+| Autenticación del sitio | Supabase Auth | Registro e inicio de sesión en la interfaz |
+
+Node.js **22.x** es la versión requerida. Está indicada en `.nvmrc` y en los `engines` de los manifiestos de paquetes.
+
+## Módulos educativos
+
+El catálogo se mantiene en [`src/data/clases.js`](src/data/clases.js). Actualmente contiene 19 módulos:
+
+| Tema | Módulos |
+| --- | --- |
+| Backend | API, SSR vs CSR, Colas de mensajes, Transacciones SQL |
+| DevOps | Docker |
+| Lógica | Algoritmo de número, Recursividad |
+| Sistema | Servidor |
+| Control de versiones | GitHub |
+| Automatización | Bots |
+| Redes | HTTP / HTTPS |
+| Almacén | Base de datos, Caché con Redis |
+| Seguridad | SQL Injection, XSS, Hashing de Contraseñas, JWT Inseguro, CSRF, CORS, Path Traversal |
+
+Algunas vistas son simulaciones locales; otras consultan los endpoints del backend. Las rutas y el nivel de integración están definidos junto a los metadatos de cada clase.
+
+## Estructura del proyecto
+
+```text
+RunLearn/
+├── src/
+│   ├── components/        # Navbar, tarjetas, banners e islas React
+│   ├── data/clases.js     # Catálogo de módulos
+│   ├── layouts/           # Layout base de Astro
+│   ├── lib/               # Cliente API, Supabase y audio
+│   ├── pages/              # Inicio, catálogo, autenticación y clases
+│   └── styles/             # Tokens y estilos globales
+├── backend/
+│   ├── src/routes/        # Endpoints Express
+│   ├── src/db/            # Pool PostgreSQL y runner de migraciones
+│   ├── src/cache/         # Cliente Redis
+│   └── db/migrations/     # Esquema y datos de demostración
+├── astro.config.mjs
+└── README.md
+```
+
+## Ejecutar el sitio localmente
+
+### Requisitos
+
+- Node.js 22.x y npm.
+- Git para clonar el repositorio.
+- Docker Compose solo si también se quiere intentar levantar los servicios locales.
+
+### Frontend
 
 ```bash
+git clone <URL_DEL_REPOSITORIO>
+cd RunLearn
 nvm use
 npm install
 cp .env.example .env
 npm run dev
 ```
 
-El sitio estará disponible en `http://localhost:4321`. Sin las variables de Supabase, las páginas educativas siguen totalmente operativas, pero el registro e inicio de sesión mostrarán un aviso de configuración pendiente.
+Astro muestra la URL local en la terminal; normalmente es `http://localhost:4321`.
 
-Para habilitar la autenticación localmente, configurar en `.env`:
+El catálogo y las simulaciones locales pueden recorrerse sin configurar Supabase. Para habilitar registro e inicio de sesión, completa `.env`:
 
 ```env
 PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
@@ -32,86 +113,117 @@ PUBLIC_SUPABASE_ANON_KEY=<anon-o-publishable-key>
 PUBLIC_API_URL=http://localhost:5000
 ```
 
-> **Nota de seguridad:** Ambos valores de Supabase son públicos para el navegador. No colocar aquí `service_role`, claves secretas ni contraseñas. En Supabase, habilitar Email/Password en **Authentication → Providers → Email** y agregar `http://localhost:4321` a las URLs permitidas en **Authentication → URL Configuration**.
+En Supabase, habilita el proveedor Email y agrega la URL local a las URL permitidas de autenticación. La clave `PUBLIC_SUPABASE_ANON_KEY` se expone al navegador; **nunca pongas una clave `service_role` en variables `PUBLIC_` ni en el frontend**.
 
-### 2. Backend (opcional para demos en vivo)
+### Backend y servicios
 
-El frontend detecta si el backend está desconectado y muestra un banner amigable. Para levantar la API y las bases de datos en local:
-
-**Opción A — Docker Compose (Recomendada):**
-
-```bash
-cd backend
-cp .env.example .env
-docker compose up -d --build
-```
-
-Esto inicia Express en `http://localhost:5000`, PostgreSQL en el puerto 5432 y Redis en el 6379, corriendo las migraciones automáticamente.
-
-**Opción B — Node directo:**
+La API puede configurarse con PostgreSQL y Redis locales o con servicios administrados. Copia `backend/.env.example` a `backend/.env` y define, como mínimo, `JWT_SECRET` para firmar tokens del login interno.
 
 ```bash
 cd backend
 cp .env.example .env
 npm install
-npm run migrate
 npm run dev
 ```
 
-## Despliegue en producción
+El servidor escucha normalmente en `http://localhost:5000`. Al arrancar, ejecuta las migraciones antes de empezar a aceptar solicitudes.
 
-### Frontend en Vercel
+#### Nota sobre PostgreSQL local y progreso
 
-1. Importar el repositorio en [Vercel](https://vercel.com).
-2. Configuración del proyecto:
-   - **Framework preset:** Astro
-   - **Install command:** `npm install`
-   - **Build command:** `npm run build`
-   - **Output directory:** `dist`
-   - **Node.js version:** `22.x`
-3. Variables de entorno en Vercel:
-   - `PUBLIC_SUPABASE_URL`: URL del proyecto de Supabase.
-   - `PUBLIC_SUPABASE_ANON_KEY`: Anon / public API key de Supabase.
-   - `PUBLIC_API_URL`: URL pública HTTPS del backend desplegado (ej. `https://runlearn-api.onrender.com`).
-4. Agregar el dominio final de Vercel en la lista de Redirect URLs de Supabase (**Authentication → URL Configuration**).
+La migración `004_progreso.sql` relaciona el progreso con `auth.users`, una tabla que crea Supabase Auth. El PostgreSQL incluido en `docker-compose.yml` no crea ese esquema por sí solo. Por eso, el Compose actual no es una instalación local completa del backend tal como está: para probar todas las migraciones, configura `DATABASE_URL` con la base PostgreSQL del proyecto Supabase. Si solo necesitas las páginas y simulaciones locales, no hace falta iniciar el backend.
 
-### Backend en Render
+Si necesitas Redis local, puedes iniciar únicamente ese servicio con `docker compose up -d redis` desde `backend/`, o configurar una instancia administrada. La API también puede responder cuando Redis está desconectado, aunque las funciones que dependen de caché no estarán disponibles.
 
-El backend está preparado para desplegarse como un **Web Service** en [Render](https://render.com):
+## API del backend
 
-1. Crear un Web Service apuntando a la subcarpeta `backend/` (Root Directory: `backend`).
-2. Configuración del servicio:
-   - **Environment:** Node
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm run migrate && npm start`
-3. Variables de entorno en Render:
-   - `NODE_ENV`: `production`
-   - `JWT_SECRET`: Secreto aleatorio seguro (`openssl rand -hex 32`).
-   - `CORS_ORIGINS`: Dominio de tu frontend en Vercel (ej. `https://runlearn.vercel.app`).
-   - `DATABASE_URL`: Connection string URI de PostgreSQL con SSL (ej. desde Supabase: *Project Settings → Database → Connection string URI*).
-   - `REDIS_URL`: URL de conexión de Redis con TLS (ej. desde Upstash: *rediss://default:password@host.upstash.io:6379*).
+La API está separada del sitio estático. Entre sus rutas principales se encuentran:
 
-## Contenido y módulos educativos
+| Grupo | Rutas destacadas | Propósito |
+| --- | --- | --- |
+| Estado y métricas | `GET /api/health`, `GET /api/metrics` | Estado de servicios, tiempo de actividad y solicitudes |
+| Autenticación interna | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` | Demo de registro, login y JWT local |
+| Personas | `GET/POST /api/people`, `GET/PUT/DELETE /api/people/:id` | Simulador CRUD protegido con Bearer token |
+| Progreso | `GET/PUT /api/progreso` | Progreso asociado a la identidad de Supabase Auth |
+| Caché | `GET /api/cache-demo/:key` | Recorrido de caché HIT/MISS |
+| Transacciones | `POST /api/transaccion-demo` | Transferencia de demostración y rollback |
+| Seguridad | `/api/sqli-demo`, `/api/hash-demo`, `/api/jwt-demo`, `/api/csrf-demo`, `/api/cors-demo`, `/api/path-traversal-demo` | Demos controladas de vulnerabilidades y mitigaciones |
 
-RunLearn incluye 19 módulos temáticos en `src/data/clases.js`:
+Las rutas vulnerables son **demostraciones educativas intencionales**. No deben reutilizarse como patrones de producción ni exponerse en un despliegue público sin evaluar y limitar el acceso.
 
-- **Arquitectura y APIs:** REST vs GraphQL (`/api-explicacion`), Servidor Linux & Cloud (`/servidor-explicacion`), HTTP/HTTPS (`/http-explicacion`), SSR vs CSR (`/ssr-vs-csr-explicacion`).
-- **DevOps y Control:** Docker & Contenedores (`/docker-explicacion`), GitHub y Git (`/github-explicacion`).
-- **Seguridad Web & OWASP:** SQL Injection (`/sql-injection-explicacion`), XSS (`/xss-explicacion`), CSRF (`/csrf-explicacion`), CORS (`/cors-explicacion`), Path Traversal (`/path-traversal-explicacion`), JWT Inseguro (`/jwt-inseguro-explicacion`), Password Hashing (`/password-hashing-explicacion`), Botnets & Rate Limiting (`/bots-explicacion`).
-- **Persistencia y Rendimiento:** Transacciones ACID (`/transacciones-explicacion`), Caché con Redis (`/cache-redis-explicacion`), Colas de Mensajería (`/colas-explicacion`), Bases de Datos relacionales (`/database-explicacion`).
-- **Lógica:** Recursividad (`/recursividad-explicacion`), Algoritmos numéricos (`/algoritmo-numero`).
+El frontend centraliza las llamadas al backend en `src/lib/apiClient.js`; `PUBLIC_API_URL` debe apuntar al servicio backend, no al dominio del frontend.
 
-## Comandos útiles
+## Variables de entorno
+
+### Frontend (`.env` en la raíz)
+
+| Variable | Requerida para | Descripción |
+| --- | --- | --- |
+| `PUBLIC_SUPABASE_URL` | Autenticación | URL del proyecto Supabase |
+| `PUBLIC_SUPABASE_ANON_KEY` | Autenticación | Clave pública para el cliente del navegador |
+| `PUBLIC_API_URL` | Demos conectadas | URL base del backend Express |
+
+En desarrollo, el cliente puede usar `http://localhost:5000` como fallback. En producción configura la URL HTTPS real del backend.
+
+### Backend (`backend/.env`)
+
+| Variable | Uso |
+| --- | --- |
+| `PORT`, `NODE_ENV` | Puerto y entorno del servidor |
+| `JWT_SECRET` | Firma de tokens de la autenticación interna |
+| `SUPABASE_URL` | Validación de tokens de Supabase y configuración de progreso |
+| `SUPABASE_JWT_SECRET` | Opcional; validación de tokens Supabase legacy HS256 |
+| `CORS_ORIGINS` | Orígenes permitidos, separados por coma |
+| `DATABASE_URL` | Connection string PostgreSQL; tiene prioridad sobre `PG_*` |
+| `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, `PG_DATABASE` | Conexión PostgreSQL local alternativa |
+| `REDIS_URL` | Connection string Redis; admite `rediss://` |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Conexión Redis local alternativa |
+
+No subas archivos `.env`, contraseñas ni secretos al repositorio. En producción, genera un `JWT_SECRET` aleatorio de al menos 32 bytes y configura `CORS_ORIGINS` con el dominio exacto del frontend.
+
+## Despliegue
+
+### Frontend estático
+
+El proyecto genera el sitio en `dist/` mediante `npm run build`. Puede desplegarse en Vercel como proyecto Astro:
+
+- Comando de instalación: `npm install`
+- Comando de build: `npm run build`
+- Directorio de salida: `dist`
+- Versión de Node.js: `22.x`
+- Variables: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` y `PUBLIC_API_URL`
+
+### Backend
+
+El backend puede desplegarse como servicio Node.js en Render u otro proveedor compatible:
+
+- Directorio raíz: `backend`
+- Instalación: `npm install`
+- Inicio: `npm start`
+- Entorno: `NODE_ENV=production`, `JWT_SECRET`, `CORS_ORIGINS`, `DATABASE_URL` y `REDIS_URL`
+
+El proceso ejecuta las migraciones al iniciar. Configura `CORS_ORIGINS` con el dominio público del frontend y usa conexiones PostgreSQL/Redis seguras para producción.
+
+## Comandos
 
 ```bash
-# Frontend (raíz)
-npm run dev       # Servidor de desarrollo en localhost:4321
-npm run build     # Compilación de producción estática a dist/
-npm run preview   # Previsualización local del build en dist/
+# Frontend, desde la raíz
+npm run dev       # Desarrollo con Astro
+npm run build     # Generar el sitio estático en dist/
+npm run preview   # Previsualizar el build localmente
 
-# Backend (carpeta backend/)
-npm run dev       # Servidor Express con watch mode en localhost:5000
-npm run start     # Iniciar servidor Express en producción
-npm run migrate   # Ejecutar migraciones SQL pendientes
+# Backend, desde backend/
+npm run dev       # Express con reinicio al cambiar archivos
+npm start         # Servidor backend
+npm run migrate   # Ejecutar migraciones manualmente
 ```
 
+## Añadir una clase
+
+1. Agrega sus metadatos en `src/data/clases.js`.
+2. Crea la página Astro dentro de `src/pages/`.
+3. Si necesita backend, implementa su endpoint en `backend/src/routes/` y consume la API mediante `src/lib/apiClient.js`.
+4. Ejecuta `npm run build` y comprueba la ruta en el navegador.
+
+## Licencia
+
+Este repositorio no declara una licencia de uso. Consulta al responsable del proyecto antes de reutilizar o distribuir el código.
