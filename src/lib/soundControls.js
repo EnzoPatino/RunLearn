@@ -4,12 +4,20 @@ const SOUND_STORAGE_KEY = 'runlearn:sound-enabled';
 
 function readSoundPreference() {
   if (typeof window === 'undefined') return true;
-  return window.localStorage.getItem(SOUND_STORAGE_KEY) !== 'false';
+  try {
+    return window.localStorage.getItem(SOUND_STORAGE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
 }
 
 function writeSoundPreference(enabled) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(SOUND_STORAGE_KEY, enabled ? 'true' : 'false');
+  try {
+    window.localStorage.setItem(SOUND_STORAGE_KEY, enabled ? 'true' : 'false');
+  } catch {
+    // El control sigue funcionando en esta pestaña aunque el almacenamiento esté bloqueado.
+  }
 }
 
 export function initSoundControls({
@@ -31,7 +39,7 @@ export function initSoundControls({
     if (icon) icon.innerHTML = soundEnabled ? soundOnSvg : soundOffSvg;
     if (text) text.textContent = soundEnabled ? activeText : mutedText;
     button?.classList.toggle('muted', !soundEnabled);
-    button?.setAttribute('aria-pressed', String(!soundEnabled));
+    button?.setAttribute('aria-pressed', String(soundEnabled));
   }
 
   button?.addEventListener('click', () => {

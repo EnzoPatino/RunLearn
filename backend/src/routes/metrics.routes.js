@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { checkDbConnection } from '../db/index.js';
 import { checkRedisConnection } from '../cache/index.js';
-import { getTotalRequests, formatUptime } from '../metrics.js';
+import { getRequestMetrics, formatUptime } from '../metrics.js';
 
 const router = Router();
 
@@ -13,13 +13,15 @@ router.get('/', async (req, res) => {
 
   const uptimeSeconds = Math.floor(process.uptime());
   const mem = process.memoryUsage();
+  const requestMetrics = getRequestMetrics();
 
   const responsePayload = {
-    status: 'ok',
+    status: dbResult.ok && redisResult.ok ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
     uptime: uptimeSeconds,
     uptimeFormatted: formatUptime(uptimeSeconds),
-    requestsCount: getTotalRequests(),
+    requestsCount: requestMetrics.totalRequests,
+    requestMetrics,
     services: {
       postgres: dbResult.ok ? 'connected' : 'disconnected',
       redis: redisResult.ok ? 'connected' : 'disconnected',
@@ -39,7 +41,7 @@ router.get('/', async (req, res) => {
     responsePayload.services.redis_error = redisResult.error;
   }
 
-  return res.status(200).json(responsePayload);
+  return res.status(responsePayload.status === 'ok' ? 200 : 503).json(responsePayload);
 });
 
 export default router;

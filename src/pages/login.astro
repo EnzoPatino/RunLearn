@@ -20,6 +20,8 @@ import Layout from '../layouts/Layout.astro';
 
         <div id="errorMsg" class="error" role="alert" aria-live="polite" hidden></div>
 
+        <div class="auth-note" role="note">Tu contraseña se envía directamente a Supabase por una conexión segura.</div>
+
         <button type="submit" class="btn-login">Entrar</button>
       </form>
 
@@ -97,13 +99,26 @@ import Layout from '../layouts/Layout.astro';
     font-family: var(--font-main);
     font-size: 0.95rem;
     color: var(--text-primary);
-    outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .field input:focus {
     border-color: var(--brand-blue);
     box-shadow: 0 0 0 3px var(--brand-blue-glow);
+  }
+
+  .field input:focus-visible,
+  .btn-login:focus-visible,
+  .login-switch a:focus-visible {
+    outline: 2px solid var(--lime);
+    outline-offset: 3px;
+  }
+
+  .auth-note {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-align: center;
   }
 
   .field input::placeholder {

@@ -240,6 +240,9 @@ import {
 
 (function () {
   function setupPathTraversalDemo() {
+    const pageRoot = document.querySelector('.api-page');
+    if (!pageRoot || pageRoot.dataset.pathTraversalInitialized === 'true') return;
+    pageRoot.dataset.pathTraversalInitialized = 'true';
     const sound = initSoundControls();
 
     const API_BASE = `${getApiBaseUrl()}/api/path-traversal-demo`;
@@ -408,6 +411,14 @@ import {
       }
 
       running = true;
+      let flowCompleted = false;
+      const stopOnNavigation = () => {
+        if (flowCompleted) return;
+        flowCompleted = true;
+        running = false;
+        if (btnRead) btnRead.disabled = false;
+      };
+      document.addEventListener('astro:before-swap', stopOnNavigation, { once: true });
       if (btnRead) btnRead.disabled = true;
       if (resultZone) resultZone.style.display = 'none';
       if (resultWarning) resultWarning.style.display = 'none';
@@ -449,6 +460,7 @@ import {
       showStep(3, buildStep3(nombre, result));
       finish(nombre, result);
 
+      flowCompleted = true;
       running = false;
       if (btnRead) btnRead.disabled = false;
     }

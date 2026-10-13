@@ -376,6 +376,9 @@ import {
 } from '../lib/apiClient.js';
 
 function setupJwtDemo() {
+  const pageRoot = document.querySelector('.api-page');
+  if (!pageRoot || pageRoot.dataset.jwtInitialized === 'true') return;
+  pageRoot.dataset.jwtInitialized = 'true';
   const sound = initSoundControls();
 
   // API Base

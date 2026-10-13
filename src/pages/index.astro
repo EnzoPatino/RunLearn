@@ -823,7 +823,8 @@ const marqueeItems = [...clases, ...clases];
     tickSimulation();
   } else {
     tickSimulation();
-    setInterval(tickSimulation, 1300);
+    const simulationTimer = setInterval(tickSimulation, 1300);
+    document.addEventListener('astro:before-swap', () => clearInterval(simulationTimer), { once: true });
     window.addEventListener('resize', () => positionPacket(lastNode));
   }
 

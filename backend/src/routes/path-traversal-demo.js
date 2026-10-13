@@ -20,8 +20,8 @@ const relPath = (abs) => path.relative(BACKEND_ROOT, abs).split(path.sep).join('
 // (.env, .git, ...). Esto no es la defensa de la lección: es el limite
 // para que la simulacion no lea archivos reales del proyecto ni del sistema.
 function dentroDelSandbox(resolved) {
-  if (!isInside(BACKEND_ROOT, resolved)) return false;
-  return !relPath(resolved).split('/').some((seg) => seg.startsWith('.'));
+    if (!isInside(BACKEND_ROOT, resolved)) return false;
+    return !relPath(resolved).split('/').some((seg) => seg.startsWith('.'));
 }
 
 function entradaInvalida(nombre) {
@@ -56,7 +56,7 @@ router.get('/', async (req, res, next) => {
     if (mode === 'vulnerable') {
       // ⚠️ VULNERABLE — concatenación directa, sin validar el input.
       // "../secreto-simulado.txt" sube un nivel y sale de archivos-demo/.
-      resolved = path.resolve(path.join(BASE_DIR, nombre));
+      resolved = path.resolve(BASE_DIR, nombre);
 
       if (!dentroDelSandbox(resolved)) {
         return res.status(403).json({

@@ -339,7 +339,9 @@ import {
   getErrorMessage,
 } from '../lib/apiClient.js';
 
-(function () {
+const serverPageRoot = document.querySelector('.api-page');
+if (serverPageRoot && serverPageRoot.dataset.metricsInitialized !== 'true') {
+  serverPageRoot.dataset.metricsInitialized = 'true';
   const steps = [
     {
       from: 'cliente', to: 'servidor', dir: 'request',
@@ -552,6 +554,7 @@ import {
   let lastServerFetchTime = Date.now();
   let pollIntervalTimer: any = null;
   let tickTimer: any = null;
+  let pageActive = true;
 
   const statusIndicator = document.getElementById('status-indicator');
   const statusText = document.getElementById('status-text');
@@ -596,6 +599,7 @@ import {
   }
 
   async function fetchServerMetrics(isManual = false) {
+    if (!pageActive || !API_BASE) return;
     try {
       const res = await fetchWithTimeout(`${API_BASE}/api/metrics`, {
         method: 'GET',
@@ -612,11 +616,12 @@ import {
       lastServerFetchTime = Date.now();
 
       // Actualizar estado del indicador
+      const servicesHealthy = data.services?.postgres === 'connected' && data.services?.redis === 'connected';
       if (statusIndicator) {
-        statusIndicator.className = 'status-indicator online';
+        statusIndicator.className = `status-indicator ${servicesHealthy ? 'online' : 'offline'}`;
       }
       if (statusText) {
-        statusText.textContent = 'ONLINE · Backend activo en puerto 5000';
+        statusText.textContent = servicesHealthy ? 'ONLINE · Backend y servicios activos' : 'DEGRADADO · Revisá PostgreSQL y Redis';
       }
 
       // Actualizar requests
@@ -648,10 +653,10 @@ import {
       if (valRuntime && data.system) {
         valRuntime.textContent = `Node ${data.system.nodeVersion || ''} (${data.system.platform || 'linux'})`;
       }
-      if (valMemRss && data.system?.memoryRssMb) {
+      if (valMemRss && typeof data.system?.memoryRssMb === 'number') {
         valMemRss.textContent = `${data.system.memoryRssMb} MB`;
       }
-      if (valMemHeap && data.system?.heapUsedMb) {
+      if (valMemHeap && typeof data.system?.heapUsedMb === 'number') {
         valMemHeap.textContent = `${data.system.heapUsedMb} MB`;
       }
       if (valTimestamp) {
@@ -733,7 +738,12 @@ import {
   });
 
   reset(true);
-})();
+  document.addEventListener('astro:before-swap', () => {
+    pageActive = false;
+    clearInterval(pollIntervalTimer);
+    clearInterval(tickTimer);
+  }, { once: true });
+}
 </script>
 
 <style>

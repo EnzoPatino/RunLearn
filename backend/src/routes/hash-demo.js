@@ -12,6 +12,10 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Se requiere un campo "password" (string).' });
     }
 
+    if (password.length > 128) {
+      return res.status(400).json({ error: 'La contraseña de demostración no puede superar 128 caracteres.' });
+    }
+
     if (!['plain', 'hashed'].includes(mode)) {
       return res.status(400).json({ error: 'El campo "mode" debe ser "plain" o "hashed".' });
     }

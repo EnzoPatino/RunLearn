@@ -510,12 +510,16 @@ export default function GithubModule() {
           flex: 1;
           background: transparent;
           border: none;
-          outline: none;
           color: #ffffff;
           font-family: var(--font-mono, monospace);
           font-size: 13.5px;
           font-weight: 600;
           padding: 10px 6px;
+        }
+
+        .gh-input:focus-visible {
+          outline: 2px solid #c6f432;
+          outline-offset: 2px;
         }
 
         .gh-submit-btn {

@@ -41,6 +41,10 @@ export function getApiBaseUrl() {
  * @returns {Promise<Response>}
  */
 export async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  if (options.signal?.aborted) {
+    throw options.signal.reason || new DOMException('La solicitud fue cancelada.', 'AbortError');
+  }
+
   const controller = new AbortController();
   let didTimeout = false;
 
@@ -71,7 +75,7 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TI
   } catch (err) {
     const error = new Error();
 
-    if (didTimeout || (err && err.name === 'AbortError' && didTimeout)) {
+    if (didTimeout) {
       error.name = 'TimeoutError';
       error.message = BACKEND_TIMEOUT_MESSAGE;
       error.isTimeout = true;

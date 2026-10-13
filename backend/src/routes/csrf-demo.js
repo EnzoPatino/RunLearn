@@ -7,11 +7,25 @@ const router = Router();
 const sessions = new Map();
 
 function createSession() {
+  pruneExpiredSessions();
   const sessionId = crypto.randomBytes(16).toString('hex');
   const csrfToken = crypto.randomBytes(32).toString('hex');
   const balance = 50000;
-  sessions.set(sessionId, { csrfToken, balance });
+  sessions.set(sessionId, { csrfToken, balance, createdAt: Date.now() });
   return { sessionId, csrfToken, balance };
+}
+
+const SESSION_TTL_MS = 30 * 60 * 1000;
+
+function pruneExpiredSessions(removeOldest = false) {
+  const now = Date.now();
+  for (const [id, session] of sessions) {
+    if (now - session.createdAt > SESSION_TTL_MS) sessions.delete(id);
+  }
+  if (removeOldest && sessions.size >= 1000) {
+    const oldestId = sessions.keys().next().value;
+    if (oldestId) sessions.delete(oldestId);
+  }
 }
 
 function getSession(sessionId) {
@@ -20,6 +34,7 @@ function getSession(sessionId) {
 
 // GET /token — issues a new session + CSRF token (simulates "login" and token generation)
 router.get('/token', (req, res) => {
+  if (sessions.size >= 1000) pruneExpiredSessions(true);
   const { sessionId, csrfToken, balance } = createSession();
   res.json({ sessionId, csrfToken, balance });
 });
@@ -27,7 +42,7 @@ router.get('/token', (req, res) => {
 // POST /transferir — simulates a bank transfer
 router.post('/transferir', (req, res, next) => {
   try {
-    const { sessionId, to, amount, csrfToken, mode } = req.body;
+    const { sessionId, to, amount = 5000, csrfToken, mode } = req.body || {};
 
     if (!sessionId || typeof sessionId !== 'string') {
       return res.status(400).json({ error: 'Se requiere sessionId.' });
@@ -53,10 +68,17 @@ router.post('/transferir', (req, res, next) => {
     }
     // Vulnerable: no CSRF check — only session cookie matters
 
-    const transferAmount = Number(amount) || 5000;
+    const transferAmount = Number(amount);
+    if (!Number.isFinite(transferAmount) || transferAmount <= 0 || transferAmount > 50000) {
+      return res.status(400).json({ error: 'El monto debe ser un número mayor que 0 y no superar $50.000.' });
+    }
 
     if (session.balance < transferAmount) {
       return res.status(400).json({ error: 'Saldo insuficiente.' });
+    }
+
+    if (typeof to !== 'string' || !to.trim()) {
+      return res.status(400).json({ error: 'Se requiere una cuenta de destino válida.' });
     }
 
     session.balance -= transferAmount;
@@ -65,7 +87,7 @@ router.post('/transferir', (req, res, next) => {
       ok: true,
       mode,
       from: 'cuenta-12345',
-      to: to || 'cuenta-attacker-99999',
+      to: to.trim().slice(0, 100),
       amount: transferAmount,
       newBalance: session.balance,
       message: mode === 'vulnerable'

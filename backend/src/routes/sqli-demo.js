@@ -22,6 +22,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'El campo "input" debe ser un string' });
     }
 
+    if (input.length > 200) {
+      return res.status(400).json({ error: 'El campo "input" no puede superar 200 caracteres.' });
+    }
+
     if (!['vulnerable', 'seguro'].includes(mode)) {
       return res.status(400).json({ error: 'El campo "mode" debe ser "vulnerable" o "seguro"' });
     }
@@ -54,7 +58,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       error: 'Error al ejecutar la consulta',
-      message: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'La consulta de demostración no pudo ejecutarse.' : error.message,
     });
   }
 });
