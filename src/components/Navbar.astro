@@ -830,8 +830,6 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 </style>
 
 <script>
-  import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
-
   function renderLoggedOut() {
     const avatar = document.getElementById('navbar-avatar');
     const status = document.getElementById('navbar-avatar-status');
@@ -895,29 +893,67 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   if (document.documentElement.dataset.supabaseNavbarInitialized !== 'true') {
     document.documentElement.dataset.supabaseNavbarInitialized = 'true';
 
-    if (!isSupabaseConfigured || !supabase) {
-      renderLoggedOut();
+    // Comprobación ultrarrápida sincrónica: ¿hay tokens de supabase en localStorage?
+    let hasStoredSession = false;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith('sb-') || k.includes('supabase.auth.token'))) {
+          hasStoredSession = true;
+          break;
+        }
+      }
+    } catch {}
+
+    const loadAuth = async () => {
+      try {
+        const { isSupabaseConfigured, supabase } = await import('../lib/supabaseClient.js');
+        if (!isSupabaseConfigured || !supabase) {
+          renderLoggedOut();
+          return;
+        }
+
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data.session?.user) {
+          renderLoggedOut();
+        } else {
+          renderLoggedIn(data.session.user);
+        }
+
+        supabase.auth.onAuthStateChange((_event, session) => {
+          if (session?.user) renderLoggedIn(session.user);
+          else renderLoggedOut();
+        });
+
+        window.addEventListener('auth-change', async () => {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user) renderLoggedIn(data.session.user);
+          else renderLoggedOut();
+        });
+
+        document.getElementById('navbar-logout-btn')?.addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = '/';
+        });
+      } catch (e) {
+        renderLoggedOut();
+      }
+    };
+
+    if (hasStoredSession) {
+      loadAuth();
     } else {
-      supabase.auth.getSession().then(({ data, error }) => {
-        if (error || !data.session?.user) renderLoggedOut();
-        else renderLoggedIn(data.session.user);
-      });
-
-      supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) renderLoggedIn(session.user);
-        else renderLoggedOut();
-      });
-
-      window.addEventListener('auth-change', async () => {
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.user) renderLoggedIn(data.session.user);
-        else renderLoggedOut();
-      });
-
-      document.getElementById('navbar-logout-btn')?.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = '/';
-      });
+      renderLoggedOut();
+      // En dispositivos móviles y conexiones lentas diferimos cualquier carga al tiempo ocioso
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          window.addEventListener('auth-change', loadAuth, { once: true });
+        }, { timeout: 4000 });
+      } else {
+        setTimeout(() => {
+          window.addEventListener('auth-change', loadAuth, { once: true });
+        }, 2000);
+      }
     }
   }
 </script>

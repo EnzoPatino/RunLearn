@@ -449,14 +449,16 @@ const totalClases = clases.length;
     filterCards();
   });
 
-  // Foco dinámico para el resplandor de la tarjeta (spotlight en hover)
-  gridContainer?.addEventListener('pointermove', (e) => {
-    const card = e.target.closest('.card');
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-    card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
-  });
+  // Foco dinámico para el resplandor de la tarjeta (spotlight en hover solo con mouse)
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    gridContainer?.addEventListener('pointermove', (e) => {
+      const card = e.target.closest('.card');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    }, { passive: true });
+  }
 
   // Atajo de teclado: presionar '/' para enfocar el buscador
   document.addEventListener('keydown', (e) => {

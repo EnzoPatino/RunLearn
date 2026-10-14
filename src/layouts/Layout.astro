@@ -15,16 +15,31 @@ import "../styles/global.css";
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
 
-  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans & JetBrains Mono -->
+  <meta name="theme-color" content="#0b0c0a" />
+
+  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans & JetBrains Mono (Non-blocking font loading) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
-    rel="stylesheet"
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap"
   />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap"
+    />
+  </noscript>
 </head>
 <body>
-  <!-- Interactive flashlight cursor grid -->
+  <!-- Interactive flashlight cursor grid (solo en desktop con mouse) -->
   <div class="spot" id="spot" aria-hidden="true"></div>
 
   <!-- Ambient Lighting Effects -->
@@ -39,14 +54,18 @@ import "../styles/global.css";
   </div>
 
   <script>
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      window.addEventListener('pointermove', (e) => {
-        const spot = document.getElementById('spot');
-        if (spot) {
+    // Solo activar el spotlight en dispositivos con mouse real (hover y pointer fino)
+    const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (hasFinePointer && !reducedMotion) {
+      const spot = document.getElementById('spot');
+      if (spot) {
+        window.addEventListener('pointermove', (e) => {
           spot.style.setProperty('--sx', e.clientX + 'px');
           spot.style.setProperty('--sy', e.clientY + 'px');
-        }
-      });
+        }, { passive: true });
+      }
     }
   </script>
 </body>

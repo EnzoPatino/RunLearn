@@ -312,6 +312,7 @@ const marqueeItems = [...clases, ...clases];
     gap: 34px;
     width: max-content;
     animation: mq-scroll 40s linear infinite;
+    will-change: transform;
   }
 
   .mq:hover div {
@@ -728,7 +729,8 @@ const marqueeItems = [...clases, ...clases];
   const words = ['viéndolo', 'rompiéndolo', 'hackeándolo', 'probándolo'];
   let wordIndex = 0;
   if (!reducedMotion) {
-    setInterval(() => {
+    const wordInterval = setInterval(() => {
+      if (document.hidden) return;
       const el = $('rw');
       if (!el) return;
       el.classList.add('out');
@@ -737,6 +739,7 @@ const marqueeItems = [...clases, ...clases];
         el.classList.remove('out');
       }, 260);
     }, 2600);
+    document.addEventListener('astro:before-swap', () => clearInterval(wordInterval), { once: true });
   }
 
   /* 2. Simulación de peticiones HTTP en vivo */
@@ -819,13 +822,44 @@ const marqueeItems = [...clases, ...clases];
     }
   }
 
+  let simTimer = null;
+  function startSimulation() {
+    if (!simTimer && !reducedMotion && !document.hidden) {
+      simTimer = setInterval(tickSimulation, 1300);
+    }
+  }
+
+  function stopSimulation() {
+    if (simTimer) {
+      clearInterval(simTimer);
+      simTimer = null;
+    }
+  }
+
   if (reducedMotion) {
     tickSimulation();
   } else {
     tickSimulation();
-    const simulationTimer = setInterval(tickSimulation, 1300);
-    document.addEventListener('astro:before-swap', () => clearInterval(simulationTimer), { once: true });
-    window.addEventListener('resize', () => positionPacket(lastNode));
+    const flowBox = document.querySelector('.flow');
+    if (flowBox && 'IntersectionObserver' in window) {
+      const flowObserver = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) startSimulation();
+          else stopSimulation();
+        });
+      }, { threshold: 0.1 });
+      flowObserver.observe(flowBox);
+    } else {
+      startSimulation();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopSimulation();
+      else startSimulation();
+    });
+
+    document.addEventListener('astro:before-swap', stopSimulation, { once: true });
+    window.addEventListener('resize', () => positionPacket(lastNode), { passive: true });
   }
 
   /* 3. Reveal con IntersectionObserver y Contadores */

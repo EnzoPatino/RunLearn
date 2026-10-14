@@ -4,6 +4,10 @@ import react from '@astrojs/react';
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
+  prefetch: {
+    prefetchAll: false,
+    defaultStrategy: 'hover',
+  },
   integrations: [react()],
   redirects: {
     '/docker': '/docker-explicacion',

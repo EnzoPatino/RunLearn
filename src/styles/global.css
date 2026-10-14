@@ -312,6 +312,18 @@ input:focus-visible {
   }
 }
 
+/* Optimización para dispositivos táctiles / móviles (ahorro de batería y GPU) */
+@media (hover: none) and (pointer: coarse) {
+  .spot {
+    display: none !important;
+  }
+
+  .ambient-glow {
+    filter: blur(60px) !important;
+    opacity: 0.12 !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation: none !important;
