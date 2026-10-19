@@ -54,7 +54,7 @@ router.get(['/', '/read'], async (req, res, next) => {
     let resolved;
 
     if (mode === 'vulnerable') {
-      // ⚠️ VULNERABLE — concatenación directa, sin validar el input.
+      // VULNERABLE: concatenación directa, sin validar el input.
       // "../secreto-simulado.txt" sube un nivel y sale de archivos-demo/.
       resolved = path.resolve(BASE_DIR, nombre);
 
@@ -69,7 +69,7 @@ router.get(['/', '/read'], async (req, res, next) => {
         });
       }
     } else {
-      // ✅ SEGURO — se rechaza cualquier ".." o separador ANTES de tocar el disco.
+      // SEGURO: se rechaza cualquier ".." o separador ANTES de tocar el disco.
       if (entradaInvalida(nombre)) {
         return res.status(400).json({
           ok: false,

@@ -919,7 +919,7 @@ const marqueeItems = [...clases, ...clases];
     if (mode === 'vuln') {
       queryText = `SELECT * FROM people\nWHERE nombre = '<span class="inj">${esc(val)}</span>';`;
       if (isInjection) {
-        resultText = `<span class="bad">⚠ 5 filas: el atacante leyó toda la tabla de usuarios</span>\n` + sampleUsers.map((u) => u[1]).join('\n');
+        resultText = `<span class="bad">AVISO: 5 filas; el atacante leyó toda la tabla de usuarios</span>\n` + sampleUsers.map((u) => u[1]).join('\n');
       } else if (val.includes("'")) {
         resultText = `<span class="bad">ERROR: syntax error near "'"</span>`;
       } else {

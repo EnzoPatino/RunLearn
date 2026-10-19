@@ -21,7 +21,7 @@ Un aula interactiva para explorar **backend, seguridad y DevOps** ejecutando cad
 
 ## Aprendé haciendo
 
-| 🔎 Seguí el recorrido | 🧪 Probá escenarios | 🧠 Entendé el resultado |
+| Seguí el recorrido | Probá escenarios | Entendé el resultado |
 | --- | --- | --- |
 | Observá peticiones HTTP desde la interfaz hasta la API. | Compará SQL vulnerable y parametrizado en demos controladas. | Revisá consultas, headers, respuestas y cambios de estado. |
 | Explorá el ciclo de vida de una petición, una transacción o una tarea en cola. | Provocá aciertos y fallos de caché; probá defensas contra ataques. | Avanzá paso a paso con diagramas, terminales y explicaciones. |
