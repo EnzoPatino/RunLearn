@@ -213,33 +213,20 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #60a5fa 0%, var(--brand-blue) 60%, #1d4ed8 100%);
+    background: transparent;
     display: grid;
     place-items: center;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
     transition: transform var(--ease-spring), box-shadow var(--ease-spring);
     overflow: visible;
-    isolation: isolate;
     padding: 0;
     border: 0;
     color: inherit;
     appearance: none;
   }
 
-  .navbar__avatar::before {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    z-index: -1;
-    border-radius: inherit;
-    background: conic-gradient(from 0deg, #67e8f9, #818cf8, #f0abfc, #67e8f9);
-    opacity: 0;
-    transition: opacity 180ms ease;
-    animation: avatar-orbit 5s linear infinite;
-  }
-
-  .navbar__avatar:not(.navbar__avatar--offline)::before { opacity: 0.8; }
+  .navbar__avatar:not(.navbar__avatar--offline) { background: transparent; box-shadow: none; }
 
   .avatar-image, .avatar-initials {
     width: 100%;
@@ -270,15 +257,13 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   .avatar-initials[hidden], .avatar-image[hidden] { display: none; }
 
-  @keyframes avatar-orbit { to { transform: rotate(1turn); } }
-
   @media (prefers-reduced-motion: reduce) {
-    .navbar__avatar::before, .avatar-generated { animation: none; }
+    .avatar-generated { animation: none; }
   }
 
   .navbar__avatar:hover {
     transform: scale(1.06);
-    box-shadow: 0 6px 22px rgba(59, 130, 246, 0.6);
+    box-shadow: none;
   }
 
   .navbar__avatar:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 5px; }
@@ -313,6 +298,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .avatar-customizer__choices :global(.avatar-choice svg) { display: block; width: 48px; height: 48px; flex: none; overflow: visible; }
   .avatar-customizer__choices :global(.avatar-choice span) { font-size: .68rem; line-height: 1.2; }
   .avatar-customizer__preview :global(.avatar-blob-eyes) { transform: translate(var(--look-x, 0), var(--look-y, 0)); transition: transform .16s ease-out; }
+  .avatar-customizer__choices :global(.avatar-blob-eyes) { transform: translate(var(--look-x, 0), var(--look-y, 0)); transition: transform .16s ease-out; }
   .avatar-customizer__footer { display: flex; align-items: center; justify-content: space-between; gap: .65rem; margin-top: 1.1rem; }
   .avatar-customizer__status { color: var(--text-muted); font-size: .72rem; }
   .avatar-customizer__save { padding: .65rem 1rem; border: 0; border-radius: 999px; color: #07131d; background: linear-gradient(100deg,#67e8f9,#a5b4fc); font-weight: 800; cursor: pointer; }
@@ -1159,14 +1145,21 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     dialog.addEventListener('close', () => {
       if (!previewSaved && currentAvatarUser) renderLoggedIn(currentAvatarUser);
     });
-    trigger.addEventListener('pointermove', event => {
-      const rect = trigger.getBoundingClientRect();
-      const x = (event.clientX - rect.left - rect.width / 2) / rect.width;
-      const y = (event.clientY - rect.top - rect.height / 2) / rect.height;
-      trigger.style.setProperty('--look-x', `${x * 2}px`);
-      trigger.style.setProperty('--look-y', `${y * 2}px`);
-    });
-    trigger.addEventListener('pointerleave', () => { trigger.style.removeProperty('--look-x'); trigger.style.removeProperty('--look-y'); });
+    let pointerFrame = 0;
+    window.addEventListener('pointermove', event => {
+      if (pointerFrame) return;
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0;
+        document.querySelectorAll('.avatar-generated:not([hidden])').forEach(svg => {
+          const rect = svg.getBoundingClientRect();
+          const strength = rect.width < 60 ? 1.8 : 3.2;
+          const x = Math.max(-1, Math.min(1, (event.clientX - rect.left - rect.width / 2) / (rect.width / 2 || 1)));
+          const y = Math.max(-1, Math.min(1, (event.clientY - rect.top - rect.height / 2) / (rect.height / 2 || 1)));
+          svg.style.setProperty('--look-x', `${x * strength}px`);
+          svg.style.setProperty('--look-y', `${y * strength}px`);
+        });
+      });
+    }, { passive: true });
   }
 
   if (document.documentElement.dataset.supabaseNavbarInitialized !== 'true') {
