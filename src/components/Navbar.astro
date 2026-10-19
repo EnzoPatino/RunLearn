@@ -10,7 +10,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 <header class="navbar">
   <!-- Left: Identity -->
   <div class="navbar__left">
-    <div class="navbar__avatar navbar__avatar--offline" id="navbar-avatar" title="No logueado" aria-label="Avatar de usuario">
+    <button class="navbar__avatar navbar__avatar--offline" id="navbar-avatar" title="No logueado" aria-label="Avatar de usuario" type="button" aria-haspopup="dialog" aria-controls="avatar-customizer">
       <img class="avatar-image" id="navbar-avatar-image" alt="" hidden />
       <svg class="avatar-generated" id="navbar-avatar-generated" viewBox="0 0 64 64" role="img" aria-label="Avatar generado" hidden>
         <defs>
@@ -27,7 +27,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
         <path id="avatar-ear-right" d="M44 27c5-2 6 5 1 8l-3 1" fill="url(#avatar-skin)" />
         <ellipse cx="32" cy="28" rx="13" ry="16" fill="url(#avatar-skin)" />
         <path id="avatar-fringe" d="M19 25c-1-11 4-18 13-18 10 0 15 7 13 18l-5-7c-5 2-12 2-18 0z" />
-        <path d="M25 28h3m8 0h3" stroke="#332b35" stroke-width="2" stroke-linecap="round" />
+        <path id="avatar-eyes" d="M25 28h3m8 0h3" stroke="#332b35" stroke-width="2" stroke-linecap="round" />
         <path d="M29 36c2 2 4 2 6 0" fill="none" stroke="#a94f58" stroke-width="1.7" stroke-linecap="round" />
         <circle id="avatar-accessory" cx="32" cy="12" r="3" fill="#fde68a" />
       </svg>
@@ -37,7 +37,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
         <path d="M10 32C10 26.4772 14.4772 22 20 22C25.5228 22 30 26.4772 30 32H10Z" fill="#0c1015" />
       </svg>
       <span class="avatar-status avatar-status--offline" id="navbar-avatar-status" title="No logueado"></span>
-    </div>
+    </button>
 
     <div class="navbar__meta" id="navbar-profile-meta">
       <span class="navbar__welcome" id="navbar-welcome">Estado</span>
@@ -138,6 +138,19 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   </div>
 </header>
 
+<dialog class="avatar-customizer" id="avatar-customizer" aria-labelledby="avatar-customizer-title">
+  <form method="dialog" class="avatar-customizer__close-wrap"><button class="avatar-customizer__close" aria-label="Cerrar personalizador">×</button></form>
+  <div class="avatar-customizer__eyebrow">TU IDENTIDAD EN RUNLEARN</div>
+  <h2 id="avatar-customizer-title">Personalizá tu avatar</h2>
+  <p class="avatar-customizer__intro">Elegí un estilo. Tu personaje te saluda con movimiento y te acompaña por las clases.</p>
+  <div class="avatar-customizer__preview" id="avatar-customizer-preview" aria-live="polite"></div>
+  <div class="avatar-customizer__choices" id="avatar-customizer-choices" role="group" aria-label="Estilos de avatar"></div>
+  <div class="avatar-customizer__footer">
+    <span class="avatar-customizer__status" id="avatar-customizer-status" aria-live="polite">Se guarda en tu perfil</span>
+    <button class="avatar-customizer__save" id="avatar-customizer-save" type="button">Guardar avatar</button>
+  </div>
+</dialog>
+
 <!-- Modal de búsqueda (se mueve a <body> por script para escapar del backdrop-filter) -->
 <div class="search-modal" id="search-modal" hidden>
   <div class="search-modal__backdrop" data-search-close></div>
@@ -214,6 +227,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     transition: transform var(--ease-spring), box-shadow var(--ease-spring);
     overflow: visible;
     isolation: isolate;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    appearance: none;
   }
 
   .navbar__avatar::before {
@@ -237,6 +254,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   }
 
   .avatar-generated { overflow: hidden; border: 2px solid rgba(255,255,255,.72); filter: drop-shadow(0 2px 4px rgba(15,23,42,.28)); animation: avatar-float 3s ease-in-out infinite; }
+  #avatar-eyes { transform: translate(var(--look-x, 0), var(--look-y, 0)); transition: transform .16s ease-out; }
   .avatar-generated[hidden] { display: none; }
   @keyframes avatar-float { 50% { transform: translateY(-1px) scale(1.035); } }
 
@@ -265,6 +283,46 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .navbar__avatar:hover {
     transform: scale(1.06);
     box-shadow: 0 6px 22px rgba(59, 130, 246, 0.6);
+  }
+
+  .navbar__avatar:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 5px; }
+
+  .avatar-customizer {
+    width: min(92vw, 440px);
+    max-height: min(88vh, 720px);
+    padding: 1.65rem;
+    overflow-y: auto;
+    color: var(--text-primary);
+    border: 1px solid rgba(148,163,184,.23);
+    border-radius: 24px;
+    background: radial-gradient(ellipse at 50% -25%, rgba(59,130,246,.25), transparent 55%), #10151e;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  }
+
+  .avatar-customizer::backdrop { background: rgba(3,7,18,.72); backdrop-filter: blur(8px); }
+  .avatar-customizer__close-wrap { display: flex; justify-content: flex-end; margin: -.75rem -.65rem .15rem; }
+  .avatar-customizer__close { width: 34px; height: 34px; border: 0; border-radius: 50%; color: #cbd5e1; background: #ffffff12; font-size: 1.4rem; cursor: pointer; }
+  .avatar-customizer__eyebrow { color: #67e8f9; font: 700 .65rem var(--font-mono); letter-spacing: .14em; }
+  .avatar-customizer h2 { margin: .45rem 0; color: white; font-size: 1.45rem; }
+  .avatar-customizer__intro { margin: 0; color: var(--text-secondary); font-size: .88rem; line-height: 1.55; }
+  .avatar-customizer__preview { display: grid; place-items: center; min-height: 136px; margin: .9rem 0 .35rem; }
+  .avatar-customizer__preview .avatar-generated { width: 112px; height: 112px; animation-duration: 2.6s; filter: drop-shadow(0 12px 24px rgba(59,130,246,.28)); }
+  .avatar-customizer__choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; }
+  .avatar-choice { display: grid; justify-items: center; gap: .35rem; padding: .55rem .25rem; border: 1px solid rgba(148,163,184,.16); border-radius: 16px; color: #cbd5e1; background: rgba(255,255,255,.035); cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+  .avatar-choice:hover { transform: translateY(-2px); background: rgba(255,255,255,.08); }
+  .avatar-choice[aria-pressed="true"] { border-color: #67e8f9; background: rgba(34,211,238,.12); box-shadow: 0 0 0 2px rgba(34,211,238,.12); }
+  .avatar-choice svg { width: 48px; height: 48px; border-radius: 50%; }
+  .avatar-choice span { font-size: .68rem; }
+  .avatar-customizer__footer { display: flex; align-items: center; justify-content: space-between; gap: .65rem; margin-top: 1.1rem; }
+  .avatar-customizer__status { color: var(--text-muted); font-size: .72rem; }
+  .avatar-customizer__save { padding: .65rem 1rem; border: 0; border-radius: 999px; color: #07131d; background: linear-gradient(100deg,#67e8f9,#a5b4fc); font-weight: 800; cursor: pointer; }
+  .avatar-customizer__save:disabled { opacity: .65; cursor: wait; }
+
+  @media (max-width: 460px) {
+    .avatar-customizer { padding: 1.2rem; }
+    .avatar-customizer__choices { gap: .45rem; }
+    .avatar-choice svg { width: 42px; height: 42px; }
+    .avatar-customizer__footer { align-items: flex-start; flex-direction: column; }
   }
 
   .avatar-svg {
@@ -899,7 +957,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 </style>
 
 <script>
+  let currentAvatarUser = null;
+
   function renderLoggedOut() {
+    currentAvatarUser = null;
     const avatar = document.getElementById('navbar-avatar');
     const avatarImage = document.getElementById('navbar-avatar-image');
     const avatarGenerated = document.getElementById('navbar-avatar-generated');
@@ -916,6 +977,8 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (avatar) {
       avatar.classList.add('navbar__avatar--offline');
       avatar.title = 'No logueado';
+      avatar.disabled = true;
+      avatar.disabled = true;
     }
     if (avatarImage) { avatarImage.hidden = true; avatarImage.removeAttribute('src'); }
     if (avatarGenerated) avatarGenerated.hidden = true;
@@ -938,6 +1001,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   }
 
   function renderLoggedIn(user) {
+    currentAvatarUser = user;
     const avatar = document.getElementById('navbar-avatar');
     const avatarImage = document.getElementById('navbar-avatar-image');
     const avatarGenerated = document.getElementById('navbar-avatar-generated');
@@ -954,35 +1018,15 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (avatar) {
       avatar.classList.remove('navbar__avatar--offline');
       avatar.title = user?.email ? `Perfil de ${user.email}` : 'Perfil de Desarrollador';
+      avatar.disabled = false;
     }
     const metadata = user?.user_metadata || {};
     const profileName = metadata.full_name || metadata.name || metadata.display_name || user?.email?.split('@')[0] || 'Estudiante';
-    const avatarUrl = metadata.avatar_url || metadata.picture || metadata.photo_url;
+    const avatarUrl = metadata.runlearn_avatar ? null : metadata.avatar_url || metadata.picture || metadata.photo_url;
     const seedText = String(user?.id || profileName);
-    let seed = 0;
-    for (const char of seedText) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
-    const palette = [
-      ['#0891b2', '#164e63'], ['#6366f1', '#312e81'], ['#ec4899', '#831843'],
-      ['#22c55e', '#14532d'], ['#f59e0b', '#78350f'], ['#a855f7', '#581c87'],
-      ['#f97316', '#7c2d12'], ['#14b8a6', '#134e4a'],
-    ];
-    const skinTones = [['#fbd4b4', '#d79570'], ['#f1c09a', '#bb7652'], ['#dfaa7d', '#935638'], ['#c98961', '#70402e'], ['#9b6044', '#553327']];
-    const hairColors = ['#241c28', '#3b261d', '#6b3f2b', '#191e36', '#703b55', '#283b35'];
-    const [bgStart, bgEnd] = palette[seed % palette.length];
-    const [skinLight, skinDark] = skinTones[(seed >>> 4) % skinTones.length];
-    const hair = hairColors[(seed >>> 8) % hairColors.length];
-    const setFill = (id, value) => { const node = document.getElementById(id); if (node) node.setAttribute('stop-color', value); };
-    setFill('avatar-bg-start', bgStart); setFill('avatar-bg-end', bgEnd);
-    setFill('avatar-shirt-start', palette[(seed >>> 12) % palette.length][0]);
-    setFill('avatar-shirt-end', palette[(seed >>> 12) % palette.length][1]);
-    setFill('avatar-skin-light', skinLight); setFill('avatar-skin-dark', skinDark);
-    ['avatar-hair-back', 'avatar-fringe'].forEach(id => { const node = document.getElementById(id); if (node) node.setAttribute('fill', hair); });
-    const accessory = document.getElementById('avatar-accessory');
-    if (accessory) accessory.setAttribute('opacity', seed % 3 === 0 ? '1' : '0');
-    if (avatarInitials) {
-      avatarInitials.textContent = profileName.trim().split(/[\s._-]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'RL';
-      avatarInitials.hidden = true;
-    }
+    let seed = Number.isInteger(metadata.runlearn_avatar?.style) ? metadata.runlearn_avatar.style : 0;
+    if (!Number.isInteger(metadata.runlearn_avatar?.style)) for (const char of seedText) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+    applyAvatarStyle(seed);
     if (avatarGenerated) avatarGenerated.hidden = Boolean(avatarUrl);
     if (avatarImage) {
       avatarImage.hidden = !avatarUrl;
@@ -1008,8 +1052,106 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (mainAuthLink) mainAuthLink.hidden = true;
   }
 
+  const avatarPalettes = [
+      ['#0891b2', '#164e63'], ['#6366f1', '#312e81'], ['#ec4899', '#831843'],
+      ['#22c55e', '#14532d'], ['#f59e0b', '#78350f'], ['#a855f7', '#581c87'],
+      ['#f97316', '#7c2d12'], ['#14b8a6', '#134e4a'],
+  ];
+  const avatarSkinTones = [['#fbd4b4', '#d79570'], ['#f1c09a', '#bb7652'], ['#dfaa7d', '#935638'], ['#c98961', '#70402e'], ['#9b6044', '#553327']];
+  const avatarHairColors = ['#241c28', '#3b261d', '#6b3f2b', '#191e36', '#703b55', '#283b35'];
+
+  function applyAvatarStyle(seed) {
+    seed = Math.abs(Number(seed) || 0) % 8;
+    const [bgStart, bgEnd] = avatarPalettes[seed];
+    const [skinLight, skinDark] = avatarSkinTones[seed % avatarSkinTones.length];
+    const hair = avatarHairColors[seed % avatarHairColors.length];
+    const setFill = (id, value) => { const node = document.getElementById(id); if (node) node.setAttribute('stop-color', value); };
+    setFill('avatar-bg-start', bgStart); setFill('avatar-bg-end', bgEnd);
+    setFill('avatar-shirt-start', avatarPalettes[(seed + 3) % avatarPalettes.length][0]);
+    setFill('avatar-shirt-end', avatarPalettes[(seed + 3) % avatarPalettes.length][1]);
+    setFill('avatar-skin-light', skinLight); setFill('avatar-skin-dark', skinDark);
+    ['avatar-hair-back', 'avatar-fringe'].forEach(id => { const node = document.getElementById(id); if (node) node.setAttribute('fill', hair); });
+    const accessory = document.getElementById('avatar-accessory');
+    if (accessory) accessory.setAttribute('opacity', seed % 2 === 0 ? '1' : '0');
+    const avatar = document.getElementById('navbar-avatar');
+    if (avatar) avatar.dataset.avatarStyle = String(seed);
+  }
+
+  function initAvatarCustomizer() {
+    const dialog = document.getElementById('avatar-customizer');
+    const trigger = document.getElementById('navbar-avatar');
+    const choices = document.getElementById('avatar-customizer-choices');
+    const preview = document.getElementById('avatar-customizer-preview');
+    const save = document.getElementById('avatar-customizer-save');
+    const status = document.getElementById('avatar-customizer-status');
+    if (!dialog || !trigger || !choices || !preview || !save || dialog.dataset.initialized) return;
+    dialog.dataset.initialized = 'true';
+    let previewSaved = true;
+
+    function makeAvatarSvg(index, idPrefix) {
+      const [start, end] = avatarPalettes[index];
+      const [skinLight, skinDark] = avatarSkinTones[index % avatarSkinTones.length];
+      const hair = avatarHairColors[index % avatarHairColors.length];
+      const accessory = index % 2 === 0 ? '<circle cx="32" cy="12" r="3" fill="#fde68a" />' : '';
+      return `<svg class="avatar-generated" viewBox="0 0 64 64" role="img" aria-label="Avatar estilo ${index + 1}"><defs><linearGradient id="${idPrefix}-bg" x2="1" y2="1"><stop stop-color="${start}"/><stop offset="1" stop-color="${end}"/></linearGradient><linearGradient id="${idPrefix}-shirt" x2="0" y2="1"><stop stop-color="${avatarPalettes[(index + 3) % 8][0]}"/><stop offset="1" stop-color="${avatarPalettes[(index + 3) % 8][1]}"/></linearGradient><radialGradient id="${idPrefix}-skin" cx="35%" cy="25%"><stop stop-color="${skinLight}"/><stop offset="1" stop-color="${skinDark}"/></radialGradient></defs><rect width="64" height="64" rx="32" fill="url(#${idPrefix}-bg)"/><path d="M10 64c1-15 9-22 22-22s21 7 22 22" fill="url(#${idPrefix}-shirt)"/><path d="M26 39h12v10H26z" fill="url(#${idPrefix}-skin)"/><path d="M18 31c-2-15 5-23 15-23 11 0 16 8 14 23l-4 11H21z" fill="${hair}"/><ellipse cx="32" cy="28" rx="13" ry="16" fill="url(#${idPrefix}-skin)"/><path d="M19 25c-1-11 4-18 13-18 10 0 15 7 13 18l-5-7c-5 2-12 2-18 0z" fill="${hair}"/><path d="M25 28h3m8 0h3" stroke="#332b35" stroke-width="2" stroke-linecap="round"/><path d="M29 36c2 2 4 2 6 0" fill="none" stroke="#a94f58" stroke-width="1.7" stroke-linecap="round"/>${accessory}</svg>`;
+    }
+
+    function showStyle(index) {
+      const style = ((index % 8) + 8) % 8;
+      previewSaved = false;
+      trigger.dataset.avatarStyle = String(style);
+      applyAvatarStyle(style);
+      const generated = document.getElementById('navbar-avatar-generated');
+      const image = document.getElementById('navbar-avatar-image');
+      if (generated) generated.hidden = false;
+      if (image) image.hidden = true;
+      preview.innerHTML = makeAvatarSvg(style, 'avatar-preview');
+      choices.querySelectorAll('button').forEach((button, choiceIndex) => button.setAttribute('aria-pressed', String(choiceIndex === style)));
+      status.textContent = 'Vista previa · guardá para conservarlo';
+    }
+
+    choices.innerHTML = avatarPalettes.map((_, index) => `<button class="avatar-choice" type="button" aria-pressed="false" aria-label="Elegir avatar ${index + 1}">${makeAvatarSvg(index, `avatar-choice-${index}`)}<span>${['Cian','Índigo','Rosa','Bosque','Ámbar','Violeta','Coral','Menta'][index]}</span></button>`).join('');
+    choices.addEventListener('click', event => {
+      const button = event.target.closest('.avatar-choice');
+      if (button) showStyle(Array.from(choices.children).indexOf(button));
+    });
+    trigger.addEventListener('click', () => {
+      showStyle(Number(trigger.dataset.avatarStyle || 0));
+      dialog.showModal();
+    });
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      status.textContent = 'Guardando en tu perfil…';
+      try {
+        const { supabase } = await import('../lib/supabaseClient.js');
+        const { data, error } = await supabase.auth.updateUser({ data: { runlearn_avatar: { style: Number(trigger.dataset.avatarStyle || 0) } } });
+        if (error) throw error;
+        if (data.user) renderLoggedIn(data.user);
+        previewSaved = true;
+        status.textContent = 'Avatar guardado en tu perfil';
+        window.setTimeout(() => dialog.close(), 450);
+      } catch (error) {
+        status.textContent = error?.message || 'No se pudo guardar. Intentá de nuevo.';
+      } finally {
+        save.disabled = false;
+      }
+    });
+    dialog.addEventListener('close', () => {
+      if (!previewSaved && currentAvatarUser) renderLoggedIn(currentAvatarUser);
+    });
+    trigger.addEventListener('pointermove', event => {
+      const rect = trigger.getBoundingClientRect();
+      const x = (event.clientX - rect.left - rect.width / 2) / rect.width;
+      const y = (event.clientY - rect.top - rect.height / 2) / rect.height;
+      trigger.style.setProperty('--look-x', `${x * 2}px`);
+      trigger.style.setProperty('--look-y', `${y * 2}px`);
+    });
+    trigger.addEventListener('pointerleave', () => { trigger.style.removeProperty('--look-x'); trigger.style.removeProperty('--look-y'); });
+  }
+
   if (document.documentElement.dataset.supabaseNavbarInitialized !== 'true') {
     document.documentElement.dataset.supabaseNavbarInitialized = 'true';
+    initAvatarCustomizer();
 
     // Comprobación ultrarrápida sincrónica: ¿hay tokens de supabase en localStorage?
     let hasStoredSession = false;
