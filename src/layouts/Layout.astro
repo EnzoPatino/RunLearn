@@ -3,7 +3,7 @@ interface Props {
   title?: string;
 }
 
-const { title = "DevPlatform – Dashboard & Aula Virtual" } = Astro.props;
+const { title = "RunLearn – Aula Virtual & Arquitectura Backend" } = Astro.props;
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/global.css";
 ---
@@ -15,6 +15,7 @@ import "../styles/global.css";
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="theme-color" content="#0b0c0a" />
 
   <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans & JetBrains Mono (Non-blocking font loading) -->

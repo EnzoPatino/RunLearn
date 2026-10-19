@@ -3,7 +3,16 @@ import { pool } from '../db/index.js';
 
 const router = Router();
 
-router.post('/', async (req, res) => {
+router.get('/cuentas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, titular, saldo, updated_at FROM cuentas_demo ORDER BY id');
+    return res.json({ ok: true, cuentas: result.rows });
+  } catch (error) {
+    return res.status(500).json({ error: 'No se pudieron consultar las cuentas demo', message: error.message });
+  }
+});
+
+router.post(['/', '/transferir'], async (req, res) => {
   const { forzarError = false } = req.body || {};
   if (typeof forzarError !== 'boolean') {
     return res.status(400).json({ error: 'El campo "forzarError" debe ser booleano.' });

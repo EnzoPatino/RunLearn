@@ -34,8 +34,8 @@ function entradaInvalida(nombre) {
   );
 }
 
-// GET /api/path-traversal-demo?archivo=NOMBRE&mode=vulnerable|seguro
-router.get('/', async (req, res, next) => {
+// GET /api/path-traversal-demo?archivo=NOMBRE&mode=vulnerable|seguro (y /read)
+router.get(['/', '/read'], async (req, res, next) => {
   try {
     const raw = Array.isArray(req.query.archivo) ? req.query.archivo[0] : req.query.archivo;
     const nombre = typeof raw === 'string' ? raw : '';

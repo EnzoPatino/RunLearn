@@ -15,7 +15,17 @@ function getAudioContext() {
   return audioCtx;
 }
 
+export function isSoundEnabled() {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem('runlearn:sound-enabled') !== 'false';
+  } catch {
+    return true;
+  }
+}
+
 export function playStep() {
+  if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
@@ -34,6 +44,7 @@ export function playStep() {
 }
 
 export function playBlocked() {
+  if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
@@ -52,6 +63,7 @@ export function playBlocked() {
 }
 
 export function playSuccess() {
+  if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
@@ -70,6 +82,7 @@ export function playSuccess() {
 }
 
 export function playAlert() {
+  if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
   try {
@@ -88,6 +101,7 @@ export function playAlert() {
 }
 
 export default {
+  isSoundEnabled,
   playStep,
   playBlocked,
   playSuccess,

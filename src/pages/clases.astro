@@ -15,6 +15,17 @@ const totalClases = clases.length;
     <div class="eyebrow" id="count">Biblioteca · {totalClases} clases</div>
     <h1 class="classes-title">Todas las <em>clases</em></h1>
 
+    <!-- Barra de progreso del alumno -->
+    <div class="progress-tracker" id="progress-tracker">
+      <div class="progress-meta">
+        <span class="progress-title">Tu avance del curso</span>
+        <span class="progress-val" id="progress-val">0 / {totalClases} (0%)</span>
+      </div>
+      <div class="progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax={totalClases} aria-valuenow="0">
+        <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+
     <!-- Barra de búsqueda y chips de categoría -->
     <div class="bar">
       <label class="search" for="q">
@@ -63,6 +74,7 @@ const totalClases = clases.length;
             class="card"
             href={clase.route}
             style={`--c: ${color};`}
+            data-id={clase.id}
             data-title={clase.title.toLowerCase()}
             data-category={clase.category}
             data-desc={clase.description.toLowerCase()}
@@ -71,7 +83,20 @@ const totalClases = clases.length;
               <span class="tag">
                 <i></i>{clase.category}
               </span>
-              <span class="go" aria-hidden="true">↗</span>
+              <div class="ctop-actions">
+                <button
+                  class="card-check"
+                  type="button"
+                  data-check-id={clase.id}
+                  title="Marcar clase como completada"
+                  aria-label={`Marcar ${clase.title} como completada`}
+                >
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <span class="go" aria-hidden="true">↗</span>
+              </div>
             </div>
 
             <h3>{clase.title}</h3>
@@ -116,6 +141,99 @@ const totalClases = clases.length;
     font-size: clamp(34px, 5.4vw, 60px);
     margin: 10px 0 20px;
     letter-spacing: -.03em;
+  }
+
+  /* Progreso del curso */
+  .progress-tracker {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-family: var(--m);
+  }
+
+  .progress-title {
+    color: var(--mut);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .progress-val {
+    color: var(--lime);
+    font-weight: 700;
+  }
+
+  .progress-bar-wrap {
+    width: 100%;
+    height: 6px;
+    background: #070806;
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--lime);
+    box-shadow: 0 0 10px rgba(198, 244, 50, 0.4);
+    border-radius: 99px;
+    transition: width .4s var(--ease-spring);
+  }
+
+  .ctop-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-check {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: transparent;
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all .2s ease;
+    z-index: 2;
+  }
+
+  .card-check svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .card-check:hover {
+    border-color: var(--lime);
+    background: rgba(198, 244, 50, 0.1);
+    color: var(--lime);
+  }
+
+  .card-check.active {
+    background: var(--lime);
+    border-color: var(--lime);
+    color: #0b0c0a;
+    box-shadow: 0 0 10px rgba(198, 244, 50, 0.35);
+  }
+
+  .card.is-done {
+    border-color: rgba(198, 244, 50, 0.3);
   }
 
   .bar {
@@ -384,6 +502,7 @@ const totalClases = clases.length;
 
 <script>
   import sounds from '../lib/sounds.js';
+  import { getProgreso, toggleProgresoClase } from '../lib/progreso.js';
 
   const countEl = document.getElementById('count');
   const searchInput = document.getElementById('q');
@@ -426,6 +545,29 @@ const totalClases = clases.length;
     }
   }
 
+  async function syncProgresoUI() {
+    const progreso = await getProgreso();
+    let completedCount = 0;
+
+    cards.forEach((card) => {
+      const id = card.dataset.id;
+      const isDone = Boolean(progreso[id]);
+      card.classList.toggle('is-done', isDone);
+      const checkBtn = card.querySelector('.card-check');
+      if (checkBtn) {
+        checkBtn.classList.toggle('active', isDone);
+        checkBtn.setAttribute('aria-pressed', String(isDone));
+      }
+      if (isDone) completedCount++;
+    });
+
+    const percent = totalCards > 0 ? Math.round((completedCount / totalCards) * 100) : 0;
+    const progressVal = document.getElementById('progress-val');
+    const progressFill = document.getElementById('progress-bar-fill');
+    if (progressVal) progressVal.textContent = `${completedCount} / ${totalCards} (${percent}%)`;
+    if (progressFill) progressFill.style.width = `${percent}%`;
+  }
+
   // Interacción de chips de categoría
   chipsContainer?.addEventListener('click', (e) => {
     const btn = e.target.closest('.chip');
@@ -449,6 +591,24 @@ const totalClases = clases.length;
     filterCards();
   });
 
+  // Interacción para marcar clase completada
+  gridContainer?.addEventListener('click', async (e) => {
+    const checkBtn = e.target.closest('.card-check');
+    if (!checkBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const id = checkBtn.dataset.checkId;
+    if (!id) return;
+
+    try {
+      sounds.playSuccess();
+    } catch {}
+
+    await toggleProgresoClase(id);
+    syncProgresoUI();
+  });
+
   // Foco dinámico para el resplandor de la tarjeta (spotlight en hover solo con mouse)
   if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     gridContainer?.addEventListener('pointermove', (e) => {
@@ -469,6 +629,10 @@ const totalClases = clases.length;
     }
   });
 
+  window.addEventListener('runlearn:progreso-updated', syncProgresoUI);
+  window.addEventListener('auth-change', syncProgresoUI);
+
   // Inicializar estado
   filterCards();
+  syncProgresoUI();
 </script>

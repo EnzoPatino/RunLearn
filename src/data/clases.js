@@ -12,6 +12,23 @@ export const categoryColors = {
 
 export const clases = [
   {
+    id: "jwt-inseguro",
+    title: "JWT Inseguro",
+    category: "Seguridad",
+    icon: "key",
+    description: "Secretos débiles y bypass alg: none",
+    route: "/jwt-inseguro-explicacion",
+    colorAccent: "#fb7185",
+    snippetCmd: "POST /sign { alg: 'none' }",
+    snippetResult: "Firma omitida · el servidor vulnerable lo aceptó",
+    snippetOk: false,
+    level: 2,
+    duration: 8,
+    dateAdded: "2026-09-26",
+    status: "completo",
+    featured: true,
+  },
+  {
     id: "path-traversal",
     title: "Path Traversal",
     category: "Seguridad",
@@ -345,6 +362,11 @@ export const roadmapPhases = [
     classes: ["HTTP / HTTPS", "API", "Base de datos"],
   },
   {
+    title: "Lógica & Algoritmos",
+    subtitle: "Estructuras y pensamiento computacional",
+    classes: ["Algoritmo de número", "Recursividad"],
+  },
+  {
     title: "Backend real",
     subtitle: "Rápido y consistente",
     classes: ["SSR vs CSR", "Caché con Redis", "Transacciones SQL", "Colas de mensajes"],
@@ -352,7 +374,7 @@ export const roadmapPhases = [
   {
     title: "Seguridad",
     subtitle: "Pensá como atacante",
-    classes: ["SQL Injection", "XSS", "CSRF", "CORS", "Hashing de Contraseñas"],
+    classes: ["SQL Injection", "XSS", "CSRF", "CORS", "Hashing de Contraseñas", "JWT Inseguro", "Path Traversal"],
   },
   {
     title: "Producción",

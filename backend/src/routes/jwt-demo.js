@@ -330,10 +330,10 @@ function verifyTokenOnServer(token, mode) {
 }
 
 /**
- * POST /api/jwt-demo
+ * POST /api/jwt-demo y POST /api/jwt-demo/sign
  * Body: { mode: 'secreto-debil' | 'alg-none' | 'seguro', action?: 'generate' | 'attack' | 'verify', token?: string }
  */
-router.post('/', (req, res) => {
+router.post(['/', '/sign'], (req, res) => {
   try {
     const { mode = 'secreto-debil', action = 'generate', token } = req.body || {};
 

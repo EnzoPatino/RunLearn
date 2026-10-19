@@ -39,10 +39,11 @@ router.get('/token', (req, res) => {
   res.json({ sessionId, csrfToken, balance });
 });
 
-// POST /transferir — simulates a bank transfer
-router.post('/transferir', (req, res, next) => {
+// POST /transferir y /transferir-segura — simulates a bank transfer
+router.post(['/transferir', '/transferir-segura'], (req, res, next) => {
   try {
-    const { sessionId, to, amount = 5000, csrfToken, mode } = req.body || {};
+    const { sessionId, to, amount = 5000, csrfToken, mode = 'vulnerable' } = req.body || {};
+    const determinedMode = req.path.endsWith('/transferir-segura') ? 'seguro' : mode;
 
     if (!sessionId || typeof sessionId !== 'string') {
       return res.status(400).json({ error: 'Se requiere sessionId.' });
@@ -53,11 +54,11 @@ router.post('/transferir', (req, res, next) => {
       return res.status(401).json({ error: 'Sesión inválida. Iniciá sesión de nuevo.' });
     }
 
-    if (!['vulnerable', 'seguro'].includes(mode)) {
+    if (!['vulnerable', 'seguro'].includes(determinedMode)) {
       return res.status(400).json({ error: 'El campo "mode" debe ser "vulnerable" o "seguro".' });
     }
 
-    if (mode === 'seguro') {
+    if (determinedMode === 'seguro') {
       // Secure: must provide valid CSRF token
       if (!csrfToken || csrfToken !== session.csrfToken) {
         return res.status(403).json({
@@ -85,12 +86,12 @@ router.post('/transferir', (req, res, next) => {
 
     res.json({
       ok: true,
-      mode,
+      mode: determinedMode,
       from: 'cuenta-12345',
       to: to.trim().slice(0, 100),
       amount: transferAmount,
       newBalance: session.balance,
-      message: mode === 'vulnerable'
+      message: determinedMode === 'vulnerable'
         ? 'Transferencia procesada (sin validación CSRF).'
         : 'Transferencia procesada (token CSRF validado).',
     });

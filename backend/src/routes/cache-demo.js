@@ -22,6 +22,35 @@ function simulateSlowDbQuery(key) {
   });
 }
 
+router.get('/', (req, res) => {
+  res.json({
+    description: 'Demostración de caché con Redis en RunLearn',
+    sampleKeys: Object.keys(FAKE_DB),
+    ttlSeconds: TTL_SECONDS,
+    endpoints: {
+      get: 'GET /api/cache-demo/:key',
+      invalidate: 'POST /api/cache-demo/invalidate (body: { key?: string })',
+    },
+  });
+});
+
+router.post('/invalidate', async (req, res) => {
+  try {
+    const { key } = req.body || {};
+    if (key) {
+      await redis.del(`cache-demo:${key}`);
+      return res.json({ ok: true, message: `Clave cache-demo:${key} invalidada con éxito.`, key });
+    }
+    const keys = await redis.keys('cache-demo:*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+    return res.json({ ok: true, message: 'Todas las claves de cache-demo han sido invalidadas.', count: keys.length });
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al invalidar caché', message: error.message });
+  }
+});
+
 router.get('/:key', async (req, res) => {
   const { key } = req.params;
   const start = performance.now();

@@ -14,9 +14,12 @@ const router = Router();
  * propósitos educativos. NUNCA usar concatenación de strings
  * en código real.
  */
-router.post('/', async (req, res) => {
+router.post(['/', '/vulnerable', '/seguro'], async (req, res) => {
   try {
     const { input = '', mode = 'vulnerable' } = req.body || {};
+    let determinedMode = mode;
+    if (req.path.endsWith('/vulnerable')) determinedMode = 'vulnerable';
+    else if (req.path.endsWith('/seguro')) determinedMode = 'seguro';
 
     if (typeof input !== 'string') {
       return res.status(400).json({ error: 'El campo "input" debe ser un string' });
@@ -26,7 +29,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'El campo "input" no puede superar 200 caracteres.' });
     }
 
-    if (!['vulnerable', 'seguro'].includes(mode)) {
+    if (!['vulnerable', 'seguro'].includes(determinedMode)) {
       return res.status(400).json({ error: 'El campo "mode" debe ser "vulnerable" o "seguro"' });
     }
 
@@ -38,7 +41,7 @@ router.post('/', async (req, res) => {
     let sql;
     let result;
 
-    if (mode === 'vulnerable') {
+    if (determinedMode === 'vulnerable') {
       // VULNERABLE A SQL INJECTION — solo para demo educativa
       sql = `SELECT id, nombre, email, rol FROM people WHERE nombre = '${searchTerm}'`;
       result = await query(sql);
@@ -49,7 +52,7 @@ router.post('/', async (req, res) => {
     }
 
     return res.json({
-      mode,
+      mode: determinedMode,
       sql,
       input: searchTerm,
       rowCount: result.rows.length,

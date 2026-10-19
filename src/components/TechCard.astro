@@ -39,7 +39,8 @@ const {
   >
     <div class="ctop">
       <span class="tag">
-        <i></i>{badge}
+        {icon ? <ClassIcon name={icon} /> : <i></i>}
+        {badge}
       </span>
       <span class="go" aria-hidden="true">↗</span>
     </div>
@@ -68,7 +69,8 @@ const {
   >
     <div class="ctop">
       <span class="tag">
-        <i></i>{badge}
+        {icon ? <ClassIcon name={icon} /> : <i></i>}
+        {badge}
       </span>
       <span class="go" aria-hidden="true">↗</span>
     </div>
@@ -155,6 +157,13 @@ const {
     height: 7px;
     border-radius: 2px;
     background: var(--c);
+  }
+
+  .tag :global(.tech-icon) {
+    width: 14px;
+    height: 14px;
+    color: var(--c);
+    flex-shrink: 0;
   }
 
   .go {

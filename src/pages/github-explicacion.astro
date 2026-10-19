@@ -18,6 +18,10 @@ import GithubModule from '../components/modules/GithubModule.jsx';
         </div>
       </div>
       <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true"></span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
         <a class="home-action" href="/" aria-label="Volver al inicio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m3 10.8 9-7.2 9 7.2"/>
@@ -137,7 +141,10 @@ import GithubModule from '../components/modules/GithubModule.jsx';
 </Layout>
 
 <script>
+import { initSoundControls } from '../lib/soundControls.js';
+
 (function () {
+  const sound = initSoundControls();
   const steps = [
     {
       from: 'local', to: 'commit', dir: 'request',
@@ -221,10 +228,12 @@ import GithubModule from '../components/modules/GithubModule.jsx';
     if (packet) {
       packet.classList.add('visible');
       packet.style.background = s.dir === 'request' ? 'var(--amber)' : 'var(--blue)';
-      packet.style.left = nodePos[s.from as keyof typeof nodePos] + '%';
+      packet.style.left = nodePos[s.from] + '%';
       void packet.offsetWidth;
-      packet.style.left = nodePos[s.to as keyof typeof nodePos] + '%';
+      packet.style.left = nodePos[s.to] + '%';
     }
+
+    sound.play('playStep');
 
     document.querySelectorAll('.line[data-key="' + s.code + '"]').forEach(l => {
       l.classList.add('active');
@@ -251,10 +260,10 @@ import GithubModule from '../components/modules/GithubModule.jsx';
     segs?.forEach((seg, idx) => {
       if (idx <= i) {
         seg.classList.add('filled');
-        (seg as HTMLElement).style.background = steps[idx].dir === 'request' ? 'var(--amber)' : 'var(--blue)';
+        seg.style.background = steps[idx].dir === 'request' ? 'var(--amber)' : 'var(--blue)';
       } else {
         seg.classList.remove('filled');
-        (seg as HTMLElement).style.background = '';
+        seg.style.background = '';
       }
     });
 
@@ -275,12 +284,12 @@ import GithubModule from '../components/modules/GithubModule.jsx';
     if (codeFilename) codeFilename.textContent = 'terminal.sh';
     segs?.forEach(s => {
       s.classList.remove('filled');
-      (s as HTMLElement).style.background = '';
+      s.style.background = '';
     });
     if (stepCount) stepCount.textContent = '0 / ' + steps.length;
     if (btnRun) {
       btnRun.textContent = 'Simular flujo Git';
-      (btnRun as HTMLButtonElement).disabled = false;
+      btnRun.disabled = false;
     }
   }
 
@@ -289,9 +298,10 @@ import GithubModule from '../components/modules/GithubModule.jsx';
     currentStep++;
     if (currentStep >= steps.length) {
       running = false;
+      sound.play('playSuccess');
       if (btnRun) {
         btnRun.textContent = 'Volver a simular';
-        (btnRun as HTMLButtonElement).disabled = false;
+        btnRun.disabled = false;
       }
       return;
     }
