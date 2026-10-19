@@ -288,6 +288,9 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .navbar__avatar:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 5px; }
 
   .avatar-customizer {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: min(92vw, 440px);
     max-height: min(88vh, 720px);
     padding: 1.65rem;
@@ -306,13 +309,13 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .avatar-customizer h2 { margin: .45rem 0; color: white; font-size: 1.45rem; }
   .avatar-customizer__intro { margin: 0; color: var(--text-secondary); font-size: .88rem; line-height: 1.55; }
   .avatar-customizer__preview { display: grid; place-items: center; min-height: 136px; margin: .9rem 0 .35rem; }
-  .avatar-customizer__preview .avatar-generated { width: 112px; height: 112px; animation-duration: 2.6s; filter: drop-shadow(0 12px 24px rgba(59,130,246,.28)); }
+  .avatar-customizer__preview :global(.avatar-generated) { display: block; width: 112px; height: 112px; animation: avatar-float 2.6s ease-in-out infinite; filter: drop-shadow(0 12px 24px rgba(59,130,246,.28)); }
   .avatar-customizer__choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; }
-  .avatar-choice { display: grid; justify-items: center; gap: .35rem; padding: .55rem .25rem; border: 1px solid rgba(148,163,184,.16); border-radius: 16px; color: #cbd5e1; background: rgba(255,255,255,.035); cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
-  .avatar-choice:hover { transform: translateY(-2px); background: rgba(255,255,255,.08); }
-  .avatar-choice[aria-pressed="true"] { border-color: #67e8f9; background: rgba(34,211,238,.12); box-shadow: 0 0 0 2px rgba(34,211,238,.12); }
-  .avatar-choice svg { width: 48px; height: 48px; border-radius: 50%; }
-  .avatar-choice span { font-size: .68rem; }
+  .avatar-customizer__choices :global(.avatar-choice) { display: grid; justify-items: center; gap: .35rem; min-width: 0; padding: .55rem .25rem; border: 1px solid rgba(148,163,184,.16); border-radius: 16px; color: #cbd5e1; background: rgba(255,255,255,.035); cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+  .avatar-customizer__choices :global(.avatar-choice:hover) { transform: translateY(-2px); background: rgba(255,255,255,.08); }
+  .avatar-customizer__choices :global(.avatar-choice[aria-pressed="true"]) { border-color: #67e8f9; background: rgba(34,211,238,.12); box-shadow: 0 0 0 2px rgba(34,211,238,.12); }
+  .avatar-customizer__choices :global(.avatar-choice svg) { display: block; width: 48px; height: 48px; flex: none; border-radius: 50%; }
+  .avatar-customizer__choices :global(.avatar-choice span) { font-size: .68rem; line-height: 1.2; }
   .avatar-customizer__footer { display: flex; align-items: center; justify-content: space-between; gap: .65rem; margin-top: 1.1rem; }
   .avatar-customizer__status { color: var(--text-muted); font-size: .72rem; }
   .avatar-customizer__save { padding: .65rem 1rem; border: 0; border-radius: 999px; color: #07131d; background: linear-gradient(100deg,#67e8f9,#a5b4fc); font-weight: 800; cursor: pointer; }
@@ -321,7 +324,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   @media (max-width: 460px) {
     .avatar-customizer { padding: 1.2rem; }
     .avatar-customizer__choices { gap: .45rem; }
-    .avatar-choice svg { width: 42px; height: 42px; }
+    .avatar-customizer__choices :global(.avatar-choice svg) { width: 42px; height: 42px; }
     .avatar-customizer__footer { align-items: flex-start; flex-direction: column; }
   }
 
