@@ -25,6 +25,8 @@ backend/.env.*.local
 # IDEs y editores
 .vscode/
 .idea/
+AGENTS.md
+opencode.json
 *.suo
 *.ntvs*
 *.njsproj
