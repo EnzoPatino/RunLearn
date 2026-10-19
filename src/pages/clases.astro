@@ -535,24 +535,26 @@ const totalClases = clases.length;
     .toLocaleLowerCase('es')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
+  const cardIndex = cards.map((card) => ({
+    card,
+    category: card.dataset.category || '',
+    searchable: normalize([
+      card.dataset.title,
+      card.dataset.category,
+      card.dataset.desc,
+      card.dataset.command,
+      card.dataset.result,
+    ].join(' ')),
+  }));
 
   function filterCards() {
     let visibleCount = 0;
 
-    cards.forEach((card) => {
-      const searchableText = normalize([
-        card.dataset.title,
-        card.dataset.category,
-        card.dataset.desc,
-        card.dataset.command,
-        card.dataset.result,
-      ].join(' '));
-      const cardCategory = card.dataset.category || '';
-
-      const matchesCategory = activeCategory === 'Todas' || cardCategory === activeCategory;
+    cardIndex.forEach(({ card, category, searchable }) => {
+      const matchesCategory = activeCategory === 'Todas' || category === activeCategory;
       const matchesSearch =
         searchTerm === '' ||
-        searchableText.includes(searchTerm);
+        searchable.includes(searchTerm);
 
       const isVisible = matchesCategory && matchesSearch;
       card.classList.toggle('is-hidden', !isVisible);
@@ -635,12 +637,19 @@ const totalClases = clases.length;
 
   // Foco dinámico para el resplandor de la tarjeta (spotlight en hover solo con mouse)
   if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    let spotlightFrame = 0;
+    let pendingPointer = null;
     gridContainer?.addEventListener('pointermove', (e) => {
-      const card = e.target.closest('.card');
-      if (!card) return;
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+      pendingPointer = e;
+      if (spotlightFrame) return;
+      spotlightFrame = window.requestAnimationFrame(() => {
+        spotlightFrame = 0;
+        const card = pendingPointer?.target.closest('.card');
+        if (!card) return;
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mx', `${pendingPointer.clientX - rect.left}px`);
+        card.style.setProperty('--my', `${pendingPointer.clientY - rect.top}px`);
+      });
     }, { passive: true });
   }
 

@@ -1316,6 +1316,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   let matches = [];
   let activeIndex = 0;
+  let activeResultItem = null;
   let previousFocus = null;
   let previousBodyOverflow = '';
   const classIndex = clases.map((clase) => ({
@@ -1329,27 +1330,11 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     ].join(' ')),
   }));
 
-  function updateActive() {
-    const items = searchResults.querySelectorAll('.search-result');
-    items.forEach((item, index) => {
-      const isActive = index === activeIndex;
-      item.classList.toggle('is-active', isActive);
-      const link = item.querySelector('a');
-      if (link) link.setAttribute('aria-selected', String(isActive));
-      if (isActive) item.scrollIntoView?.({ block: 'nearest' });
-    });
-  }
+  let resultItems = null;
 
-  function renderResults(query) {
-    const q = normalize(query.trim());
-    matches = q
-      ? classIndex.filter((clase) => clase.searchable.includes(q))
-      : classIndex;
-    activeIndex = 0;
-
-    searchResults.innerHTML = '';
-
-    for (const clase of matches) {
+  function buildSearchResults() {
+    if (resultItems) return;
+    resultItems = classIndex.map((clase) => {
       const item = document.createElement('li');
       item.className = 'search-result';
       item.setAttribute('role', 'presentation');
@@ -1361,20 +1346,16 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
       const body = document.createElement('div');
       body.className = 'search-result__body';
-
       const title = document.createElement('span');
       title.className = 'search-result__title';
       title.textContent = clase.title;
-
       const category = document.createElement('span');
       category.className = 'search-result__category';
       category.style.setProperty('--category-color', categoryColors[clase.category] || 'var(--lime)');
       category.textContent = clase.category;
-
       const meta = document.createElement('span');
       meta.className = 'search-result__meta';
       meta.textContent = clase.description;
-
       const arrow = document.createElement('span');
       arrow.className = 'search-result__arrow';
       arrow.textContent = '→';
@@ -1383,7 +1364,27 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       link.append(body, arrow);
       item.append(link);
       searchResults.append(item);
-    }
+      return { clase, item, link };
+    });
+  }
+
+  function updateActive(shouldScroll = false) {
+    activeResultItem?.item.classList.remove('is-active');
+    activeResultItem?.link.setAttribute('aria-selected', 'false');
+    activeResultItem = matches[activeIndex] || null;
+    activeResultItem?.item.classList.add('is-active');
+    activeResultItem?.link.setAttribute('aria-selected', 'true');
+    if (shouldScroll) activeResultItem?.item.scrollIntoView?.({ block: 'nearest' });
+  }
+
+  function renderResults(query) {
+    const q = normalize(query.trim());
+    activeIndex = 0;
+    matches = q
+      ? resultItems.filter(({ clase }) => clase.searchable.includes(q))
+      : resultItems;
+    const visibleItems = new Set(matches);
+    for (const result of resultItems) result.item.hidden = !visibleItems.has(result);
 
     const total = matches.length;
     searchCount.textContent = `${total} ${total === 1 ? 'clase' : 'clases'}`;
@@ -1396,6 +1397,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   function openSearch() {
     if (!searchModal) return;
+    buildSearchResults();
     closeMenu();
     previousFocus = document.activeElement;
     previousBodyOverflow = document.body.style.overflow;
@@ -1473,11 +1475,11 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (matches.length) activeIndex = (activeIndex + 1) % matches.length;
-      updateActive();
+      updateActive(true);
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       if (matches.length) activeIndex = (activeIndex - 1 + matches.length) % matches.length;
-      updateActive();
+      updateActive(true);
     } else if (event.key === 'Enter') {
       const target = matches[activeIndex];
       if (target) {
