@@ -141,7 +141,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   <div class="avatar-customizer__choices" id="avatar-customizer-choices" role="group" aria-label="Estilos de avatar"></div>
   <div class="avatar-customizer__footer">
     <span class="avatar-customizer__status" id="avatar-customizer-status" aria-live="polite">Se guarda en tu perfil</span>
-    <button class="avatar-customizer__save" id="avatar-customizer-save" type="button">Guardar avatar</button>
+    <div class="avatar-customizer__actions">
+      <button class="avatar-customizer__random" id="avatar-customizer-random" type="button">Sorpréndeme</button>
+      <button class="avatar-customizer__save" id="avatar-customizer-save" type="button">Guardar avatar</button>
+    </div>
   </div>
 </dialog>
 
@@ -300,9 +303,13 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .avatar-customizer__preview :global(.avatar-blob-eyes) { transform: translate(var(--look-x, 0), var(--look-y, 0)); transition: transform .16s ease-out; }
   .avatar-customizer__choices :global(.avatar-blob-eyes) { transform: translate(var(--look-x, 0), var(--look-y, 0)); transition: transform .16s ease-out; }
   .avatar-customizer__footer { display: flex; align-items: center; justify-content: space-between; gap: .65rem; margin-top: 1.1rem; }
+  .avatar-customizer__actions { display: flex; align-items: center; gap: .5rem; }
   .avatar-customizer__status { color: var(--text-muted); font-size: .72rem; }
+  .avatar-customizer__random { padding: .62rem .8rem; border: 1px solid rgba(148,163,184,.22); border-radius: 999px; color: #dbeafe; background: rgba(255,255,255,.045); font-weight: 700; cursor: pointer; }
+  .avatar-customizer__random:hover { background: rgba(255,255,255,.1); }
   .avatar-customizer__save { padding: .65rem 1rem; border: 0; border-radius: 999px; color: #07131d; background: linear-gradient(100deg,#67e8f9,#a5b4fc); font-weight: 800; cursor: pointer; }
   .avatar-customizer__save:disabled { opacity: .65; cursor: wait; }
+  .avatar-customizer__actions button:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; }
 
   @media (max-width: 460px) {
     .avatar-customizer { padding: 1.2rem; }
@@ -1084,10 +1091,13 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     const choices = document.getElementById('avatar-customizer-choices');
     const preview = document.getElementById('avatar-customizer-preview');
     const save = document.getElementById('avatar-customizer-save');
+    const random = document.getElementById('avatar-customizer-random');
     const status = document.getElementById('avatar-customizer-status');
     if (!dialog || !trigger || !choices || !preview || !save || dialog.dataset.initialized) return;
     dialog.dataset.initialized = 'true';
     let previewSaved = true;
+    let savedStyle = Number(trigger.dataset.avatarStyle || 0);
+    let pointerEvent = null;
 
     function makeAvatarSvg(index, idPrefix) {
       const [light, color] = avatarPalettes[index];
@@ -1104,7 +1114,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
     function showStyle(index) {
       const style = ((index % avatarPalettes.length) + avatarPalettes.length) % avatarPalettes.length;
-      previewSaved = false;
+      previewSaved = style === savedStyle;
       trigger.dataset.avatarStyle = String(style);
       applyAvatarStyle(style);
       const generated = document.getElementById('navbar-avatar-generated');
@@ -1113,7 +1123,9 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       if (image) image.hidden = true;
       preview.innerHTML = makeAvatarSvg(style, 'avatar-preview');
       choices.querySelectorAll('button').forEach((button, choiceIndex) => button.setAttribute('aria-pressed', String(choiceIndex === style)));
-      status.textContent = 'Vista previa · guardá para conservarlo';
+      save.disabled = previewSaved;
+      status.textContent = previewSaved ? 'Este avatar ya está guardado' : 'Vista previa · guardá para conservarlo';
+      updateEyes(pointerEvent, [preview.querySelector('.avatar-generated')]);
     }
 
     choices.innerHTML = avatarPalettes.map((_, index) => `<button class="avatar-choice" type="button" aria-pressed="false" aria-label="Elegir ${avatarNames[index]}">${makeAvatarSvg(index, `avatar-choice-${index}`)}<span>${avatarNames[index]}</span></button>`).join('');
@@ -1121,43 +1133,63 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       const button = event.target.closest('.avatar-choice');
       if (button) showStyle(Array.from(choices.children).indexOf(button));
     });
+    random?.addEventListener('click', () => {
+      const current = Number(trigger.dataset.avatarStyle || 0);
+      const offset = 1 + Math.floor(Math.random() * (avatarPalettes.length - 1));
+      showStyle((current + offset) % avatarPalettes.length);
+    });
     trigger.addEventListener('click', () => {
       showStyle(Number(trigger.dataset.avatarStyle || 0));
       dialog.showModal();
     });
     save.addEventListener('click', async () => {
+      if (previewSaved) return;
       save.disabled = true;
+      if (random) random.disabled = true;
       status.textContent = 'Guardando en tu perfil…';
       try {
         const { supabase } = await import('../lib/supabaseClient.js');
         const { data, error } = await supabase.auth.updateUser({ data: { runlearn_avatar: { style: Number(trigger.dataset.avatarStyle || 0) } } });
         if (error) throw error;
         if (data.user) renderLoggedIn(data.user);
+        savedStyle = Number(trigger.dataset.avatarStyle || 0);
         previewSaved = true;
         status.textContent = 'Avatar guardado en tu perfil';
         window.setTimeout(() => dialog.close(), 450);
       } catch (error) {
         status.textContent = error?.message || 'No se pudo guardar. Intentá de nuevo.';
       } finally {
-        save.disabled = false;
+        save.disabled = previewSaved;
+        if (random) random.disabled = false;
       }
     });
     dialog.addEventListener('close', () => {
       if (!previewSaved && currentAvatarUser) renderLoggedIn(currentAvatarUser);
+      trigger.focus({ preventScroll: true });
     });
+    function updateEyes(event, targets) {
+      if (!event) return;
+      for (const svg of targets) {
+        if (!svg || svg.hidden || !svg.isConnected) continue;
+        const rect = svg.getBoundingClientRect();
+        const strength = rect.width < 60 ? 1.8 : 3.2;
+        const x = Math.max(-1, Math.min(1, (event.clientX - rect.left - rect.width / 2) / (rect.width / 2 || 1)));
+        const y = Math.max(-1, Math.min(1, (event.clientY - rect.top - rect.height / 2) / (rect.height / 2 || 1)));
+        svg.style.setProperty('--look-x', `${x * strength}px`);
+        svg.style.setProperty('--look-y', `${y * strength}px`);
+      }
+    }
     let pointerFrame = 0;
     window.addEventListener('pointermove', event => {
+      pointerEvent = event;
       if (pointerFrame) return;
       pointerFrame = window.requestAnimationFrame(() => {
         pointerFrame = 0;
-        document.querySelectorAll('.avatar-generated:not([hidden])').forEach(svg => {
-          const rect = svg.getBoundingClientRect();
-          const strength = rect.width < 60 ? 1.8 : 3.2;
-          const x = Math.max(-1, Math.min(1, (event.clientX - rect.left - rect.width / 2) / (rect.width / 2 || 1)));
-          const y = Math.max(-1, Math.min(1, (event.clientY - rect.top - rect.height / 2) / (rect.height / 2 || 1)));
-          svg.style.setProperty('--look-x', `${x * strength}px`);
-          svg.style.setProperty('--look-y', `${y * strength}px`);
-        });
+        const navbarSvg = document.getElementById('navbar-avatar-generated');
+        const activeChoice = dialog.open ? choices.querySelector('.avatar-choice:hover .avatar-generated') : null;
+        updateEyes(pointerEvent, dialog.open
+          ? [preview.querySelector('.avatar-generated'), activeChoice]
+          : [navbarSvg]);
       });
     }, { passive: true });
   }
