@@ -75,9 +75,11 @@ const totalClases = clases.length;
             href={clase.route}
             style={`--c: ${color};`}
             data-id={clase.id}
-            data-title={clase.title.toLowerCase()}
+            data-title={clase.title}
             data-category={clase.category}
-            data-desc={clase.description.toLowerCase()}
+            data-desc={clase.description}
+            data-command={clase.snippetCmd}
+            data-result={clase.snippetResult}
           >
             <div class="ctop">
               <span class="tag">
@@ -118,7 +120,8 @@ const totalClases = clases.length;
 
     <!-- Mensaje cuando no hay resultados (oculto por defecto) -->
     <div class="empty" id="empty-state" hidden>
-      Sin resultados. Probá otra búsqueda o seleccioná «Todas».
+      <strong>No encontramos clases</strong>
+      <span>Probá con otro término o cambiá el filtro de categoría.</span>
     </div>
   </section>
 </Layout>
@@ -495,6 +498,20 @@ const totalClases = clases.length;
     margin-top: 10px;
   }
 
+  .empty strong,
+  .empty span {
+    display: block;
+  }
+
+  .empty strong {
+    color: var(--fg);
+    margin-bottom: 5px;
+  }
+
+  .empty span {
+    font-size: 13px;
+  }
+
   .card.is-hidden {
     display: none !important;
   }
@@ -514,21 +531,28 @@ const totalClases = clases.length;
 
   let activeCategory = 'Todas';
   let searchTerm = '';
+  const normalize = (value) => String(value || '')
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
   function filterCards() {
     let visibleCount = 0;
 
     cards.forEach((card) => {
-      const cardTitle = card.dataset.title || '';
+      const searchableText = normalize([
+        card.dataset.title,
+        card.dataset.category,
+        card.dataset.desc,
+        card.dataset.command,
+        card.dataset.result,
+      ].join(' '));
       const cardCategory = card.dataset.category || '';
-      const cardDesc = card.dataset.desc || '';
 
       const matchesCategory = activeCategory === 'Todas' || cardCategory === activeCategory;
       const matchesSearch =
         searchTerm === '' ||
-        cardTitle.includes(searchTerm) ||
-        cardDesc.includes(searchTerm) ||
-        cardCategory.toLowerCase().includes(searchTerm);
+        searchableText.includes(searchTerm);
 
       const isVisible = matchesCategory && matchesSearch;
       card.classList.toggle('is-hidden', !isVisible);
@@ -587,7 +611,7 @@ const totalClases = clases.length;
 
   // Búsqueda en vivo
   searchInput?.addEventListener('input', (e) => {
-    searchTerm = e.target.value.toLowerCase().trim();
+    searchTerm = normalize(e.target.value.trim());
     filterCards();
   });
 
