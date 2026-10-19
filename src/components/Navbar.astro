@@ -10,8 +10,29 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 <header class="navbar">
   <!-- Left: Identity -->
   <div class="navbar__left">
-    <div class="navbar__avatar navbar__avatar--offline" id="navbar-avatar" title="No logueado">
-      <svg class="avatar-svg" viewBox="0 0 40 40" fill="none">
+    <div class="navbar__avatar navbar__avatar--offline" id="navbar-avatar" title="No logueado" aria-label="Avatar de usuario">
+      <img class="avatar-image" id="navbar-avatar-image" alt="" hidden />
+      <svg class="avatar-generated" id="navbar-avatar-generated" viewBox="0 0 64 64" role="img" aria-label="Avatar generado" hidden>
+        <defs>
+          <linearGradient id="avatar-bg" x1="0" y1="0" x2="1" y2="1"><stop id="avatar-bg-start" offset="0" /><stop id="avatar-bg-end" offset="1" /></linearGradient>
+          <linearGradient id="avatar-shirt" x1="0" y1="0" x2="0" y2="1"><stop id="avatar-shirt-start" offset="0" /><stop id="avatar-shirt-end" offset="1" /></linearGradient>
+          <radialGradient id="avatar-skin" cx="35%" cy="25%"><stop id="avatar-skin-light" offset="0" /><stop id="avatar-skin-dark" offset="1" /></radialGradient>
+        </defs>
+        <rect width="64" height="64" rx="32" fill="url(#avatar-bg)" />
+        <circle cx="49" cy="14" r="5" fill="#fff" opacity=".2" />
+        <path d="M10 64c1-15 9-22 22-22s21 7 22 22" fill="url(#avatar-shirt)" />
+        <path id="avatar-neck" d="M26 39h12v10H26z" fill="url(#avatar-skin)" />
+        <path id="avatar-hair-back" d="M18 31c-2-15 5-23 15-23 11 0 16 8 14 23l-4 11H21z" />
+        <path id="avatar-ear-left" d="M20 27c-5-2-6 5-1 8l3 1" fill="url(#avatar-skin)" />
+        <path id="avatar-ear-right" d="M44 27c5-2 6 5 1 8l-3 1" fill="url(#avatar-skin)" />
+        <ellipse cx="32" cy="28" rx="13" ry="16" fill="url(#avatar-skin)" />
+        <path id="avatar-fringe" d="M19 25c-1-11 4-18 13-18 10 0 15 7 13 18l-5-7c-5 2-12 2-18 0z" />
+        <path d="M25 28h3m8 0h3" stroke="#332b35" stroke-width="2" stroke-linecap="round" />
+        <path d="M29 36c2 2 4 2 6 0" fill="none" stroke="#a94f58" stroke-width="1.7" stroke-linecap="round" />
+        <circle id="avatar-accessory" cx="32" cy="12" r="3" fill="#fde68a" />
+      </svg>
+      <span class="avatar-initials" id="navbar-avatar-initials" hidden></span>
+      <svg class="avatar-svg" id="navbar-avatar-placeholder" viewBox="0 0 40 40" fill="none" aria-hidden="true">
         <circle cx="20" cy="14" r="7" fill="#0c1015" />
         <path d="M10 32C10 26.4772 14.4772 22 20 22C25.5228 22 30 26.4772 30 32H10Z" fill="#0c1015" />
       </svg>
@@ -191,6 +212,54 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
     transition: transform var(--ease-spring), box-shadow var(--ease-spring);
+    overflow: visible;
+    isolation: isolate;
+  }
+
+  .navbar__avatar::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    z-index: -1;
+    border-radius: inherit;
+    background: conic-gradient(from 0deg, #67e8f9, #818cf8, #f0abfc, #67e8f9);
+    opacity: 0;
+    transition: opacity 180ms ease;
+    animation: avatar-orbit 5s linear infinite;
+  }
+
+  .navbar__avatar:not(.navbar__avatar--offline)::before { opacity: 0.8; }
+
+  .avatar-image, .avatar-initials, .avatar-generated {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  .avatar-generated { overflow: hidden; border: 2px solid rgba(255,255,255,.72); filter: drop-shadow(0 2px 4px rgba(15,23,42,.28)); animation: avatar-float 3s ease-in-out infinite; }
+  .avatar-generated[hidden] { display: none; }
+  @keyframes avatar-float { 50% { transform: translateY(-1px) scale(1.035); } }
+
+  .avatar-image { object-fit: cover; border: 2px solid rgba(255,255,255,.86); }
+
+  .avatar-initials {
+    display: grid;
+    place-items: center;
+    color: white;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    text-shadow: 0 1px 4px rgba(0,0,0,.35);
+    border: 2px solid rgba(255,255,255,.5);
+    background: radial-gradient(circle at 28% 20%, rgba(255,255,255,.42), transparent 38%), var(--avatar-color, #6366f1);
+  }
+
+  .avatar-initials[hidden], .avatar-image[hidden] { display: none; }
+
+  @keyframes avatar-orbit { to { transform: rotate(1turn); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .navbar__avatar::before, .avatar-generated { animation: none; }
   }
 
   .navbar__avatar:hover {
@@ -832,6 +901,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 <script>
   function renderLoggedOut() {
     const avatar = document.getElementById('navbar-avatar');
+    const avatarImage = document.getElementById('navbar-avatar-image');
+    const avatarGenerated = document.getElementById('navbar-avatar-generated');
+    const avatarInitials = document.getElementById('navbar-avatar-initials');
+    const avatarPlaceholder = document.getElementById('navbar-avatar-placeholder');
     const status = document.getElementById('navbar-avatar-status');
     const welcome = document.getElementById('navbar-welcome');
     const userTitle = document.getElementById('navbar-user-title');
@@ -844,6 +917,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       avatar.classList.add('navbar__avatar--offline');
       avatar.title = 'No logueado';
     }
+    if (avatarImage) { avatarImage.hidden = true; avatarImage.removeAttribute('src'); }
+    if (avatarGenerated) avatarGenerated.hidden = true;
+    if (avatarInitials) avatarInitials.hidden = true;
+    if (avatarPlaceholder) avatarPlaceholder.hidden = false;
     if (status) {
       status.classList.add('avatar-status--offline');
       status.title = 'No logueado';
@@ -862,6 +939,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
 
   function renderLoggedIn(user) {
     const avatar = document.getElementById('navbar-avatar');
+    const avatarImage = document.getElementById('navbar-avatar-image');
+    const avatarGenerated = document.getElementById('navbar-avatar-generated');
+    const avatarInitials = document.getElementById('navbar-avatar-initials');
+    const avatarPlaceholder = document.getElementById('navbar-avatar-placeholder');
     const status = document.getElementById('navbar-avatar-status');
     const welcome = document.getElementById('navbar-welcome');
     const userTitle = document.getElementById('navbar-user-title');
@@ -874,6 +955,43 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       avatar.classList.remove('navbar__avatar--offline');
       avatar.title = user?.email ? `Perfil de ${user.email}` : 'Perfil de Desarrollador';
     }
+    const metadata = user?.user_metadata || {};
+    const profileName = metadata.full_name || metadata.name || metadata.display_name || user?.email?.split('@')[0] || 'Estudiante';
+    const avatarUrl = metadata.avatar_url || metadata.picture || metadata.photo_url;
+    const seedText = String(user?.id || profileName);
+    let seed = 0;
+    for (const char of seedText) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+    const palette = [
+      ['#0891b2', '#164e63'], ['#6366f1', '#312e81'], ['#ec4899', '#831843'],
+      ['#22c55e', '#14532d'], ['#f59e0b', '#78350f'], ['#a855f7', '#581c87'],
+      ['#f97316', '#7c2d12'], ['#14b8a6', '#134e4a'],
+    ];
+    const skinTones = [['#fbd4b4', '#d79570'], ['#f1c09a', '#bb7652'], ['#dfaa7d', '#935638'], ['#c98961', '#70402e'], ['#9b6044', '#553327']];
+    const hairColors = ['#241c28', '#3b261d', '#6b3f2b', '#191e36', '#703b55', '#283b35'];
+    const [bgStart, bgEnd] = palette[seed % palette.length];
+    const [skinLight, skinDark] = skinTones[(seed >>> 4) % skinTones.length];
+    const hair = hairColors[(seed >>> 8) % hairColors.length];
+    const setFill = (id, value) => { const node = document.getElementById(id); if (node) node.setAttribute('stop-color', value); };
+    setFill('avatar-bg-start', bgStart); setFill('avatar-bg-end', bgEnd);
+    setFill('avatar-shirt-start', palette[(seed >>> 12) % palette.length][0]);
+    setFill('avatar-shirt-end', palette[(seed >>> 12) % palette.length][1]);
+    setFill('avatar-skin-light', skinLight); setFill('avatar-skin-dark', skinDark);
+    ['avatar-hair-back', 'avatar-fringe'].forEach(id => { const node = document.getElementById(id); if (node) node.setAttribute('fill', hair); });
+    const accessory = document.getElementById('avatar-accessory');
+    if (accessory) accessory.setAttribute('opacity', seed % 3 === 0 ? '1' : '0');
+    if (avatarInitials) {
+      avatarInitials.textContent = profileName.trim().split(/[\s._-]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'RL';
+      avatarInitials.hidden = true;
+    }
+    if (avatarGenerated) avatarGenerated.hidden = Boolean(avatarUrl);
+    if (avatarImage) {
+      avatarImage.hidden = !avatarUrl;
+      if (avatarUrl) {
+        avatarImage.src = avatarUrl;
+        avatarImage.onerror = () => { avatarImage.hidden = true; if (avatarGenerated) avatarGenerated.hidden = false; };
+      } else avatarImage.removeAttribute('src');
+    }
+    if (avatarPlaceholder) avatarPlaceholder.hidden = true;
     if (status) {
       status.classList.remove('avatar-status--offline');
       status.title = 'En línea';
@@ -882,7 +1000,7 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
       welcome.textContent = user?.user_metadata?.rol ? `Rol: ${user.user_metadata.rol}` : 'Espacio de Trabajo';
     }
     if (userTitle) {
-      userTitle.textContent = user?.email || 'DevMaster Pro';
+      userTitle.textContent = profileName;
     }
     if (loginLink) loginLink.hidden = true;
     if (registerLink) registerLink.hidden = true;
