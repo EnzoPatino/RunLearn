@@ -379,7 +379,10 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
   .navbar__nav {
     display: flex;
     justify-content: center;
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 30rem);
   }
 
   .navbar__pills {
@@ -929,9 +932,12 @@ const isClases = currentPath === "/clases" || currentPath === "/clases/";
     }
 
     .navbar__nav {
+      position: static;
       order: 3;
       width: 100%;
+      max-width: none;
       justify-content: center;
+      transform: none;
     }
 
     .navbar__left {
