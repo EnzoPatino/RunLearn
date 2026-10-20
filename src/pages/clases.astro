@@ -2,6 +2,7 @@
 // src/pages/clases.astro
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import ClassIcon from '../components/ClassIcon.astro';
 import { clases, categoriasClases, categoryColors } from '../data/clases.js';
 
 const totalClases = clases.length;
@@ -101,7 +102,10 @@ const totalClases = clases.length;
               </div>
             </div>
 
-            <h3>{clase.title}</h3>
+            <div class="card-heading">
+              <ClassIcon name={clase.icon} />
+              <h3>{clase.title}</h3>
+            </div>
             <p>{clase.description}</p>
 
             <div class="mini">
@@ -416,13 +420,40 @@ const totalClases = clases.length;
   }
 
   .card h3 {
-    margin: 6px 0 0;
+    margin: 0;
     font-size: 22px;
     letter-spacing: -.02em;
     font-family: var(--f);
     font-weight: 700;
     color: var(--fg);
   }
+
+  .card-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    min-height: 36px;
+  }
+
+  .card-heading :global(.tech-icon) {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    padding: 6px;
+    color: var(--c);
+    border: 1px solid color-mix(in srgb, var(--c) 26%, transparent);
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--c) 8%, transparent);
+  }
+
+  .card-heading :global(.tech-icon--docker),
+  .card-heading :global(.tech-icon--redis) {
+    padding: 5px;
+  }
+
+  .card-heading :global(.tech-icon--redis) { color: var(--color-redis); }
+  .card-heading :global(.tech-icon--postgres) { color: #699eca; }
 
   .card p {
     margin: 0;
