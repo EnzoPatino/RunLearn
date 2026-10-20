@@ -45,7 +45,7 @@ sequenceDiagram
 
 ## El aula
 
-RunLearn reúne **20 clases en 9 categorías**, desde los fundamentos de la web hasta seguridad y producción. El catálogo completo vive en [`src/data/clases.js`](src/data/clases.js).
+RunLearn reúne **23 clases en 9 categorías**, desde los fundamentos de la web hasta seguridad y producción. El catálogo completo vive en [`src/data/clases.js`](src/data/clases.js).
 
 | Ruta de aprendizaje | Temas |
 | --- | --- |

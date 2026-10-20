@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import InteractiveLesson from '../components/InteractiveLesson.astro';
+
+const lesson = {
+  title: 'CI/CD con GitHub Actions',
+  category: 'DevOps',
+  description: 'Un cambio puede disparar una secuencia automática de validaciones y publicación. Recorré un pipeline que instala dependencias, compila el sitio y habilita el despliegue si todo sale bien.',
+  nodes: [
+    { id: 'push', label: 'Push al repo' },
+    { id: 'workflow', label: 'Workflow' },
+    { id: 'checks', label: 'Build y checks' },
+    { id: 'deploy', label: 'Despliegue' },
+  ],
+  steps: [
+    { node: 'push', label: '1. Detectar el cambio', code: 'on:\n  push:\n    branches: [main]', explanation: 'El workflow escucha eventos del repositorio. Un push a main puede iniciar una ejecución; también se puede configurar para pull requests u otros eventos.' },
+    { node: 'workflow', label: '2. Preparar el runner', code: 'steps:\n  - uses: actions/checkout@v4\n  - uses: actions/setup-node@v4', explanation: 'GitHub asigna una máquina temporal llamada runner. El workflow descarga el repositorio y prepara la versión de Node.js que necesita el proyecto.' },
+    { node: 'checks', label: '3. Validar y compilar', code: 'run: npm ci\nrun: npm run build', explanation: 'El runner instala las dependencias desde el lockfile y compila el sitio. Si el comando falla, la ejecución se marca como fallida y el despliegue no debería continuar.' },
+    { node: 'deploy', label: '4. Publicar el resultado', code: 'if: success()\nrun: deploy dist/', explanation: 'El paso de publicación se ejecuta solo si las validaciones anteriores terminaron bien. En este ejemplo el despliegue es ilustrativo; el proveedor debe tener sus credenciales configuradas.' },
+  ],
+};
+---
+
+<Layout title="RunLearn — CI/CD con GitHub Actions">
+  <InteractiveLesson {...lesson} />
+</Layout>

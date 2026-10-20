@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import InteractiveLesson from '../components/InteractiveLesson.astro';
+
+const lesson = {
+  title: 'WebSockets en tiempo real',
+  category: 'Redes',
+  description: 'HTTP suele responder a una petición y terminar. WebSocket abre una conexión persistente para que cliente y servidor puedan intercambiar mensajes en ambos sentidos.',
+  nodes: [
+    { id: 'client', label: 'Navegador' },
+    { id: 'handshake', label: 'Handshake HTTP' },
+    { id: 'channel', label: 'Canal abierto' },
+    { id: 'server', label: 'Servidor' },
+  ],
+  steps: [
+    { node: 'client', label: '1. Iniciar conexión', code: 'new WebSocket("wss://runlearn.dev/live")\n// El navegador solicita abrir un canal', explanation: 'El cliente inicia la conexión con una URL ws:// o wss://. La variante segura, wss://, cifra el tráfico con TLS.' },
+    { node: 'handshake', label: '2. Negociar el cambio', code: 'Upgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Key: …', explanation: 'En HTTP/1.1, cliente y servidor negocian el cambio de protocolo mediante un handshake. Si el servidor acepta, responde con 101 Switching Protocols.' },
+    { node: 'channel', label: '3. Mantener el canal', code: 'HTTP/1.1 101 Switching Protocols\n// La conexión permanece abierta', explanation: 'Después del handshake, ambos extremos pueden enviar mensajes sin crear una petición HTTP nueva para cada actualización.' },
+    { node: 'server', label: '4. Enviar datos en vivo', code: 'socket.send(JSON.stringify({\n  evento: "clase_actualizada"\n}))', explanation: 'El servidor también puede iniciar el envío de datos: por ejemplo, avisar que cambió el estado de una tarea o llegó un nuevo mensaje.' },
+  ],
+};
+---
+
+<Layout title="RunLearn — WebSockets en tiempo real">
+  <InteractiveLesson {...lesson} />
+</Layout>

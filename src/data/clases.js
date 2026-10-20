@@ -341,6 +341,54 @@ export const clases = [
     dateAdded: "2026-09-15",
     status: "completo",
   },
+  {
+    id: "dns",
+    title: "DNS",
+    category: "Redes",
+    icon: "globe",
+    description: "Del dominio a la dirección IP",
+    route: "/dns-explicacion",
+    colorAccent: "#22d3ee",
+    snippetCmd: "dig runlearn.dev A +trace",
+    snippetResult: "203.0.113.42 · TTL 300 s",
+    snippetOk: true,
+    level: 1,
+    duration: 6,
+    dateAdded: "2026-10-19",
+    status: "completo",
+  },
+  {
+    id: "websockets",
+    title: "WebSockets",
+    category: "Redes",
+    icon: "globe",
+    description: "Conexiones persistentes en tiempo real",
+    route: "/websockets-explicacion",
+    colorAccent: "#22d3ee",
+    snippetCmd: "Upgrade: websocket",
+    snippetResult: "101 Switching Protocols · canal abierto",
+    snippetOk: true,
+    level: 2,
+    duration: 7,
+    dateAdded: "2026-10-19",
+    status: "completo",
+  },
+  {
+    id: "ci-cd",
+    title: "CI/CD con GitHub Actions",
+    category: "DevOps",
+    icon: "git-merge",
+    description: "Automatizá validaciones y despliegues",
+    route: "/ci-cd-explicacion",
+    colorAccent: "#38bdf8",
+    snippetCmd: "npm ci && npm run build",
+    snippetResult: "Build correcto · listo para desplegar",
+    snippetOk: true,
+    level: 2,
+    duration: 8,
+    dateAdded: "2026-10-19",
+    status: "completo",
+  },
 ];
 
 export const categoriasClases = [
@@ -359,7 +407,7 @@ export const roadmapPhases = [
   {
     title: "Fundamentos",
     subtitle: "Cómo habla la web",
-    classes: ["HTTP / HTTPS", "API", "Base de datos"],
+    classes: ["HTTP / HTTPS", "DNS", "API", "Base de datos"],
   },
   {
     title: "Lógica & Algoritmos",
@@ -369,7 +417,7 @@ export const roadmapPhases = [
   {
     title: "Backend real",
     subtitle: "Rápido y consistente",
-    classes: ["SSR vs CSR", "Caché con Redis", "Transacciones SQL", "Colas de mensajes"],
+    classes: ["SSR vs CSR", "WebSockets", "Caché con Redis", "Transacciones SQL", "Colas de mensajes"],
   },
   {
     title: "Seguridad",
@@ -379,7 +427,7 @@ export const roadmapPhases = [
   {
     title: "Producción",
     subtitle: "Llevalo al mundo",
-    classes: ["Docker", "Servidor", "GitHub", "Bots"],
+    classes: ["Docker", "CI/CD con GitHub Actions", "Servidor", "GitHub", "Bots"],
   },
 ];
 

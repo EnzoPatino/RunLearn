@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import InteractiveLesson from '../components/InteractiveLesson.astro';
+
+const lesson = {
+  title: 'DNS: del dominio a la IP',
+  category: 'Redes',
+  description: 'El DNS traduce nombres fáciles de recordar en direcciones que las máquinas pueden usar. Seguí una consulta desde la caché del navegador hasta el servidor autoritativo.',
+  nodes: [
+    { id: 'browser', label: 'Navegador' },
+    { id: 'resolver', label: 'Resolver DNS' },
+    { id: 'authority', label: 'Autoritativo' },
+    { id: 'server', label: 'Servidor' },
+  ],
+  steps: [
+    { node: 'browser', label: '1. Buscar en caché', code: 'dnsCache.get("runlearn.dev")\n// MISS: todavía no hay una dirección guardada', explanation: 'Antes de salir a la red, el navegador y el sistema operativo revisan sus cachés DNS. Si encuentran una respuesta vigente, pueden reutilizarla; en este recorrido hay un MISS.' },
+    { node: 'resolver', label: '2. Preguntar al resolver', code: 'resolver.query("runlearn.dev", "A")\n// El resolver recursivo busca quién conoce el dominio', explanation: 'El resolver recursivo recibe la consulta en nombre del navegador. Si tampoco tiene una respuesta en caché, recorre las delegaciones DNS hasta encontrar el servidor que administra el dominio.' },
+    { node: 'authority', label: '3. Obtener el registro', code: 'runlearn.dev.  300  IN  A  203.0.113.42', explanation: 'El servidor autoritativo devuelve el registro solicitado. A contiene una dirección IPv4 y TTL 300 indica cuántos segundos puede conservarse en caché.' },
+    { node: 'server', label: '4. Conectar con la IP', code: 'connect("203.0.113.42:443", { sni: "runlearn.dev" })\n// La URL conserva el nombre del dominio', explanation: 'El navegador usa la IP para abrir la conexión, pero conserva el dominio para HTTP y TLS. DNS resuelve el destino; no reemplaza el nombre que aparece en la dirección del sitio.' },
+  ],
+};
+---
+
+<Layout title="RunLearn — DNS: del dominio a la IP">
+  <InteractiveLesson {...lesson} />
+</Layout>
