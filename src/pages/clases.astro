@@ -22,8 +22,12 @@ const totalClases = clases.length;
         <span class="progress-title">Tu avance del curso</span>
         <span class="progress-val" id="progress-val">0 / {totalClases} (0%)</span>
       </div>
-      <div class="progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax={totalClases} aria-valuenow="0">
+      <div class="progress-bar-wrap" role="progressbar" aria-label="Clases completadas" aria-valuemin="0" aria-valuemax={totalClases} aria-valuenow="0" aria-valuetext={`0 de ${totalClases} clases completadas`}>
         <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+      <div class="progress-footer">
+        <span class="progress-hint" id="progress-hint">Tu próxima clase aparece acá.</span>
+        <a class="progress-continue" id="progress-continue" href={clases[0]?.route || "/clases"}><span class="progress-continue-label">Empezar el curso</span><span aria-hidden="true">→</span></a>
       </div>
     </div>
 
@@ -181,6 +185,48 @@ const totalClases = clases.length;
   .progress-val {
     color: var(--lime);
     font-weight: 700;
+  }
+
+  .progress-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 22px;
+  }
+
+  .progress-hint {
+    color: var(--mut);
+    font-family: var(--f);
+    font-size: 12px;
+  }
+
+  .progress-continue {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--lime);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    max-width: 65%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .progress-continue:hover > span:last-child {
+    transform: translateX(3px);
+  }
+
+  .progress-continue span {
+    transition: transform .2s ease;
+  }
+
+  .progress-continue:focus-visible {
+    outline: 2px solid var(--lime);
+    outline-offset: 3px;
+    border-radius: 3px;
   }
 
   .progress-bar-wrap {
@@ -509,6 +555,19 @@ const totalClases = clases.length;
     }
   }
 
+  @media (max-width: 520px) {
+    .progress-footer {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .progress-continue {
+      max-width: 100%;
+      white-space: normal;
+    }
+  }
+
   .ok {
     color: #34d399;
     font-weight: bold;
@@ -605,6 +664,11 @@ const totalClases = clases.length;
   async function syncProgresoUI() {
     const progreso = await getProgreso();
     let completedCount = 0;
+    const nextCard = cards.find((card) => !progreso[card.dataset.id]);
+    const progressBar = document.querySelector('.progress-bar-wrap');
+    const progressContinue = document.getElementById('progress-continue');
+    const progressContinueLabel = progressContinue?.querySelector('.progress-continue-label');
+    const progressHint = document.getElementById('progress-hint');
 
     cards.forEach((card) => {
       const id = card.dataset.id;
@@ -614,6 +678,9 @@ const totalClases = clases.length;
       if (checkBtn) {
         checkBtn.classList.toggle('active', isDone);
         checkBtn.setAttribute('aria-pressed', String(isDone));
+        const action = isDone ? 'Marcar como pendiente' : 'Marcar como completada';
+        checkBtn.title = action;
+        checkBtn.setAttribute('aria-label', `${action}: ${card.dataset.title}`);
       }
       if (isDone) completedCount++;
     });
@@ -623,6 +690,26 @@ const totalClases = clases.length;
     const progressFill = document.getElementById('progress-bar-fill');
     if (progressVal) progressVal.textContent = `${completedCount} / ${totalCards} (${percent}%)`;
     if (progressFill) progressFill.style.width = `${percent}%`;
+    if (progressBar) {
+      progressBar.setAttribute('aria-valuenow', String(completedCount));
+      progressBar.setAttribute('aria-valuetext', `${completedCount} de ${totalCards} clases completadas, ${percent}%`);
+    }
+    if (progressContinue) {
+      const destination = nextCard || cards[0];
+      if (destination) {
+        progressContinue.href = destination.getAttribute('href') || '/clases';
+        if (progressContinueLabel) {
+          progressContinueLabel.textContent = nextCard
+            ? `${completedCount ? 'Continuar' : 'Empezar'}: ${destination.dataset.title}`
+            : 'Repasar una clase';
+        }
+      }
+    }
+    if (progressHint) {
+      progressHint.textContent = nextCard
+        ? `${completedCount} de ${totalCards} clases completadas. Tu siguiente paso:`
+        : 'Completaste todas las clases. Podés volver a recorrerlas.';
+    }
   }
 
   // Interacción de chips de categoría
