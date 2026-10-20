@@ -40,9 +40,7 @@ import BackendErrorBanner from '../components/BackendErrorBanner.astro';
       <div class="header-badge">Módulo de Seguridad Web</div>
       <h1>JWT Inseguro: Secretos Débiles y Algoritmo "none"</h1>
       <p class="lede">
-        Un <strong>JSON Web Token (JWT)</strong> contiene información pública legible por cualquiera. Su seguridad depende
-        <strong>exclusivamente</strong> de que el servidor valide la firma con un secreto inquebrantable y nunca acepte algoritmos no autorizados.
-        Explorá los 3 modos y probá forjar un rol de administrador en tiempo real.
+        Un <strong>JSON Web Token (JWT)</strong> lleva datos de identidad entre una aplicación y un servidor. El payload se puede leer; la firma es lo que permite detectar si alguien lo modificó. En esta simulación vas a comparar dos configuraciones vulnerables con una protegida.
       </p>
     </div>
 
@@ -828,6 +826,7 @@ function setupJwtDemo() {
 
     btnForgeAdmin.disabled = false;
     isAttacking = false;
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
   }
 
   function setStepState(cardEl: HTMLElement | null, indEl: HTMLElement | null, state: 'pending' | 'active' | 'done' | 'failed', text: string) {

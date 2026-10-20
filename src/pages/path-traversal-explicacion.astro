@@ -459,6 +459,7 @@ import {
 
       showStep(3, buildStep3(nombre, result));
       finish(nombre, result);
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
 
       flowCompleted = true;
       running = false;

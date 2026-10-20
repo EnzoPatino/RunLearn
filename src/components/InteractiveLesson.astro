@@ -119,12 +119,18 @@ const { title, category, description, nodes, steps } = Astro.props;
       progress.setAttribute('aria-valuenow', String(current + 1));
       progressFill.style.width = `${((current + 1) / steps.length) * 100}%`;
       previous.disabled = current === 0;
-      next.textContent = current === steps.length - 1 ? 'Volver al inicio ↻' : 'Siguiente paso →';
+      next.textContent = current === steps.length - 1 ? 'Completar clase' : 'Siguiente paso →';
       if (playSound) sound.play('playStep');
     }
 
     previous.addEventListener('click', () => showStep(current - 1));
-    next.addEventListener('click', () => showStep(current === steps.length - 1 ? 0 : current + 1));
+    next.addEventListener('click', () => {
+      if (current === steps.length - 1) {
+        window.dispatchEvent(new Event('runlearn:simulation-complete'));
+        return;
+      }
+      showStep(current + 1);
+    });
     lesson.querySelector('#lesson-reset').addEventListener('click', () => showStep(0));
     showStep(0, false);
   }

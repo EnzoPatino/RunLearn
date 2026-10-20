@@ -468,6 +468,7 @@ import {
       showBackendErrorBanner('csrf-backend-error', errMsg);
       addConsoleLine('err', `Error de conexión con el servidor: ${errMsg}`);
     }
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
   }
 
   function addConsoleLine(type, text) {

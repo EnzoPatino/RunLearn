@@ -729,6 +729,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         btnRunSim.removeAttribute('disabled');
         btnRunSim.textContent = 'Simulación finalizada';
       }
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
     }, 3800);
   }
 
@@ -849,6 +850,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         btnRunSim.removeAttribute('disabled');
         btnRunSim.textContent = 'Simulación finalizada';
       }
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
     }, 4000);
   }
 

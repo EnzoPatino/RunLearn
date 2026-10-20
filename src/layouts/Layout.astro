@@ -6,6 +6,8 @@ interface Props {
 const { title = "RunLearn – Aula Virtual & Arquitectura Backend" } = Astro.props;
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/global.css";
+import LessonCompletion from "../components/LessonCompletion.astro";
+import SimulationGuide from "../components/SimulationGuide.astro";
 ---
 
 <!DOCTYPE html>
@@ -53,6 +55,9 @@ import "../styles/global.css";
       <slot />
     </main>
   </div>
+
+  <LessonCompletion />
+  <SimulationGuide />
 
   <script>
     // Solo activar el spotlight en dispositivos con mouse real (hover y pointer fino)

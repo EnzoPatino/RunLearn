@@ -338,6 +338,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         button.disabled = false;
         button.textContent = key === 'http' ? 'Animar HTTP de nuevo' : 'Animar HTTPS de nuevo';
         sound.play('playSuccess');
+        window.dispatchEvent(new Event('runlearn:simulation-complete'));
         return;
       }
 

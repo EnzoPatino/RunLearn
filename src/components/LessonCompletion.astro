@@ -1,0 +1,136 @@
+<dialog class="lesson-completion" id="lesson-completion" aria-labelledby="lesson-completion-title">
+  <form method="dialog" class="lesson-completion__close-wrap">
+    <button class="lesson-completion__close" aria-label="Cerrar cuestionario">×</button>
+  </form>
+  <span class="lesson-completion__eyebrow">SIMULACIÓN TERMINADA</span>
+  <h2 id="lesson-completion-title">Completá la clase</h2>
+  <p class="lesson-completion__intro" id="lesson-completion-intro">Respondé una pregunta sobre lo que acabás de ver.</p>
+  <h3 class="lesson-completion__question" id="lesson-completion-question"></h3>
+  <div class="lesson-completion__answers" id="lesson-completion-answers" role="group" aria-labelledby="lesson-completion-question"></div>
+  <p class="lesson-completion__feedback" id="lesson-completion-feedback" aria-live="polite"></p>
+  <div class="lesson-completion__footer">
+    <a class="lesson-completion__back" href="/clases">Volver a las clases</a>
+    <button class="lesson-completion__submit" id="lesson-completion-submit" type="button" disabled>Completar curso</button>
+  </div>
+</dialog>
+
+<script>
+  import { clases } from '../data/clases.js';
+  import { preguntasClases } from '../data/preguntasClases.js';
+  import { setProgresoClase } from '../lib/progreso.js';
+
+  const dialog = document.getElementById('lesson-completion');
+  const questionEl = document.getElementById('lesson-completion-question');
+  const answersEl = document.getElementById('lesson-completion-answers');
+  const feedbackEl = document.getElementById('lesson-completion-feedback');
+  const introEl = document.getElementById('lesson-completion-intro');
+  const submitButton = document.getElementById('lesson-completion-submit');
+  let activeClassId = '';
+  let answeredCorrectly = false;
+
+  function renderQuestion() {
+    if (!activeClassId || !dialog || !answersEl || !questionEl) return;
+    const quiz = preguntasClases[activeClassId];
+    if (!quiz) return;
+
+    answeredCorrectly = false;
+    questionEl.textContent = quiz.question;
+    answersEl.replaceChildren();
+    if (feedbackEl) feedbackEl.textContent = '';
+    if (introEl) introEl.textContent = 'Elegí una respuesta. Si acertás, podés completar la clase.';
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Completar curso';
+    }
+
+    quiz.answers.forEach((answer, index) => {
+      const button = document.createElement('button');
+      button.className = 'lesson-completion__answer';
+      button.type = 'button';
+      button.textContent = answer;
+      button.addEventListener('click', () => {
+        const isCorrect = index === quiz.correct;
+        answersEl.querySelectorAll('button').forEach((choice) => {
+          choice.classList.remove('is-correct', 'is-incorrect');
+          choice.setAttribute('aria-pressed', 'false');
+        });
+        button.classList.add(isCorrect ? 'is-correct' : 'is-incorrect');
+        button.setAttribute('aria-pressed', 'true');
+        answeredCorrectly = isCorrect;
+        if (feedbackEl) {
+          feedbackEl.textContent = isCorrect
+            ? `Correcto. ${quiz.explanation}`
+            : 'Esa opción no es correcta. Revisá la explicación y probá otra vez.';
+        }
+        if (submitButton) submitButton.disabled = !isCorrect;
+      });
+      answersEl.append(button);
+    });
+  }
+
+  window.addEventListener('runlearn:simulation-complete', () => {
+    const route = window.location.pathname.replace(/\/+$/, '') || '/';
+    const lessonClass = clases.find((item) => item.route.replace(/\/+$/, '') === route);
+    if (!lessonClass || !preguntasClases[lessonClass.id] || !dialog) return;
+    activeClassId = lessonClass.id;
+    renderQuestion();
+    if (!dialog.open) dialog.showModal();
+  });
+
+  submitButton?.addEventListener('click', async () => {
+    if (!answeredCorrectly || !activeClassId || !submitButton) return;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Guardando…';
+    await setProgresoClase(activeClassId, true);
+    if (introEl) introEl.textContent = 'La clase quedó marcada como completada en tu avance.';
+    if (feedbackEl) feedbackEl.textContent = '¡Bien! Ya podés seguir con la próxima clase.';
+    if (answersEl) answersEl.hidden = true;
+    submitButton.hidden = true;
+  });
+
+  dialog?.addEventListener('close', () => {
+    if (answersEl) answersEl.hidden = false;
+    if (submitButton) submitButton.hidden = false;
+  });
+</script>
+
+<style>
+  .lesson-completion {
+    width: min(560px, calc(100% - 28px));
+    max-width: none;
+    max-height: min(88vh, 760px);
+    padding: 30px;
+    overflow: auto;
+    color: var(--text-primary);
+    background: linear-gradient(145deg, #141a20, #0d1116);
+    border: 1px solid var(--border-subtle);
+    border-radius: 22px;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, .55);
+  }
+
+  .lesson-completion::backdrop { background: rgba(3, 5, 8, .78); backdrop-filter: blur(8px); }
+  .lesson-completion__close-wrap { position: absolute; top: 14px; right: 14px; }
+  .lesson-completion__close { width: 34px; height: 34px; color: var(--text-secondary); background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 50%; cursor: pointer; font-size: 20px; }
+  .lesson-completion__eyebrow { color: var(--lime); font: 700 10px var(--font-mono); letter-spacing: .14em; }
+  .lesson-completion h2 { margin: 10px 40px 8px 0; font-size: clamp(24px, 5vw, 32px); letter-spacing: -.04em; }
+  .lesson-completion__intro { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+  .lesson-completion__question { margin: 24px 0 12px; font-size: 17px; line-height: 1.45; }
+  .lesson-completion__answers { display: grid; gap: 9px; }
+  .lesson-completion__answer { width: 100%; padding: 13px 15px; color: var(--text-primary); text-align: left; font: 500 14px/1.5 var(--font-main); background: rgba(255, 255, 255, .035); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; transition: border-color .18s, background .18s, transform .18s; }
+  .lesson-completion__answer:hover { border-color: var(--lime); transform: translateY(-1px); }
+  .lesson-completion__answer.is-correct { border-color: var(--color-success); background: rgba(16, 185, 129, .12); }
+  .lesson-completion__answer.is-incorrect { border-color: #fb7185; background: rgba(251, 113, 133, .1); }
+  .lesson-completion__feedback { min-height: 22px; margin: 12px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+  .lesson-completion__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+  .lesson-completion__back { color: var(--text-secondary); font-size: 13px; text-decoration: none; }
+  .lesson-completion__back:hover { color: var(--text-primary); }
+  .lesson-completion__submit { min-height: 44px; padding: 0 18px; color: #11150a; background: var(--lime); border: 0; border-radius: 999px; font: 700 13px var(--font-main); cursor: pointer; }
+  .lesson-completion__submit:disabled { opacity: .45; cursor: not-allowed; }
+  .lesson-completion :focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+  @media (max-width: 480px) {
+    .lesson-completion { padding: 24px 18px 18px; }
+    .lesson-completion__footer { align-items: stretch; flex-direction: column-reverse; }
+    .lesson-completion__submit { width: 100%; }
+  }
+</style>

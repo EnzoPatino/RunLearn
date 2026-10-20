@@ -375,6 +375,7 @@ import {
       sound.play('playAlert');
     } finally {
       if (btnSearch) btnSearch.disabled = false;
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
     }
   }
 

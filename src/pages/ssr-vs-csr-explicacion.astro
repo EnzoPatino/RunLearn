@@ -202,6 +202,7 @@ import { initSoundControls } from '../lib/soundControls.js';
     btnRun.textContent = 'Simular de nuevo';
     phase.textContent = `Contenido visible en ${modes[mode].visible} ms`;
     sound.play('playSuccess');
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
   }
 
   function next() {

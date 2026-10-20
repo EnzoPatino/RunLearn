@@ -276,6 +276,7 @@ import { initSoundControls } from '../lib/soundControls.js';
       btnRun.disabled = false;
       btnRun.textContent = 'Simular de nuevo';
       sound.play('playSuccess');
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
       return;
     }
     renderStep(currentStep);

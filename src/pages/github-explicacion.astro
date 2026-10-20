@@ -303,6 +303,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         btnRun.textContent = 'Volver a simular';
         btnRun.disabled = false;
       }
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
       return;
     }
     renderStep(currentStep);

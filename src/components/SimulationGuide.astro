@@ -1,0 +1,52 @@
+<aside class="simulation-guide" id="simulation-guide" aria-labelledby="simulation-guide-title" hidden>
+  <div class="simulation-guide__mark" aria-hidden="true">?</div>
+  <div class="simulation-guide__content">
+    <h2 id="simulation-guide-title">Cómo probar esta simulación</h2>
+    <ol id="simulation-guide-steps"></ol>
+    <p><strong>Qué observar:</strong> <span id="simulation-guide-observe"></span></p>
+  </div>
+</aside>
+
+<script>
+  import { clases } from '../data/clases.js';
+  import { guiasSimulaciones } from '../data/guiasSimulaciones.js';
+
+  const guide = document.getElementById('simulation-guide');
+  const stepsList = document.getElementById('simulation-guide-steps');
+  const observeText = document.getElementById('simulation-guide-observe');
+  const route = window.location.pathname.replace(/\/+$/, '') || '/';
+  const lessonClass = clases.find((item) => item.route.replace(/\/+$/, '') === route);
+  const content = lessonClass && guiasSimulaciones[lessonClass.id];
+
+  if (guide && content && stepsList && observeText) {
+    content.steps.forEach((step) => {
+      const item = document.createElement('li');
+      item.textContent = step;
+      stepsList.append(item);
+    });
+    observeText.textContent = content.observe;
+    guide.hidden = false;
+
+    const intro = document.querySelector('.lesson-intro');
+    const lede = document.querySelector('.lede');
+    if (intro) intro.insertAdjacentElement('afterend', guide);
+    else if (lede) lede.insertAdjacentElement('afterend', guide);
+  }
+</script>
+
+<style>
+  .simulation-guide { display: flex; align-items: flex-start; gap: 14px; margin: 18px 0 24px; padding: 16px 18px; color: var(--text-secondary); background: rgba(255, 255, 255, .035); border: 1px solid var(--border-subtle); border-radius: 14px; }
+  .simulation-guide[hidden] { display: none; }
+  .simulation-guide__mark { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; color: var(--ink); background: var(--lime); border-radius: 50%; font: 800 14px var(--font-main); }
+  .simulation-guide__content { min-width: 0; }
+  .simulation-guide h2 { margin: 1px 0 8px; color: var(--text-primary); font-size: 15px; }
+  .simulation-guide ol { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; }
+  .simulation-guide li + li { margin-top: 2px; }
+  .simulation-guide p { margin: 8px 0 0; font-size: 12px; line-height: 1.65; }
+  .simulation-guide strong { color: var(--text-primary); }
+
+  @media (max-width: 540px) {
+    .simulation-guide { gap: 10px; padding: 14px; }
+    .simulation-guide ol { padding-left: 17px; }
+  }
+</style>

@@ -540,6 +540,7 @@ import {
 
       showStep(4, buildStep5(who, result));
       finish(who, consoleEl, result);
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
 
       running = false;
       setButtonsDisabled(false);

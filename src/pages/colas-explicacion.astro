@@ -250,6 +250,9 @@ import { initSoundControls } from '../lib/soundControls.js';
     btnToggle.textContent = running ? 'Pausar simulación' : 'Iniciar simulación';
     scheduleProducer();
     scheduleConsumer();
+    if (!running && processed > 0) {
+      window.dispatchEvent(new Event('runlearn:simulation-complete'));
+    }
     if (running) {
       produce();
       window.setTimeout(consume, 220);

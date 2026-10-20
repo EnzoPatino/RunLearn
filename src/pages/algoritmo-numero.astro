@@ -531,6 +531,7 @@ const maxVal = Math.max(...defaultArray);
         if (currentStep === steps.length - 1) {
           stopRunning();
           btnRun.textContent = 'Simular de nuevo';
+          window.dispatchEvent(new Event('runlearn:simulation-complete'));
         } else if (isRunning) {
           timer = setTimeout(nextStep, SPEED_MS);
         }
@@ -603,6 +604,7 @@ const maxVal = Math.max(...defaultArray);
         if (currentStep < steps.length - 1) {
           currentStep++;
           applyStep(currentStep);
+          if (currentStep === steps.length - 1) window.dispatchEvent(new Event('runlearn:simulation-complete'));
         }
       });
     }

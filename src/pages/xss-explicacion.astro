@@ -434,6 +434,7 @@ import { initSoundControls } from '../lib/soundControls.js';
         highlightCode(['sec']);
       }
     }
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
   }
 
   // Event listeners

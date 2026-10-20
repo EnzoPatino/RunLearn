@@ -315,6 +315,7 @@ import {
         showResult(true, data.timing);
         segs.forEach((s, i) => { s.classList.toggle('done', i <= 2); s.classList.add('response'); });
         stepCount.textContent = '3 / 3';
+        window.dispatchEvent(new Event('runlearn:simulation-complete'));
 
       } else {
         // MISS path
@@ -384,6 +385,7 @@ import {
 
     btnConsult.disabled = false;
     btnConsult.textContent = 'Consultar dato';
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
   }
 
   function reset() {
