@@ -12,6 +12,40 @@ export const categoryColors = {
 
 export const clases = [
   {
+    id: "indices-btree",
+    title: "Índices B-Tree",
+    category: "Almacén",
+    icon: "binary-tree",
+    description: "B-Tree vs Seq Scan, buffers de 8KB y EXPLAIN ANALYZE",
+    route: "/indices-btree-explicacion",
+    colorAccent: "#a78bfa",
+    snippetCmd: "EXPLAIN ANALYZE SELECT * WHERE id = 7842",
+    snippetResult: "Index Scan: 4 buffers · 0.4 ms (vs 417 buffers · 24 ms)",
+    snippetOk: true,
+    level: 2,
+    duration: 8,
+    dateAdded: "2026-10-28",
+    status: "completo",
+    featured: true,
+  },
+  {
+    id: "graphql",
+    title: "GraphQL vs REST",
+    category: "Backend",
+    icon: "graphql",
+    description: "Over-fetching, AST de resolvers y consultas precisas",
+    route: "/graphql-explicacion",
+    colorAccent: "#60a5fa",
+    snippetCmd: "POST /graphql { user { nombre } }",
+    snippetResult: "1 request · 180 B (vs 3 requests · 4.8 KB)",
+    snippetOk: true,
+    level: 2,
+    duration: 8,
+    dateAdded: "2026-10-28",
+    status: "completo",
+    featured: true,
+  },
+  {
     id: "rate-limit",
     title: "Rate Limiting",
     category: "Seguridad",
@@ -424,7 +458,7 @@ export const roadmapPhases = [
   {
     title: "Fundamentos",
     subtitle: "Cómo habla la web",
-    classes: ["HTTP / HTTPS", "DNS", "API", "Base de datos"],
+    classes: ["HTTP / HTTPS", "DNS", "API", "Base de datos", "Índices B-Tree"],
   },
   {
     title: "Lógica & Algoritmos",
@@ -434,7 +468,7 @@ export const roadmapPhases = [
   {
     title: "Backend real",
     subtitle: "Rápido y consistente",
-    classes: ["SSR vs CSR", "WebSockets", "Caché con Redis", "Transacciones SQL", "Colas de mensajes"],
+    classes: ["SSR vs CSR", "GraphQL vs REST", "WebSockets", "Caché con Redis", "Transacciones SQL", "Colas de mensajes"],
   },
   {
     title: "Seguridad",

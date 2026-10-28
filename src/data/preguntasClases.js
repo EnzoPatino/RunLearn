@@ -1,4 +1,24 @@
 export const preguntasClases = {
+  'indices-btree': {
+    question: '¿Por qué un índice B-Tree en PostgreSQL permite encontrar una fila entre un millón en menos de 1 milisegundo?',
+    answers: [
+      'Porque recorre la estructura en tiempo logarítmico O(log N), leyendo solo 3 o 4 páginas de disco en lugar de escanear la tabla completa',
+      'Porque almacena toda la tabla en la memoria RAM del navegador',
+      'Porque convierte la consulta SQL en un script de bash',
+    ],
+    correct: 0,
+    explanation: 'Un índice B-Tree organiza las claves de forma balanceada. El motor recorre el nodo raíz, una rama intermedia y una hoja, obteniendo el puntero TID de la tupla con solo 3 o 4 lecturas de buffers de 8 KB.',
+  },
+  graphql: {
+    question: '¿Qué problema fundamental de las APIs REST resuelve GraphQL al permitir que el cliente especifique exactamente los campos que necesita?',
+    answers: [
+      'El problema de Over-fetching (recibir campos innecesarios) y Under-fetching (hacer múltiples llamadas para datos relacionados)',
+      'La necesidad de tener una base de datos relacional',
+      'La obligación de cifrar las conexiones con certificados SSL',
+    ],
+    correct: 0,
+    explanation: 'GraphQL permite solicitar exactamente los datos requeridos en una única petición HTTP POST, evitando transferir kilobytes de datos no deseados y reduciendo los viajes de red (round-trips).',
+  },
   'rate-limit': {
     question: '¿Qué cabecera HTTP estándar y código de respuesta usa el servidor para indicar que se superó el límite de peticiones y cuándo reintentar?',
     answers: [

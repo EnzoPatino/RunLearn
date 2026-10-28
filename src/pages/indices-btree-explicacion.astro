@@ -1,0 +1,882 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
+---
+
+<Layout title="RunLearn — Índices B-Tree en Bases de Datos">
+  <div class="api-page">
+    <header class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <nav class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <a href="/clases">Clases</a>
+          <span class="sep">/</span>
+          <span class="current">Índices B-Tree</span>
+        </nav>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true"></span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </header>
+
+    <section class="lesson-header">
+      <span class="badge-tag">Almacén & Optimización de Consultas</span>
+      <h1>Índices B-Tree: De 100.000 Filas a 4 Lecturas de Disco</h1>
+      <p class="lede">
+        En un motor relacional como PostgreSQL, los datos viven en páginas de disco de <strong>8 KB</strong> dentro de una estructura no ordenada llamada <em>Heap</em>. Sin un índice, encontrar una fila requiere un <strong>Sequential Scan</strong>: leer cada página del disco de principio a fin ($O(N)$). Con un índice <strong>B-Tree (Balanced Tree)</strong>, el motor salta de la raíz a una hoja en $O(\log N)$, leyendo únicamente 3 o 4 buffers de memoria para encontrar el puntero exacto (TID).
+      </p>
+    </section>
+
+    <!-- Banner de error si el backend no responde -->
+    <BackendErrorBanner
+      id="btree-backend-error"
+      message="No se pudo conectar con el servidor backend. Usando simulación local en el navegador."
+      hint="El backend Express expone /api/indexing-demo/explain con planes EXPLAIN ANALYZE reales."
+    />
+
+    <!-- CONTROLES DEL MOTOR DE BÚSQUEDA -->
+    <div class="query-config-card">
+      <div class="config-row">
+        <div class="config-item">
+          <label for="input-target-id">Registro a buscar (ID):</label>
+          <div class="input-with-btn">
+            <input type="number" id="input-target-id" value="7842" min="1" max="100000" />
+            <button type="button" class="btn-rnd" id="btn-random-id">Aleatorio</button>
+          </div>
+        </div>
+
+        <div class="config-item">
+          <label for="select-total-rows">Volumen de la tabla:</label>
+          <select id="select-total-rows">
+            <option value="10000">10.000 filas (~83 páginas Heap)</option>
+            <option value="50000" selected>50.000 filas (~417 páginas Heap)</option>
+            <option value="100000">100.000 filas (~833 páginas Heap)</option>
+          </select>
+        </div>
+
+        <div class="config-item">
+          <label>Estrategia de ejecución:</label>
+          <div class="strategy-toggle">
+            <button type="button" class="strat-btn active" id="btn-strat-btree">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="5" r="2.5" />
+                <circle cx="6" cy="19" r="2.5" />
+                <circle cx="18" cy="19" r="2.5" />
+                <line x1="10.5" y1="7" x2="7.5" y2="17" />
+                <line x1="13.5" y1="7" x2="16.5" y2="17" />
+              </svg>
+              Con Índice B-Tree
+            </button>
+            <button type="button" class="strat-btn" id="btn-strat-seq">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="18" x2="20" y2="18" />
+              </svg>
+              Sequential Scan
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="btn-run-query" id="btn-run-query">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Ejecutar Consulta
+        </button>
+      </div>
+    </div>
+
+    <!-- TARJETAS DE RENDIMIENTO -->
+    <div class="metrics-row">
+      <div class="stat-card">
+        <span class="stat-lbl">Páginas de disco leídas</span>
+        <span class="stat-val highlight" id="val-pages">4 buffers</span>
+        <span class="stat-desc" id="sub-pages">32 KB transferidos desde RAM/Disco</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-lbl">Filas examinadas</span>
+        <span class="stat-val highlight" id="val-rows">1 fila</span>
+        <span class="stat-desc" id="sub-rows">Puntero directo al Item Pointer</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-lbl">Tiempo de ejecución</span>
+        <span class="stat-val highlight" id="val-time">0.42 ms</span>
+        <span class="stat-desc" id="sub-time">Complejidad O(log N)</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-lbl">Puntero TID en Disco</span>
+        <span class="stat-val" id="val-tid">(Page: 65, Item: 42)</span>
+        <span class="stat-desc">Tupla localizada en el Heap</span>
+      </div>
+    </div>
+
+    <!-- SIMULADOR VISUAL DEL ÁRBOL B-TREE VS HEAP -->
+    <div class="tree-canvas-card">
+      <div class="card-title-bar">
+        <span>Visualizador del Recorrido en Disco</span>
+        <span class="badge-mini" id="canvas-badge">B-TREE INDEX SCAN</span>
+      </div>
+
+      <!-- ARQUITECTURA B-TREE INTERACTIVA -->
+      <div class="tree-container" id="tree-container">
+        <!-- NIVEL 0: NODO RAÍZ -->
+        <div class="tree-level">
+          <span class="level-lbl">Nivel 0 · Nodo Raíz (Page 1)</span>
+          <div class="tree-nodes">
+            <div class="tree-node active-path" id="node-root">
+              <span class="node-key">Raíz: [ 1 .. 50.000 ]</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-connector-line"></div>
+
+        <!-- NIVEL 1: NODOS INTERMEDIOS -->
+        <div class="tree-level">
+          <span class="level-lbl">Nivel 1 · Ramas Intermedias</span>
+          <div class="tree-nodes" id="internal-nodes">
+            <div class="tree-node" id="branch-0">[ 1 .. 12.500 ]</div>
+            <div class="tree-node" id="branch-1">[ 12.501 .. 25.000 ]</div>
+            <div class="tree-node" id="branch-2">[ 25.001 .. 37.500 ]</div>
+            <div class="tree-node" id="branch-3">[ 37.501 .. 50.000 ]</div>
+          </div>
+        </div>
+
+        <div class="tree-connector-line"></div>
+
+        <!-- NIVEL 2: HOJAS CON TIDs -->
+        <div class="tree-level">
+          <span class="level-lbl">Nivel 2 · Hojas con Punteros a Datos (Leaf Pages)</span>
+          <div class="tree-nodes" id="leaf-nodes">
+            <div class="tree-node leaf" id="leaf-node">
+              <span class="leaf-key" id="leaf-key-label">Key: 7842</span>
+              <span class="leaf-tid" id="leaf-tid-label">TID: (Block 65, Item 42)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-connector-line arrow"></div>
+
+        <!-- TABLA HEAP EN DISCO -->
+        <div class="tree-level heap-level">
+          <span class="level-lbl">Tabla Heap en Disco (Páginas de 8 KB)</span>
+          <div class="heap-strip" id="heap-strip">
+            <!-- Bloques simulados de páginas -->
+            <div class="heap-block">Page 63</div>
+            <div class="heap-block">Page 64</div>
+            <div class="heap-block target-block" id="target-heap-block">
+              Page 65 [Tupla encontrada]
+            </div>
+            <div class="heap-block">Page 66</div>
+            <div class="heap-block">Page 67</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISOR SEQ SCAN ALTERNATIVO -->
+      <div class="seq-scan-container" id="seq-scan-container" style="display: none;">
+        <div class="seq-progress-header">
+          <span>Escaneo secuencial página por página:</span>
+          <span id="seq-counter-text">Leyendo página 1 de 417...</span>
+        </div>
+        <div class="seq-bar">
+          <div class="seq-fill" id="seq-fill" style="width: 0%;"></div>
+        </div>
+        <div class="seq-pages-grid" id="seq-pages-grid">
+          <!-- Bloques que se van pintando de rojo -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TERMINAL DE EXPLAIN ANALYZE -->
+    <div class="explain-card">
+      <div class="card-title-bar">
+        <span>Salida del Optimizador de PostgreSQL: EXPLAIN (ANALYZE, BUFFERS)</span>
+        <span class="query-cmd">SELECT * FROM users WHERE id = <span id="explain-id-val">7842</span>;</span>
+      </div>
+      <pre class="explain-pre"><code id="explain-code">-- Ejecutá la consulta para ver el plan de ejecución del motor.</code></pre>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { initSoundControls } from '../lib/soundControls.js';
+  import { getApiBaseUrl, fetchWithTimeout, showBackendErrorBanner, hideBackendErrorBanner } from '../lib/apiClient.js';
+
+  const sound = initSoundControls();
+  const API_BASE = getApiBaseUrl();
+
+  let useIndex = true;
+  let targetId = 7842;
+  let totalRows = 50000;
+  let simulationCompleted = false;
+
+  const inputTargetId = document.getElementById('input-target-id');
+  const selectTotalRows = document.getElementById('select-total-rows');
+  const btnStratBtree = document.getElementById('btn-strat-btree');
+  const btnStratSeq = document.getElementById('btn-strat-seq');
+  const btnRandomId = document.getElementById('btn-random-id');
+  const btnRunQuery = document.getElementById('btn-run-query');
+
+  const treeContainer = document.getElementById('tree-container');
+  const seqScanContainer = document.getElementById('seq-scan-container');
+  const canvasBadge = document.getElementById('canvas-badge');
+  const explainCode = document.getElementById('explain-code');
+  const explainIdVal = document.getElementById('explain-id-val');
+
+  // Metricas
+  const valPages = document.getElementById('val-pages');
+  const subPages = document.getElementById('sub-pages');
+  const valRows = document.getElementById('val-rows');
+  const subRows = document.getElementById('sub-rows');
+  const valTime = document.getElementById('val-time');
+  const subTime = document.getElementById('sub-time');
+  const valTid = document.getElementById('val-tid');
+
+  // Tree nodes
+  const branch0 = document.getElementById('branch-0');
+  const branch1 = document.getElementById('branch-1');
+  const branch2 = document.getElementById('branch-2');
+  const branch3 = document.getElementById('branch-3');
+  const leafKeyLabel = document.getElementById('leaf-key-label');
+  const leafTidLabel = document.getElementById('leaf-tid-label');
+  const targetHeapBlock = document.getElementById('target-heap-block');
+
+  function setStrategy(isBtree) {
+    useIndex = isBtree;
+    sound.play('playStep');
+
+    btnStratBtree?.classList.toggle('active', isBtree);
+    btnStratSeq?.classList.toggle('active', !isBtree);
+
+    if (isBtree) {
+      if (treeContainer) treeContainer.style.display = 'flex';
+      if (seqScanContainer) seqScanContainer.style.display = 'none';
+      if (canvasBadge) {
+        canvasBadge.textContent = 'B-TREE INDEX SCAN';
+        canvasBadge.className = 'badge-mini';
+      }
+    } else {
+      if (treeContainer) treeContainer.style.display = 'none';
+      if (seqScanContainer) seqScanContainer.style.display = 'flex';
+      if (canvasBadge) {
+        canvasBadge.textContent = 'SEQUENTIAL FULL TABLE SCAN';
+        canvasBadge.className = 'badge-mini badge-warning';
+      }
+    }
+  }
+
+  btnStratBtree?.addEventListener('click', () => setStrategy(true));
+  btnStratSeq?.addEventListener('click', () => setStrategy(false));
+
+  btnRandomId?.addEventListener('click', () => {
+    targetId = Math.floor(Math.random() * (totalRows - 100)) + 50;
+    if (inputTargetId) inputTargetId.value = String(targetId);
+    if (explainIdVal) explainIdVal.textContent = String(targetId);
+    sound.play('playStep');
+  });
+
+  inputTargetId?.addEventListener('input', () => {
+    targetId = Math.max(1, Number(inputTargetId.value) || 1);
+    if (explainIdVal) explainIdVal.textContent = String(targetId);
+  });
+
+  selectTotalRows?.addEventListener('change', () => {
+    totalRows = Number(selectTotalRows.value) || 50000;
+    if (targetId > totalRows) {
+      targetId = Math.floor(totalRows * 0.5);
+      if (inputTargetId) inputTargetId.value = String(targetId);
+      if (explainIdVal) explainIdVal.textContent = String(targetId);
+    }
+  });
+
+  async function executeExplain() {
+    sound.play('playStep');
+    if (btnRunQuery) btnRunQuery.disabled = true;
+
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE}/api/indexing-demo/explain`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetId, useIndex, totalRows }),
+        },
+        3000
+      );
+
+      hideBackendErrorBanner('btree-backend-error');
+      const data = await res.json();
+      renderExplainResult(data);
+    } catch {
+      showBackendErrorBanner('btree-backend-error', 'Backend offline. Ejecutando simulación en cliente.');
+      // Fallback local
+      const page = Math.ceil(targetId / 120);
+      const mockData = useIndex
+        ? {
+            method: 'Index Scan (B-Tree)',
+            complexity: 'O(log N)',
+            totalBuffers: 4,
+            rowsExamined: 1,
+            executionTimeMs: 0.38,
+            explainOutput: `Index Scan using users_pkey on users  (cost=0.41..8.43 rows=1)\n  Index Cond: (id = ${targetId})\n  Buffers: shared hit=4\nExecution Time: 0.38 ms`,
+          }
+        : {
+            method: 'Seq Scan (Full Table Scan)',
+            complexity: 'O(N)',
+            totalBuffers: page,
+            rowsExamined: targetId,
+            executionTimeMs: 22.4,
+            explainOutput: `Seq Scan on users  (cost=0.00..625.00 rows=1)\n  Filter: (id = ${targetId})\n  Rows Removed by Filter: ${targetId - 1}\n  Buffers: shared read=${page}\nExecution Time: 22.4 ms`,
+          };
+      renderExplainResult(mockData);
+    }
+
+    if (btnRunQuery) btnRunQuery.disabled = false;
+
+    if (!simulationCompleted) {
+      simulationCompleted = true;
+      setTimeout(() => {
+        window.dispatchEvent(new Event('runlearn:simulation-complete'));
+      }, 1000);
+    }
+  }
+
+  function renderExplainResult(data) {
+    const pageNum = Math.ceil(targetId / 120);
+    const itemNum = (targetId % 120) || 1;
+
+    if (explainCode) explainCode.textContent = data.explainOutput;
+
+    if (useIndex) {
+      if (valPages) {
+        valPages.textContent = `${data.totalBuffers} buffers`;
+        valPages.className = 'stat-val highlight';
+      }
+      if (subPages) subPages.textContent = '3 buffers de índice + 1 del Heap';
+
+      if (valRows) {
+        valRows.textContent = '1 fila';
+        valRows.className = 'stat-val highlight';
+      }
+      if (subRows) subRows.textContent = 'Recorrido logarítmico O(log N)';
+
+      if (valTime) {
+        valTime.textContent = `${data.executionTimeMs} ms`;
+        valTime.className = 'stat-val highlight';
+      }
+      if (subTime) subTime.textContent = 'Velocidad instantánea';
+
+      if (valTid) valTid.textContent = `(Block: ${pageNum}, Item: ${itemNum})`;
+
+      // Animación en el árbol
+      [branch0, branch1, branch2, branch3].forEach((b) => b?.classList.remove('active-path'));
+      const q = totalRows / 4;
+      if (targetId <= q) branch0?.classList.add('active-path');
+      else if (targetId <= q * 2) branch1?.classList.add('active-path');
+      else if (targetId <= q * 3) branch2?.classList.add('active-path');
+      else branch3?.classList.add('active-path');
+
+      if (leafKeyLabel) leafKeyLabel.textContent = `Key: ${targetId}`;
+      if (leafTidLabel) leafTidLabel.textContent = `TID: (${pageNum}, ${itemNum})`;
+      if (targetHeapBlock) targetHeapBlock.textContent = `Page ${pageNum} [ID: ${targetId}]`;
+    } else {
+      // Seq Scan
+      if (valPages) {
+        valPages.textContent = `${data.totalBuffers} buffers`;
+        valPages.className = 'stat-val warning';
+      }
+      if (subPages) subPages.textContent = `${((data.totalBuffers * 8) / 1024).toFixed(1)} MB leídos desde disco`;
+
+      if (valRows) {
+        valRows.textContent = `${data.rowsExamined} filas`;
+        valRows.className = 'stat-val warning';
+      }
+      if (subRows) subRows.textContent = 'Tuvo que descartar cada fila previa';
+
+      if (valTime) {
+        valTime.textContent = `${data.executionTimeMs} ms`;
+        valTime.className = 'stat-val warning';
+      }
+      if (subTime) subTime.textContent = 'Cuello de botella en I/O de disco';
+
+      if (valTid) valTid.textContent = `(Block: ${pageNum}, Item: ${itemNum})`;
+
+      // Simular progreso de escaneo
+      const totalPages = Math.ceil(totalRows / 120);
+      const percent = Math.min(100, Math.round((pageNum / totalPages) * 100));
+      const seqFill = document.getElementById('seq-fill');
+      const seqCounterText = document.getElementById('seq-counter-text');
+      if (seqFill) seqFill.style.width = `${percent}%`;
+      if (seqCounterText) seqCounterText.textContent = `Escaneadas ${pageNum} páginas de ${totalPages} (${percent}% de la tabla)...`;
+    }
+  }
+
+  btnRunQuery?.addEventListener('click', executeExplain);
+  executeExplain();
+</script>
+
+<style>
+  .api-page {
+    width: min(1200px, calc(100% - 32px));
+    margin: 24px auto 80px;
+    color: var(--text-primary);
+  }
+
+  .topbar {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 18px;
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+  }
+
+  .topbar-main, .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-white);
+    text-decoration: none;
+    font-weight: 800;
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #a78bfa;
+    color: #111;
+    font: 700 11px var(--font-mono);
+  }
+
+  .crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .crumbs a { color: inherit; text-decoration: none; }
+  .crumbs a:hover, .crumbs .current { color: var(--text-primary); }
+
+  .sound-btn, .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font: 600 12px var(--font-main);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .sound-btn:hover, .home-action:hover {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+  }
+
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(167, 139, 250, 0.12);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    border-radius: var(--radius-pill);
+    color: #a78bfa;
+    font: 700 10px var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a78bfa;
+    box-shadow: 0 0 8px #a78bfa;
+  }
+
+  .lesson-header {
+    margin: 32px 0 24px;
+  }
+
+  .badge-tag {
+    display: inline-block;
+    color: #a78bfa;
+    font: 700 11px var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .lesson-header h1 {
+    font-size: clamp(32px, 5vw, 44px);
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: -.03em;
+  }
+
+  .lede {
+    max-width: 860px;
+    margin: 14px 0 0;
+    color: var(--text-secondary);
+    font-size: clamp(15px, 1.8vw, 17px);
+    line-height: 1.65;
+  }
+
+  /* CONFIG CARD */
+  .query-config-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .config-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .config-item label {
+    font: 700 11px var(--font-mono);
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .input-with-btn {
+    display: flex;
+    gap: 8px;
+  }
+
+  .config-item input, .config-item select {
+    padding: 10px 14px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-white);
+    font: 600 14px var(--font-mono);
+    width: 100%;
+  }
+
+  .btn-rnd {
+    padding: 0 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font: 600 12px var(--font-main);
+    cursor: pointer;
+  }
+
+  .btn-rnd:hover { color: var(--text-white); border-color: #a78bfa; }
+
+  .strategy-toggle {
+    display: flex;
+    gap: 8px;
+  }
+
+  .strat-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font: 700 12px var(--font-main);
+    cursor: pointer;
+  }
+
+  .strat-btn.active {
+    background: rgba(167, 139, 250, 0.15);
+    border-color: #a78bfa;
+    color: #a78bfa;
+  }
+
+  .btn-run-query {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    background: #a78bfa;
+    color: #111;
+    font: 700 14px var(--font-main);
+    border: none;
+    cursor: pointer;
+    transition: transform .15s, background .15s;
+    height: 44px;
+  }
+
+  .btn-run-query:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: #c4b5fd;
+  }
+
+  /* METRICS ROW */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-lbl {
+    font: 700 11px var(--font-mono);
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .stat-val {
+    font: 800 24px var(--font-mono);
+    color: var(--text-white);
+  }
+
+  .stat-val.highlight { color: #34d399; }
+  .stat-val.warning { color: #fb7185; }
+
+  .stat-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* TREE CANVAS */
+  .tree-canvas-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .card-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-subtle);
+    font: 700 11px var(--font-mono);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .badge-mini {
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    color: #a78bfa;
+  }
+
+  .badge-mini.badge-warning {
+    color: #fb7185;
+    border-color: rgba(251, 113, 133, 0.4);
+  }
+
+  .tree-container {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    background: #090c10;
+  }
+
+  .tree-level {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .level-lbl {
+    font: 700 10px var(--font-mono);
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .tree-nodes {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .tree-node {
+    padding: 10px 16px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    font: 600 12px var(--font-mono);
+    color: var(--text-secondary);
+    transition: all .2s;
+  }
+
+  .tree-node.active-path {
+    background: rgba(167, 139, 250, 0.15);
+    border-color: #a78bfa;
+    color: #a78bfa;
+    box-shadow: 0 0 16px rgba(167, 139, 250, 0.25);
+    transform: scale(1.05);
+  }
+
+  .tree-node.leaf {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.08);
+    color: #34d399;
+  }
+
+  .leaf-tid { font-size: 10px; color: #94a3b8; }
+
+  .tree-connector-line {
+    width: 2px;
+    height: 18px;
+    background: var(--border-subtle);
+  }
+
+  .heap-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    width: 100%;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .heap-block {
+    padding: 10px 14px;
+    background: #141a24;
+    border: 1px dashed var(--border-subtle);
+    border-radius: 8px;
+    font: 600 11px var(--font-mono);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .heap-block.target-block {
+    border: 1px solid #34d399;
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+  }
+
+  /* SEQ SCAN SIM */
+  .seq-scan-container {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #090c10;
+  }
+
+  .seq-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font: 600 12px var(--font-mono);
+    color: #fb7185;
+  }
+
+  .seq-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .seq-fill {
+    height: 100%;
+    background: #fb7185;
+    transition: width .3s ease;
+  }
+
+  /* EXPLAIN CARD */
+  .explain-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+
+  .query-cmd {
+    font-size: 11px;
+    color: #a78bfa;
+    font-weight: 500;
+  }
+
+  .explain-pre {
+    margin: 0;
+    padding: 18px;
+    background: #090c10;
+    font: 500 12px/1.7 var(--font-mono);
+    color: #cbd5e1;
+    overflow-x: auto;
+  }
+
+  @media (max-width: 900px) {
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .tree-nodes { flex-wrap: wrap; }
+    .config-row { flex-direction: column; }
+  }
+</style>
