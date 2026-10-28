@@ -1,0 +1,980 @@
+---
+import Layout from "../layouts/Layout.astro";
+import BackendErrorBanner from "../components/BackendErrorBanner.astro";
+---
+
+<Layout title="Apache Kafka & Event Streaming | RunLearn">
+  <div class="dashboard">
+    <BackendErrorBanner id="kafka-banner" />
+
+    <header class="page-header">
+      <div class="header-badge">Arquitectura & Event-Driven</div>
+      <h1 class="page-title">Apache Kafka</h1>
+      <p class="page-subtitle">
+        Log de eventos distribuido y persistente. Particionado con orden garantizado por clave, offsets secuenciales y tracking de consumer lag.
+      </p>
+    </header>
+
+    <!-- Panel de control de produccion y consumo -->
+    <section class="controls-section">
+      <div class="control-row">
+        <div class="control-group">
+          <label class="control-label" for="topic-select">Topic activo</label>
+          <select id="topic-select" class="select-input">
+            <option value="orders">orders (3 particiones)</option>
+            <option value="payments">payments (2 particiones)</option>
+            <option value="notifications">notifications (4 particiones)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="msg-key">Message Key (Garantiza particion fija)</label>
+          <input type="text" id="msg-key" value="user_482" class="text-input" placeholder="Opcional: user_id, order_id..." />
+        </div>
+
+        <div class="control-group flex-grow">
+          <label class="control-label" for="msg-value">Payload JSON / Evento</label>
+          <input type="text" id="msg-value" value='{"action":"checkout","amount":120.5}' class="text-input font-mono" />
+        </div>
+      </div>
+
+      <div class="control-row action-bar">
+        <div class="action-buttons">
+          <button class="btn-primary" id="btn-produce">Producir mensaje</button>
+          <button class="btn-secondary" id="btn-consume">Consumir evento (Poll)</button>
+          <button class="btn-subtle" id="btn-batch">Batch x5</button>
+          <button class="btn-subtle" id="btn-reset">Restablecer broker</button>
+        </div>
+
+        <div class="consumer-group-selector">
+          <label class="control-label" for="cg-select">Consumer Group activo</label>
+          <select id="cg-select" class="select-input">
+            <option value="order-processor">order-processor</option>
+            <option value="analytics-service">analytics-service</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Topologia visual de Particiones y Offsets -->
+    <section class="broker-section" aria-label="Estructura interna del Broker">
+      <div class="broker-header">
+        <div>
+          <span class="broker-tag">BROKER CLUSTER (IN-MEMORY SIMULATOR)</span>
+          <span class="broker-topic-name" id="display-topic">orders</span>
+        </div>
+        <div class="broker-metrics">
+          <span>Total mensajes: <strong id="total-messages">0</strong></span>
+          <span>Consumer Lag total: <strong id="total-lag" class="lag-indicator">0</strong></span>
+        </div>
+      </div>
+
+      <div class="partitions-container" id="partitions-view">
+        <!-- Renderizado dinamicamente por JS -->
+      </div>
+    </section>
+
+    <!-- Terminal de Stream de Eventos -->
+    <section class="terminal-section">
+      <div class="terminal-bar">
+        <span class="term-tag">EVENT BROKER STREAM & OFFSET COMMIT LOG</span>
+        <span class="term-status" id="broker-status">ESTADO: LISTO</span>
+      </div>
+      <div class="terminal-body font-mono" id="stream-log">
+        <div class="log-hint">Esperando eventos... Presiona "Producir mensaje" o "Batch x5" para emitir registros al cluster.</div>
+      </div>
+    </section>
+
+    <!-- Explicacion de Arquitectura -->
+    <section class="edu-section">
+      <h2 class="section-title">Principios fundamentales de Apache Kafka</h2>
+
+      <div class="concept-grid">
+        <div class="concept-card">
+          <div class="concept-head">
+            <span class="concept-idx">01</span>
+            <h3 class="concept-title">Particionado y Orden</h3>
+          </div>
+          <p class="concept-body">
+            Cada topic se divide en particiones inmutables (append-only logs). Si el productor incluye una clave (<code>message_key</code>), Kafka aplica un hash determinista: <code>murmur2(key) % num_partitions</code>. Todos los eventos de un mismo usuario u orden van a la misma partición, garantizando orden secuencial absoluto por entidad.
+          </p>
+        </div>
+
+        <div class="concept-card">
+          <div class="concept-head">
+            <span class="concept-idx">02</span>
+            <h3 class="concept-title">Offsets Inmutables</h3>
+          </div>
+          <p class="concept-body">
+            A diferencia de colas tradicionales (RabbitMQ) donde los mensajes se eliminan al ser leídos (destructive read), en Kafka cada mensaje conserva un ID correlativo permanente (offset). El mensaje no se borra tras el consumo; su permanencia depende de la política de retención (ej. 7 días o 100 GB).
+          </p>
+        </div>
+
+        <div class="concept-card">
+          <div class="concept-head">
+            <span class="concept-idx">03</span>
+            <h3 class="concept-title">Consumer Groups & Lag</h3>
+          </div>
+          <p class="concept-body">
+            Varios microservicios pueden leer el mismo topic sin interferir entre sí mediante distintos <em>Consumer Groups</em>. Cada grupo almacena su propio puntero (commit offset). La métrica <code>Consumer Lag = LogEndOffset - CurrentOffset</code> indica cuántos mensajes pendientes quedan por procesar; un lag creciente revela cuellos de botella en el consumidor.
+          </p>
+        </div>
+      </div>
+
+      <div class="spec-panel">
+        <div class="spec-panel-title">Garantias de Entrega (Delivery Semantics)</div>
+        <p class="spec-panel-text">
+          - <strong>At-most-once:</strong> El consumidor commitea el offset antes de procesar el registro. Si colapsa durante la ejecución, el mensaje se pierde.<br />
+          - <strong>At-least-once (Estándar):</strong> El consumidor procesa y recién entonces commitea el offset. Si falla, el mensaje se reintenta, requiriendo lógica idempotente en la base de datos.<br />
+          - <strong>Exactly-once (EOS):</strong> Kafka Transactions coordinadas entre productor y consumidor mediante two-phase commit sobre el topic interno <code>__transaction_state</code>.
+        </p>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<script>
+  import { getApiBaseUrl, fetchWithTimeout, showBackendErrorBanner, hideBackendErrorBanner } from '../lib/apiClient.js';
+  import { initSoundControls } from '../lib/soundControls.js';
+
+  const sound = initSoundControls();
+  let backendOnline = true;
+  let logSeq = 0;
+
+  // Estado local para fallback
+  const localBroker = {
+    orders: {
+      partitions: [[], [], []],
+      consumerGroups: {
+        'order-processor': [0, 0, 0],
+        'analytics-service': [0, 0, 0],
+      },
+    },
+    payments: {
+      partitions: [[], []],
+      consumerGroups: {
+        'payment-processor': [0, 0],
+      },
+    },
+    notifications: {
+      partitions: [[], [], [], []],
+      consumerGroups: {
+        'email-service': [0, 0, 0, 0],
+        'push-service': [0, 0, 0, 0],
+      },
+    },
+  };
+
+  const topicSelect = document.getElementById('topic-select');
+  const cgSelect = document.getElementById('cg-select');
+  const msgKeyInput = document.getElementById('msg-key');
+  const msgValueInput = document.getElementById('msg-value');
+  const displayTopic = document.getElementById('display-topic');
+  const partitionsView = document.getElementById('partitions-view');
+  const totalMessagesEl = document.getElementById('total-messages');
+  const totalLagEl = document.getElementById('total-lag');
+  const streamLog = document.getElementById('stream-log');
+  const brokerStatus = document.getElementById('broker-status');
+
+  function getActiveTopic() {
+    return topicSelect?.value || 'orders';
+  }
+
+  function getActiveCg() {
+    return cgSelect?.value || 'order-processor';
+  }
+
+  function updateCgOptions(topicName) {
+    if (!cgSelect) return;
+    cgSelect.innerHTML = '';
+    const topic = localBroker[topicName];
+    if (!topic) return;
+    Object.keys(topic.consumerGroups).forEach(cg => {
+      const opt = document.createElement('option');
+      opt.value = cg;
+      opt.textContent = cg;
+      cgSelect.appendChild(opt);
+    });
+  }
+
+  topicSelect?.addEventListener('change', () => {
+    const t = getActiveTopic();
+    if (displayTopic) displayTopic.textContent = t;
+    updateCgOptions(t);
+    fetchBrokerState();
+  });
+
+  cgSelect?.addEventListener('change', () => {
+    fetchBrokerState();
+  });
+
+  function appendStreamLog(html) {
+    if (!streamLog) return;
+    logSeq++;
+    const now = new Date().toISOString().substring(11, 23);
+    const entry = document.createElement('div');
+    entry.className = 'stream-entry';
+    entry.innerHTML = `<span class="stream-seq">[${String(logSeq).padStart(4, '0')}]</span> <span class="stream-time">${now}</span> ${html}`;
+    const hint = streamLog.querySelector('.log-hint');
+    if (hint) hint.remove();
+    streamLog.appendChild(entry);
+    streamLog.scrollTop = streamLog.scrollHeight;
+  }
+
+  function renderPartitions(topicData, currentCgName) {
+    if (!partitionsView) return;
+    partitionsView.innerHTML = '';
+
+    const cgInfo = topicData.consumerGroups?.find(cg => cg.name === currentCgName) || topicData.consumerGroups?.[0];
+    const offsets = cgInfo ? cgInfo.offsets : [];
+
+    topicData.partitions.forEach((part, idx) => {
+      const partCard = document.createElement('div');
+      partCard.className = 'partition-card';
+
+      const currentOffset = offsets[idx] !== undefined ? offsets[idx] : 0;
+      const lag = Math.max(0, part.messageCount - currentOffset);
+
+      let messagesHtml = '';
+      const localMsgs = localBroker[getActiveTopic()]?.partitions[idx] || [];
+      const displayMsgs = localMsgs.slice(-6); // ultimos 6
+
+      displayMsgs.forEach(m => {
+        const isConsumed = m.offset < currentOffset;
+        messagesHtml += `
+          <div class="msg-record ${isConsumed ? 'consumed' : 'unconsumed'}">
+            <span class="msg-off">#${m.offset}</span>
+            <span class="msg-key">${m.key || 'null'}</span>
+            <span class="msg-payload">${JSON.stringify(m.value)}</span>
+          </div>
+        `;
+      });
+
+      if (!messagesHtml) {
+        messagesHtml = '<div class="empty-partition">Particion vacia</div>';
+      }
+
+      partCard.innerHTML = `
+        <div class="partition-head">
+          <div class="partition-title">Particion ${part.id}</div>
+          <div class="partition-lag ${lag > 0 ? 'has-lag' : ''}">Lag: ${lag}</div>
+        </div>
+        <div class="partition-meta">
+          <span>LogEndOffset: <strong>${part.messageCount}</strong></span>
+          <span>ConsumerOffset: <strong>${currentOffset}</strong></span>
+        </div>
+        <div class="records-stream">
+          ${messagesHtml}
+        </div>
+      `;
+
+      partitionsView.appendChild(partCard);
+    });
+
+    if (totalMessagesEl) totalMessagesEl.textContent = topicData.totalMessages || 0;
+    if (totalLagEl) totalLagEl.textContent = cgInfo ? cgInfo.totalLag : 0;
+  }
+
+  async function fetchBrokerState() {
+    const topicName = getActiveTopic();
+    const cgName = getActiveCg();
+
+    if (backendOnline) {
+      try {
+        const base = getApiBaseUrl();
+        const res = await fetchWithTimeout(`${base}/api/kafka-demo/topics`, {}, 3000);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        hideBackendErrorBanner('kafka-banner');
+        const topicData = data.topics[topicName];
+        if (topicData) {
+          renderPartitions(topicData, cgName);
+        }
+      } catch {
+        backendOnline = false;
+        showBackendErrorBanner('kafka-banner', 'Servidor de eventos operando en modo local (simulado).');
+        renderLocalState();
+      }
+    } else {
+      renderLocalState();
+    }
+  }
+
+  function renderLocalState() {
+    const topicName = getActiveTopic();
+    const cgName = getActiveCg();
+    const topic = localBroker[topicName];
+    if (!topic) return;
+
+    const topicData = {
+      partitionCount: topic.partitions.length,
+      partitions: topic.partitions.map((msgs, idx) => ({
+        id: idx,
+        messageCount: msgs.length,
+        latestOffset: msgs.length,
+      })),
+      consumerGroups: Object.entries(topic.consumerGroups).map(([name, offsets]) => ({
+        name,
+        offsets,
+        lag: offsets.map((off, idx) => topic.partitions[idx].length - off),
+        totalLag: offsets.reduce((acc, off, idx) => acc + (topic.partitions[idx].length - off), 0),
+      })),
+      totalMessages: topic.partitions.reduce((acc, p) => acc + p.length, 0),
+    };
+
+    renderPartitions(topicData, cgName);
+  }
+
+  async function produceMessage(customKey, customValue) {
+    const topicName = getActiveTopic();
+    const key = customKey !== undefined ? customKey : (msgKeyInput?.value.trim() || null);
+    let value;
+    try {
+      value = customValue !== undefined ? customValue : JSON.parse(msgValueInput?.value || '{}');
+    } catch {
+      value = { raw: msgValueInput?.value };
+    }
+
+    sound.play?.('playStep');
+
+    if (backendOnline) {
+      try {
+        const base = getApiBaseUrl();
+        const res = await fetchWithTimeout(`${base}/api/kafka-demo/produce`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: topicName, key, value }),
+        }, 3000);
+        const data = await res.json();
+        const p = data.produced;
+        // sincronizar copia local para renderizado de records
+        localBroker[topicName].partitions[p.partition].push(p);
+
+        appendStreamLog(
+          `<span class="tok-prod">PRODUCE</span> topic=${p.topic} partition=${p.partition} offset=${p.offset} key="${p.key || 'null'}" payload=${JSON.stringify(p.value)} (${data.partitioning.algorithm})`
+        );
+        fetchBrokerState();
+        return;
+      } catch {
+        backendOnline = false;
+      }
+    }
+
+    // Fallback local
+    const topic = localBroker[topicName];
+    let partitionIndex = 0;
+    if (key) {
+      let hash = 0;
+      for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+      partitionIndex = hash % topic.partitions.length;
+    } else {
+      partitionIndex = Math.floor(Math.random() * topic.partitions.length);
+    }
+    const offset = topic.partitions[partitionIndex].length;
+    const msg = {
+      id: Math.random().toString(36).substring(2, 8),
+      topic: topicName,
+      partition: partitionIndex,
+      offset,
+      key,
+      value,
+      timestamp: new Date().toISOString(),
+    };
+    topic.partitions[partitionIndex].push(msg);
+
+    appendStreamLog(
+      `<span class="tok-prod">PRODUCE</span> topic=${topicName} partition=${partitionIndex} offset=${offset} key="${key || 'null'}" payload=${JSON.stringify(value)}`
+    );
+    renderLocalState();
+  }
+
+  async function consumeMessage() {
+    const topicName = getActiveTopic();
+    const cgName = getActiveCg();
+    sound.play?.('playStep');
+
+    if (backendOnline) {
+      try {
+        const base = getApiBaseUrl();
+        const res = await fetchWithTimeout(`${base}/api/kafka-demo/consume`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: topicName, consumerGroup: cgName, maxMessages: 3 }),
+        }, 3000);
+        const data = await res.json();
+        // Sincronizar offsets en local
+        if (localBroker[topicName]?.consumerGroups[cgName]) {
+          localBroker[topicName].consumerGroups[cgName] = data.offsetsAfter;
+        }
+
+        if (data.consumed?.length > 0) {
+          data.consumed.forEach(c => {
+            appendStreamLog(
+              `<span class="tok-cons">CONSUME</span> group=${cgName} topic=${c.topic} partition=${c.partition} offset=${c.offset} key="${c.key || 'null'}" -> PROCESADO OK`
+            );
+          });
+        } else {
+          appendStreamLog(
+            `<span class="tok-idle">POLL (EMPTY)</span> group=${cgName} topic=${topicName} -> Sin eventos nuevos (Lag=0)`
+          );
+        }
+        fetchBrokerState();
+        window.dispatchEvent(new Event('runlearn:simulation-complete'));
+        return;
+      } catch {
+        backendOnline = false;
+      }
+    }
+
+    // Fallback local
+    const topic = localBroker[topicName];
+    const offsets = topic.consumerGroups[cgName];
+    let consumedCount = 0;
+
+    for (let p = 0; p < topic.partitions.length; p++) {
+      const msgs = topic.partitions[p];
+      const curOff = offsets[p];
+      if (curOff < msgs.length) {
+        const m = msgs[curOff];
+        offsets[p] = curOff + 1;
+        consumedCount++;
+        appendStreamLog(
+          `<span class="tok-cons">CONSUME</span> group=${cgName} partition=${p} offset=${curOff} key="${m.key || 'null'}"`
+        );
+      }
+    }
+
+    if (consumedCount === 0) {
+      appendStreamLog(`<span class="tok-idle">POLL (EMPTY)</span> group=${cgName} -> Sin eventos pendientes (Lag=0)`);
+    }
+
+    renderLocalState();
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
+  }
+
+  document.getElementById('btn-produce')?.addEventListener('click', () => produceMessage());
+  document.getElementById('btn-consume')?.addEventListener('click', () => consumeMessage());
+
+  document.getElementById('btn-batch')?.addEventListener('click', async () => {
+    const keys = ['user_101', 'user_204', 'user_101', 'user_888', 'user_204'];
+    for (let i = 0; i < keys.length; i++) {
+      await produceMessage(keys[i], { event: 'heartbeat', seq: i + 1, ts: Date.now() });
+      await new Promise(r => setTimeout(r, 120));
+    }
+  });
+
+  document.getElementById('btn-reset')?.addEventListener('click', async () => {
+    if (backendOnline) {
+      try {
+        const base = getApiBaseUrl();
+        await fetchWithTimeout(`${base}/api/kafka-demo/reset`, { method: 'POST' }, 3000);
+      } catch {}
+    }
+    // Reset local
+    Object.values(localBroker).forEach(t => {
+      t.partitions = t.partitions.map(() => []);
+      Object.keys(t.consumerGroups).forEach(cg => {
+        t.consumerGroups[cg] = t.consumerGroups[cg].map(() => 0);
+      });
+    });
+    if (streamLog) {
+      streamLog.innerHTML = '<div class="log-hint">Broker reseteado. Particiones y offsets limpios.</div>';
+    }
+    logSeq = 0;
+    fetchBrokerState();
+    sound.play?.('playStep');
+  });
+
+  // Inicializar
+  updateCgOptions('orders');
+  fetchBrokerState();
+</script>
+
+<style>
+  .dashboard {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--canvas-bg);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    padding: 2.5rem 1.5rem;
+    box-sizing: border-box;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 1.5rem;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: rgba(96, 165, 250, 0.1);
+    color: var(--brand-blue);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: var(--radius-pill);
+    padding: 0.2rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .page-title {
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+    color: var(--text-white);
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0;
+  }
+
+  .controls-section {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .control-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-end;
+  }
+
+  .control-row.action-bar {
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .control-group.flex-grow {
+    flex-grow: 1;
+    min-width: 260px;
+  }
+
+  .control-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .select-input, .text-input {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.82rem;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .select-input:focus, .text-input:focus {
+    border-color: var(--brand-blue);
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .btn-primary, .btn-secondary, .btn-subtle {
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--ease-fast);
+    border: 1px solid transparent;
+  }
+
+  .btn-primary {
+    background: var(--brand-blue);
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-secondary {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--color-success);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(16, 185, 129, 0.25);
+  }
+
+  .btn-subtle {
+    background: var(--surface-card);
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
+  }
+
+  .btn-subtle:hover {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+  }
+
+  .consumer-group-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .broker-section {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .broker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .broker-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .broker-topic-name {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brand-blue);
+  }
+
+  .broker-metrics {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .broker-metrics strong {
+    font-family: var(--font-mono);
+    color: var(--text-white);
+  }
+
+  .lag-indicator {
+    color: #f59e0b !important;
+  }
+
+  .partitions-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .partition-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .partition-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .partition-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-white);
+  }
+
+  .partition-lag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+  }
+
+  .partition-lag.has-lag {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .partition-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.5rem;
+  }
+
+  .records-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .empty-partition {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin: auto 0;
+  }
+
+  .msg-record {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .msg-record.consumed {
+    opacity: 0.5;
+  }
+
+  .msg-record.unconsumed {
+    border-left: 2px solid #f59e0b;
+  }
+
+  .msg-off {
+    color: var(--brand-blue);
+    font-weight: 700;
+  }
+
+  .msg-key {
+    color: #a78bfa;
+  }
+
+  .msg-payload {
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .terminal-section {
+    background: #080a0e;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+
+  .terminal-bar {
+    background: var(--surface-panel);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .term-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .term-status {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+
+  .terminal-body {
+    padding: 1rem;
+    font-size: 0.75rem;
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    line-height: 1.5;
+  }
+
+  .log-hint {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .stream-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+  }
+
+  .stream-seq {
+    color: var(--text-muted);
+  }
+
+  .stream-time {
+    color: #475569;
+  }
+
+  .tok-prod {
+    color: var(--brand-blue);
+    font-weight: 700;
+  }
+
+  .tok-cons {
+    color: var(--color-success);
+    font-weight: 700;
+  }
+
+  .tok-idle {
+    color: var(--text-muted);
+  }
+
+  .edu-section {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: var(--text-white);
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .concept-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+  }
+
+  .concept-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .concept-idx {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--brand-blue);
+    font-weight: 700;
+  }
+
+  .concept-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-white);
+    margin: 0;
+  }
+
+  .concept-body {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .concept-body code {
+    font-family: var(--font-mono);
+    color: var(--brand-blue);
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+  }
+
+  .spec-panel {
+    background: rgba(96, 165, 250, 0.05);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-radius: var(--radius-card);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .spec-panel-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brand-blue);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .spec-panel-text {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .spec-panel-text strong {
+    color: var(--text-white);
+  }
+
+  @media (max-width: 768px) {
+    .control-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>

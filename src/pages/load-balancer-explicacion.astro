@@ -1,0 +1,1105 @@
+---
+import Layout from "../layouts/Layout.astro";
+import BackendErrorBanner from "../components/BackendErrorBanner.astro";
+---
+
+<Layout title="Load Balancing | RunLearn">
+  <div class="dashboard">
+    <BackendErrorBanner id="lb-banner" />
+
+    <header class="page-header">
+      <div class="header-badge">DevOps & Infraestructura</div>
+      <h1 class="page-title">Load Balancing</h1>
+      <p class="page-subtitle">
+        Distribución de carga L4/L7 en clústeres distribuidos. Inspección de algoritmos de enrutamiento y failover ante caídas de nodo.
+      </p>
+    </header>
+
+    <section class="controls-section">
+      <div class="control-group">
+        <label class="control-label" for="algo-tabs">Algoritmo de enrutamiento</label>
+        <div class="algo-tabs" id="algo-tabs" role="tablist">
+          <button class="algo-btn active" data-algo="round-robin" role="tab" aria-selected="true">Round Robin</button>
+          <button class="algo-btn" data-algo="least-connections" role="tab" aria-selected="false">Least Connections</button>
+          <button class="algo-btn" data-algo="ip-hash" role="tab" aria-selected="false">IP Hash</button>
+        </div>
+      </div>
+
+      <div class="control-group ip-control" id="ip-section" style="display:none;">
+        <label class="control-label" for="client-ip">Dirección IP de origen</label>
+        <input type="text" id="client-ip" value="192.168.1.42" class="ip-input" placeholder="192.168.1.x" />
+      </div>
+
+      <div class="control-group action-buttons">
+        <button class="btn-primary" id="btn-send">Enviar request</button>
+        <button class="btn-secondary" id="btn-burst">Ráfaga (10)</button>
+        <button class="btn-subtle" id="btn-reset">Restablecer</button>
+      </div>
+    </section>
+
+    <section class="viz-section" aria-label="Topología de red">
+      <div class="topology-grid">
+        <div class="node-card client-node">
+          <div class="node-badge">CLIENT</div>
+          <div class="node-title">Cliente HTTP</div>
+          <div class="node-meta" id="display-client-ip">192.168.1.42</div>
+        </div>
+
+        <div class="pipe-horizontal">
+          <div class="pipe-line"></div>
+          <div class="packet-tracer" id="packet-tracer" style="display:none;"></div>
+          <div class="pipe-arrow"></div>
+        </div>
+
+        <div class="node-card lb-node">
+          <div class="node-badge">REVERSE PROXY</div>
+          <div class="node-title">HAProxy / Nginx</div>
+          <div class="algo-tag" id="algo-tag">Round Robin</div>
+          <div class="lb-counter">Peticiones procesadas: <span id="total-reqs">0</span></div>
+        </div>
+      </div>
+
+      <div class="cluster-fanout">
+        <div class="fanout-line"></div>
+      </div>
+
+      <div class="servers-grid">
+        <div class="server-card" id="card-server-a" data-server="server-a">
+          <div class="server-head">
+            <span class="server-badge">srv-01</span>
+            <span class="status-indicator online" id="status-server-a">ONLINE</span>
+          </div>
+          <div class="server-title">Server A</div>
+          <div class="server-region">us-east-1 (N. Virginia)</div>
+          
+          <div class="metric-row">
+            <span class="metric-key">Conexiones activas</span>
+            <span class="metric-val" id="conn-server-a">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Total requests</span>
+            <span class="metric-val" id="total-server-a">0</span>
+          </div>
+
+          <div class="load-track">
+            <div class="load-bar" id="fill-server-a" style="width:0%"></div>
+          </div>
+
+          <button class="btn-toggle-server" data-server="server-a">Desactivar nodo</button>
+        </div>
+
+        <div class="server-card" id="card-server-b" data-server="server-b">
+          <div class="server-head">
+            <span class="server-badge">srv-02</span>
+            <span class="status-indicator online" id="status-server-b">ONLINE</span>
+          </div>
+          <div class="server-title">Server B</div>
+          <div class="server-region">eu-west-1 (Ireland)</div>
+          
+          <div class="metric-row">
+            <span class="metric-key">Conexiones activas</span>
+            <span class="metric-val" id="conn-server-b">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Total requests</span>
+            <span class="metric-val" id="total-server-b">0</span>
+          </div>
+
+          <div class="load-track">
+            <div class="load-bar" id="fill-server-b" style="width:0%"></div>
+          </div>
+
+          <button class="btn-toggle-server" data-server="server-b">Desactivar nodo</button>
+        </div>
+
+        <div class="server-card" id="card-server-c" data-server="server-c">
+          <div class="server-head">
+            <span class="server-badge">srv-03</span>
+            <span class="status-indicator online" id="status-server-c">ONLINE</span>
+          </div>
+          <div class="server-title">Server C</div>
+          <div class="server-region">ap-southeast-1 (Singapore)</div>
+          
+          <div class="metric-row">
+            <span class="metric-key">Conexiones activas</span>
+            <span class="metric-val" id="conn-server-c">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Total requests</span>
+            <span class="metric-val" id="total-server-c">0</span>
+          </div>
+
+          <div class="load-track">
+            <div class="load-bar" id="fill-server-c" style="width:0%"></div>
+          </div>
+
+          <button class="btn-toggle-server" data-server="server-c">Desactivar nodo</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="terminal-section">
+      <div class="terminal-bar">
+        <span class="term-tag">HTTP ACCESS LOG</span>
+        <span class="term-status" id="backend-status-indicator">MODO NATIVO</span>
+      </div>
+      <div class="terminal-body" id="dispatch-log" role="log" aria-live="polite">
+        <div class="log-hint">Esperando trafico HTTP... Presiona "Enviar request" o "Rafaga" para iniciar.</div>
+      </div>
+    </section>
+
+    <section class="edu-section">
+      <h2 class="section-title">Mecanismos de balanceo y disponibilidad</h2>
+
+      <div class="spec-grid">
+        <div class="spec-card">
+          <div class="spec-header">
+            <span class="spec-idx">01</span>
+            <h3 class="spec-name">Round Robin</h3>
+          </div>
+          <p class="spec-desc">
+            Asigna solicitudes de forma circular y determinista: nodo <code>i = (i + 1) % N</code>. No considera la latencia de procesamiento ni el consumo de memoria de peticiones previas. Eficiente cuando todas las transacciones poseen costo uniforme.
+          </p>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-header">
+            <span class="spec-idx">02</span>
+            <h3 class="spec-name">Least Connections</h3>
+          </div>
+          <p class="spec-desc">
+            El proxy evalua el recuento de conexiones abiertas concurrentes y deriva la nueva peticion al nodo con valor minimo <code>min(active_conns)</code>. Mitiga acumulacion de latencia cuando ciertas peticiones requieren computo intensivo o transferencias pesadas.
+          </p>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-header">
+            <span class="spec-idx">03</span>
+            <h3 class="spec-name">IP Hash</h3>
+          </div>
+          <p class="spec-desc">
+            Calcula una clave hash univoca a partir de la direccion IPv4/IPv6 de origen: <code>hash(client_ip) % N</code>. Garantiza afinidad de sesion (sticky sessions) sin depender de cookies compartidas, manteniendo al cliente en el mismo nodo salvo fallas.
+          </p>
+        </div>
+      </div>
+
+      <div class="advisory-panel">
+        <div class="advisory-title">Health Checking Activo vs Pasivo</div>
+        <p class="advisory-text">
+          Un balanceador de produccion ejecuta sondas periodicas (ej. <code>GET /health</code> cada 2000ms). Si un nodo no responde con codigo 200 dentro del timeout o aborta la conexion TCP, se retira inmediatamente del grupo de enrutamiento activo (failover transparente), evitando que los clientes experimenten errores 502/504.
+        </p>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<script>
+  import { getApiBaseUrl, fetchWithTimeout, showBackendErrorBanner, hideBackendErrorBanner } from '../lib/apiClient.js';
+  import { initSoundControls } from '../lib/soundControls.js';
+
+  const sound = initSoundControls();
+  let currentAlgo = 'round-robin';
+  let logIndex = 0;
+  let backendOnline = true;
+
+  const localState = {
+    servers: [
+      { id: 'server-a', name: 'Server A', activeConnections: 0, totalRequests: 0, region: 'us-east-1', healthy: true },
+      { id: 'server-b', name: 'Server B', activeConnections: 0, totalRequests: 0, region: 'eu-west-1', healthy: true },
+      { id: 'server-c', name: 'Server C', activeConnections: 0, totalRequests: 0, region: 'ap-southeast-1', healthy: true },
+    ],
+    rrIndex: 0,
+    total: 0,
+  };
+
+  function localPickRoundRobin() {
+    const healthy = localState.servers.filter(s => s.healthy);
+    if (!healthy.length) return null;
+    let attempts = 0;
+    while (attempts < localState.servers.length) {
+      const candidate = localState.servers[localState.rrIndex % localState.servers.length];
+      localState.rrIndex = (localState.rrIndex + 1) % localState.servers.length;
+      attempts++;
+      if (candidate.healthy) return candidate;
+    }
+    return null;
+  }
+
+  function localPickLeastConn() {
+    const healthy = localState.servers.filter(s => s.healthy);
+    if (!healthy.length) return null;
+    return healthy.reduce((m, s) => (s.activeConnections < m.activeConnections ? s : m));
+  }
+
+  function localPickIpHash(ip) {
+    const healthy = localState.servers.filter(s => s.healthy);
+    if (!healthy.length) return null;
+    let hash = 0;
+    for (let i = 0; i < ip.length; i++) hash = (hash * 31 + ip.charCodeAt(i)) >>> 0;
+    return healthy[hash % healthy.length];
+  }
+
+  function localSimulate(algo, clientIp) {
+    let selected = null;
+    let reasoning = '';
+    if (algo === 'round-robin') {
+      selected = localPickRoundRobin();
+      reasoning = selected ? `Round Robin: rotacion ciclica hacia ${selected.name}` : 'Sin nodos saludables disponibles';
+    } else if (algo === 'least-connections') {
+      selected = localPickLeastConn();
+      reasoning = selected ? `Least Connections: ${selected.name} posee menor concurrencia (${selected.activeConnections})` : 'Sin nodos saludables disponibles';
+    } else {
+      selected = localPickIpHash(clientIp);
+      reasoning = selected ? `IP Hash: direccion ${clientIp} asociada deterministicamente a ${selected.name}` : 'Sin nodos saludables disponibles';
+    }
+    if (selected) {
+      selected.activeConnections++;
+      selected.totalRequests++;
+      localState.total++;
+      setTimeout(() => {
+        selected.activeConnections = Math.max(0, selected.activeConnections - 1);
+        renderServers(localState.servers, localState.total);
+      }, 400 + Math.random() * 500);
+    }
+    return {
+      selectedServer: selected ? { ...selected } : null,
+      allServers: localState.servers.map(s => ({ ...s })),
+      totalRequestsProcessed: localState.total,
+      reasoning,
+    };
+  }
+
+  const algoTabs = document.querySelectorAll('.algo-btn');
+  const algoTag = document.getElementById('algo-tag');
+  const ipSection = document.getElementById('ip-section');
+  const clientIpInput = document.getElementById('client-ip');
+  const displayClientIp = document.getElementById('display-client-ip');
+  const totalReqsEl = document.getElementById('total-reqs');
+  const dispatchLog = document.getElementById('dispatch-log');
+  const packetTracer = document.getElementById('packet-tracer');
+  const backendStatus = document.getElementById('backend-status-indicator');
+
+  clientIpInput?.addEventListener('input', () => {
+    if (displayClientIp) displayClientIp.textContent = clientIpInput.value.trim() || '127.0.0.1';
+  });
+
+  algoTabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      algoTabs.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      currentAlgo = btn.dataset.algo;
+      if (algoTag) algoTag.textContent = btn.textContent;
+      if (ipSection) ipSection.style.display = currentAlgo === 'ip-hash' ? 'flex' : 'none';
+    });
+  });
+
+  function tracePacket() {
+    if (!packetTracer) return;
+    packetTracer.style.display = 'block';
+    packetTracer.style.left = '0%';
+    packetTracer.style.opacity = '1';
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      packetTracer.style.left = `${progress}%`;
+      if (progress >= 95) {
+        clearInterval(interval);
+        setTimeout(() => {
+          packetTracer.style.display = 'none';
+        }, 100);
+      }
+    }, 20);
+  }
+
+  async function sendRequest() {
+    const clientIp = clientIpInput?.value.trim() || '192.168.1.42';
+    tracePacket();
+    sound.play?.('playStep');
+
+    let data;
+    if (backendOnline) {
+      try {
+        const base = getApiBaseUrl();
+        const res = await fetchWithTimeout(`${base}/api/load-balancer-demo/request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ algorithm: currentAlgo, clientIp }),
+        }, 4000);
+        if (!res.ok) throw new Error(String(res.status));
+        data = await res.json();
+        hideBackendErrorBanner('lb-banner');
+        if (backendStatus) backendStatus.textContent = 'BACKEND API: CONECTADO';
+      } catch {
+        backendOnline = false;
+        showBackendErrorBanner('lb-banner', 'Backend no disponible. Ejecutando simulador local en memoria.');
+        if (backendStatus) backendStatus.textContent = 'SIMULADOR LOCAL (FALLBACK)';
+        data = localSimulate(currentAlgo, clientIp);
+      }
+    } else {
+      data = localSimulate(currentAlgo, clientIp);
+    }
+
+    renderServers(data.allServers, data.totalRequestsProcessed);
+    appendLog(data, clientIp);
+
+    if (!data.selectedServer) {
+      sound.play?.('error');
+    }
+  }
+
+  function renderServers(servers, total) {
+    if (totalReqsEl) totalReqsEl.textContent = total;
+    const maxReqs = Math.max(...servers.map(s => s.totalRequests), 1);
+
+    servers.forEach(srv => {
+      const connEl = document.getElementById(`conn-${srv.id}`);
+      const totalEl = document.getElementById(`total-${srv.id}`);
+      const fillEl = document.getElementById(`fill-${srv.id}`);
+      const statusEl = document.getElementById(`status-${srv.id}`);
+      const cardEl = document.getElementById(`card-${srv.id}`);
+      const toggleBtn = cardEl?.querySelector('.btn-toggle-server');
+
+      if (connEl) connEl.textContent = srv.activeConnections;
+      if (totalEl) totalEl.textContent = srv.totalRequests;
+      if (fillEl) fillEl.style.width = `${Math.min(100, (srv.totalRequests / maxReqs) * 100)}%`;
+
+      if (statusEl) {
+        statusEl.className = `status-indicator ${srv.healthy ? 'online' : 'offline'}`;
+        statusEl.textContent = srv.healthy ? 'ONLINE' : 'DRAINED / DOWN';
+      }
+      if (cardEl) {
+        cardEl.classList.toggle('server-down', !srv.healthy);
+      }
+      if (toggleBtn) {
+        toggleBtn.textContent = srv.healthy ? 'Desactivar nodo' : 'Restablecer nodo';
+      }
+    });
+  }
+
+  function appendLog(data, clientIp) {
+    if (!dispatchLog) return;
+    const { selectedServer, reasoning } = data;
+    logIndex++;
+    const now = new Date().toISOString().substring(11, 23);
+    const line = document.createElement('div');
+    line.className = 'log-entry';
+
+    if (selectedServer) {
+      line.innerHTML = `
+        <span class="log-seq">[${String(logIndex).padStart(4, '0')}]</span>
+        <span class="log-time">${now}</span>
+        <span class="log-proto">HTTP/1.1</span>
+        <span class="log-status ok">200 OK</span>
+        <span class="log-route">${clientIp} -> ${selectedServer.id} (${selectedServer.region})</span>
+        <span class="log-reason">${reasoning}</span>
+      `;
+    } else {
+      line.innerHTML = `
+        <span class="log-seq">[${String(logIndex).padStart(4, '0')}]</span>
+        <span class="log-time">${now}</span>
+        <span class="log-proto">HTTP/1.1</span>
+        <span class="log-status err">503 SERVICE UNAVAILABLE</span>
+        <span class="log-route">${clientIp} -> DROP</span>
+        <span class="log-reason">${reasoning}</span>
+      `;
+    }
+
+    const hint = dispatchLog.querySelector('.log-hint');
+    if (hint) hint.remove();
+
+    dispatchLog.appendChild(line);
+    dispatchLog.scrollTop = dispatchLog.scrollHeight;
+  }
+
+  document.querySelectorAll('.btn-toggle-server').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const serverId = btn.dataset.server;
+      sound.play?.('playStep');
+
+      if (backendOnline) {
+        try {
+          const base = getApiBaseUrl();
+          const res = await fetchWithTimeout(`${base}/api/load-balancer-demo/toggle-server`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ serverId }),
+          }, 4000);
+          const data = await res.json();
+          renderServers(data.allServers, parseInt(totalReqsEl?.textContent || '0', 10));
+          logNodeEvent(data.toggled);
+        } catch {
+          localToggle(serverId);
+        }
+      } else {
+        localToggle(serverId);
+      }
+    });
+  });
+
+  function localToggle(serverId) {
+    const srv = localState.servers.find(s => s.id === serverId);
+    if (srv) {
+      srv.healthy = !srv.healthy;
+      renderServers(localState.servers, localState.total);
+      logNodeEvent(srv);
+    }
+  }
+
+  function logNodeEvent(srv) {
+    if (!dispatchLog) return;
+    const now = new Date().toISOString().substring(11, 23);
+    const line = document.createElement('div');
+    line.className = 'log-entry system-event';
+    line.innerHTML = `
+      <span class="log-seq">[SYS]</span>
+      <span class="log-time">${now}</span>
+      <span class="log-status notice">HEALTHCHECK</span>
+      <span class="log-route">${srv.id} estado modificado a ${srv.healthy ? 'UP' : 'DOWN'}</span>
+    `;
+    const hint = dispatchLog.querySelector('.log-hint');
+    if (hint) hint.remove();
+    dispatchLog.appendChild(line);
+    dispatchLog.scrollTop = dispatchLog.scrollHeight;
+  }
+
+  document.getElementById('btn-send')?.addEventListener('click', () => sendRequest());
+
+  document.getElementById('btn-burst')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-burst');
+    if (btn) btn.disabled = true;
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 120));
+      await sendRequest();
+    }
+    if (btn) btn.disabled = false;
+    window.dispatchEvent(new Event('runlearn:simulation-complete'));
+  });
+
+  document.getElementById('btn-reset')?.addEventListener('click', async () => {
+    if (backendOnline) {
+      try {
+        const base = getApiBaseUrl();
+        await fetchWithTimeout(`${base}/api/load-balancer-demo/reset`, { method: 'POST' }, 3000);
+      } catch {}
+    }
+    localState.servers.forEach(s => {
+      s.activeConnections = 0;
+      s.totalRequests = 0;
+      s.healthy = true;
+    });
+    localState.rrIndex = 0;
+    localState.total = 0;
+    renderServers(localState.servers, 0);
+    if (dispatchLog) {
+      dispatchLog.innerHTML = '<div class="log-hint">Estado reinicializado. Esperando trafico HTTP...</div>';
+    }
+    logIndex = 0;
+    sound.play?.('playStep');
+  });
+</script>
+
+<style>
+  .dashboard {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--canvas-bg);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    padding: 2.5rem 1.5rem;
+    box-sizing: border-box;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 1.5rem;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--color-docker);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: var(--radius-pill);
+    padding: 0.2rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .page-title {
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+    color: var(--text-white);
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    max-width: 780px;
+    margin: 0;
+  }
+
+  .controls-section {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-end;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .control-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .algo-tabs {
+    display: flex;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .algo-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    border-radius: var(--radius-pill);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--ease-fast);
+  }
+
+  .algo-btn:hover {
+    color: var(--text-white);
+  }
+
+  .algo-btn.active {
+    background: var(--surface-panel);
+    color: var(--color-docker);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    font-weight: 600;
+  }
+
+  .ip-input {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 0.45rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    outline: none;
+    width: 150px;
+  }
+
+  .ip-input:focus {
+    border-color: var(--color-docker);
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .btn-primary, .btn-secondary, .btn-subtle {
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--ease-fast);
+    border: 1px solid transparent;
+  }
+
+  .btn-primary {
+    background: var(--color-docker);
+    color: #07080b;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-secondary {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--color-docker);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(56, 189, 248, 0.2);
+  }
+
+  .btn-subtle {
+    background: var(--surface-card);
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
+  }
+
+  .btn-subtle:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+
+  .viz-section {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .topology-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .node-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1rem 1.4rem;
+    min-width: 200px;
+    box-sizing: border-box;
+  }
+
+  .node-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+
+  .node-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-white);
+  }
+
+  .node-meta {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+  }
+
+  .lb-node {
+    border-color: rgba(56, 189, 248, 0.3);
+  }
+
+  .algo-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: var(--color-docker);
+    font-weight: 600;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.4rem;
+  }
+
+  .lb-counter {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+  }
+
+  .lb-counter span {
+    color: var(--text-white);
+    font-weight: 700;
+    font-family: var(--font-mono);
+  }
+
+  .pipe-horizontal {
+    position: relative;
+    width: 120px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+  }
+
+  .pipe-line {
+    width: 100%;
+    height: 2px;
+    background: var(--border-subtle);
+  }
+
+  .packet-tracer {
+    position: absolute;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-docker);
+    box-shadow: 0 0 8px var(--color-docker);
+    transition: left 0.02s linear;
+  }
+
+  .pipe-arrow {
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid var(--border-subtle);
+  }
+
+  .cluster-fanout {
+    width: 100%;
+    max-width: 600px;
+    margin: 1.5rem auto 1rem;
+    height: 16px;
+    border-top: 1px dashed var(--border-subtle);
+    border-left: 1px dashed var(--border-subtle);
+    border-right: 1px dashed var(--border-subtle);
+  }
+
+  .servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .server-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+    transition: border-color var(--ease-fast);
+  }
+
+  .server-card.server-down {
+    opacity: 0.5;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
+  .server-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .server-badge {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .status-indicator {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+  }
+
+  .status-indicator.online {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--color-success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .status-indicator.offline {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .server-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-white);
+    margin-bottom: 0.2rem;
+  }
+
+  .server-region {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .metric-key {
+    color: var(--text-secondary);
+  }
+
+  .metric-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-white);
+  }
+
+  .load-track {
+    background: rgba(255, 255, 255, 0.05);
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .load-bar {
+    height: 100%;
+    background: var(--color-docker);
+    transition: width 0.3s ease;
+  }
+
+  .btn-toggle-server {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--ease-fast);
+  }
+
+  .btn-toggle-server:hover {
+    border-color: var(--border-hover);
+    color: var(--text-white);
+  }
+
+  .terminal-section {
+    background: #080a0e;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+
+  .terminal-bar {
+    background: var(--surface-panel);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .term-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .term-status {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+
+  .terminal-body {
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    line-height: 1.5;
+  }
+
+  .log-hint {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .log-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    color: var(--text-secondary);
+  }
+
+  .log-seq {
+    color: var(--text-muted);
+  }
+
+  .log-time {
+    color: #475569;
+  }
+
+  .log-proto {
+    color: var(--text-muted);
+  }
+
+  .log-status.ok {
+    color: var(--color-success);
+    font-weight: 700;
+  }
+
+  .log-status.err {
+    color: #ef4444;
+    font-weight: 700;
+  }
+
+  .log-status.notice {
+    color: #f59e0b;
+    font-weight: 700;
+  }
+
+  .log-route {
+    color: var(--text-primary);
+  }
+
+  .log-reason {
+    color: var(--text-muted);
+  }
+
+  .system-event {
+    border-left: 2px solid #f59e0b;
+    padding-left: 0.5rem;
+  }
+
+  .edu-section {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: var(--text-white);
+  }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .spec-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+  }
+
+  .spec-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .spec-idx {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-docker);
+    font-weight: 700;
+  }
+
+  .spec-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-white);
+    margin: 0;
+  }
+
+  .spec-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .spec-desc code {
+    font-family: var(--font-mono);
+    color: var(--color-docker);
+    background: rgba(56, 189, 248, 0.08);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+  }
+
+  .advisory-panel {
+    background: rgba(56, 189, 248, 0.05);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: var(--radius-card);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .advisory-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-docker);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .advisory-text {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .advisory-text code {
+    font-family: var(--font-mono);
+    color: var(--text-white);
+    background: var(--surface-card);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+  }
+
+  @media (max-width: 768px) {
+    .controls-section {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .pipe-horizontal {
+      display: none;
+    }
+    .cluster-fanout {
+      display: none;
+    }
+  }
+</style>

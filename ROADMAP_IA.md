@@ -15,11 +15,12 @@ RunLearn es un **laboratorio técnico interactivo y aula visual de ingeniería d
 
 ---
 
-## 2. Catálogo Actual de Módulos (23 Clases)
+## 2. Catálogo Actual de Módulos (28 Clases)
 
 El catálogo unificado en `src/data/clases.js` abarca 9 categorías temáticas:
 
 1. **Seguridad:**
+   - OAuth 2.0 & PKCE (Proof Key for Code Exchange, mitigación de intercepción RFC 7636).
    - Rate Limiting (Token Bucket, cabeceras `X-RateLimit-*`, HTTP 429).
    - JWT Inseguro (Bypass algoritmo `none`, secretos débiles).
    - SQL Injection (Consultas concatenadas vulnerables vs parametrizadas `$1, $2`).
@@ -28,6 +29,24 @@ El catálogo unificado en `src/data/clases.js` abarca 9 categorías temáticas:
    - CORS (Same-Origin Policy y cabeceras `Access-Control-Allow-Origin`).
    - Hashing de Contraseñas (bcrypt, salt rounds, funciones de costo vs MD5/SHA).
    - Path Traversal (Escape de directorios con `../` vs validación canónica de rutas).
+
+2. **Backend & Arquitectura:**
+   - Apache Kafka (Particionado determinista por clave, offsets inmutables, consumer lag).
+   - GraphQL vs REST (Over-fetching, AST de resolvers, payload sizing).
+   - Transacciones SQL (Propiedades ACID, niveles de aislamiento, bloqueos de fila).
+   - Colas de Mensajes (Productores, brokers asíncronos, reintentos).
+   - SSR vs CSR (Métricas de carga, TTFB, FCP y LCP).
+   - API REST (Endpoints HTTP, métodos semánticos, códigos de estado).
+
+3. **DevOps & Infraestructura:**
+   - Load Balancing (Round Robin, Least Connections, IP Hash, health checks y failover).
+   - Docker (Contenedores, capas de imagen, namespaces del kernel y cgroups).
+   - CI/CD con GitHub Actions (Pipelines de integración y despliegue continuo).
+
+4. **Almacén:**
+   - Índices B-Tree (B-Tree vs Sequential Scan, lectura de buffers de 8KB, EXPLAIN ANALYZE).
+   - Caché con Redis (Estrategia Cache-Aside, TTL, invalidación, HIT vs MISS).
+   - Base de Datos (Modelo relacional, llaves foráneas, integridad referencial).
 2. **Backend:**
    - API REST (CRUD interactivo con Express y PostgreSQL).
    - SSR vs CSR (Server-Side Rendering vs Client-Side Rendering y First Contentful Paint).

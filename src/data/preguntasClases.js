@@ -1,4 +1,34 @@
 export const preguntasClases = {
+  'oauth-pkce': {
+    question: '¿Por qué la extensión PKCE (RFC 7636) es indispensable en clientes públicos (SPAs o móviles) que no pueden almacenar un client_secret de forma segura?',
+    answers: [
+      'Porque un atacante que intercepte el authorization code en la redirección no puede canjearlo sin el code_verifier original, el cual solo reside en la memoria del cliente legítimo',
+      'Porque encripta la base de datos completa del servidor de autenticación con AES-256',
+      'Porque reemplaza los certificados HTTPS por firmas de correo electrónico',
+    ],
+    correct: 0,
+    explanation: 'El atacante solo intercepta el authorization_code y el code_challenge público. Sin el code_verifier secreto original, el endpoint /token rechaza el canje con error invalid_grant.',
+  },
+  kafka: {
+    question: 'En Apache Kafka, ¿cómo se garantiza que todos los eventos asociados a una misma entidad (por ejemplo, transacciones de un usuario) se procesen en orden cronológico estricto?',
+    answers: [
+      'Asignando el ID de la entidad como message key, lo que hace que Kafka aplique una función hash determinista enviando todos sus registros a la misma partición',
+      'Configurando el broker para que acepte solamente un mensaje por segundo',
+      'Eliminando las particiones y dejando el topic con cero consumidores',
+    ],
+    correct: 0,
+    explanation: 'Kafka garantiza el orden únicamente dentro de una misma partición. Al usar la misma key, el algoritmo de hash siempre deriva a la misma partición, preservando el orden secuencial.',
+  },
+  'load-balancer': {
+    question: '¿Qué algoritmo de balanceo de carga es más adecuado para garantizar que un mismo cliente siempre sea enrutado al mismo servidor backend (sesiones persistentes)?',
+    answers: [
+      'IP Hash, porque deriva el servidor de destino a partir de la dirección IP del cliente, que generalmente no cambia entre peticiones',
+      'Round Robin, porque distribuye uniformemente cada petición en orden estricto',
+      'Least Connections, porque elige el servidor con menos carga activa en tiempo real',
+    ],
+    correct: 0,
+    explanation: 'IP Hash garantiza que el mismo cliente siempre llegue al mismo servidor, lo cual es útil para sesiones con estado (sticky sessions). Round Robin y Least Connections no preservan la afinidad de cliente.',
+  },
   'indices-btree': {
     question: '¿Por qué un índice B-Tree en PostgreSQL permite encontrar una fila entre un millón en menos de 1 milisegundo?',
     answers: [

@@ -16,6 +16,9 @@ import pathTraversalDemoRouter from './routes/path-traversal-demo.js';
 import rateLimitDemoRouter from './routes/rate-limit-demo.js';
 import graphqlDemoRouter from './routes/graphql-demo.js';
 import indexingDemoRouter from './routes/indexing-demo.js';
+import loadBalancerDemoRouter from './routes/load-balancer-demo.js';
+import oauthDemoRouter from './routes/oauth-demo.js';
+import kafkaDemoRouter from './routes/kafka-demo.js';
 import { trackRequest } from './metrics.js';
 
 const app = express();
@@ -68,6 +71,9 @@ app.use('/api/path-traversal-demo', pathTraversalDemoRouter);
 app.use('/api/rate-limit-demo', rateLimitDemoRouter);
 app.use('/api/graphql-demo', graphqlDemoRouter);
 app.use('/api/indexing-demo', indexingDemoRouter);
+app.use('/api/load-balancer-demo', loadBalancerDemoRouter);
+app.use('/api/oauth-demo', oauthDemoRouter);
+app.use('/api/kafka-demo', kafkaDemoRouter);
 
 app.get('/', (req, res) => {
   res.json({
