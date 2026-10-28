@@ -12,6 +12,23 @@ export const categoryColors = {
 
 export const clases = [
   {
+    id: "rate-limit",
+    title: "Rate Limiting",
+    category: "Seguridad",
+    icon: "gauge",
+    description: "Control de tasa, Token Bucket y HTTP 429",
+    route: "/rate-limit-explicacion",
+    colorAccent: "#fb7185",
+    snippetCmd: "POST /api/v1 (ráfaga x6)",
+    snippetResult: "429 Too Many Requests · Retry-After: 3s",
+    snippetOk: false,
+    level: 2,
+    duration: 7,
+    dateAdded: "2026-10-27",
+    status: "completo",
+    featured: true,
+  },
+  {
     id: "jwt-inseguro",
     title: "JWT Inseguro",
     category: "Seguridad",
@@ -422,7 +439,7 @@ export const roadmapPhases = [
   {
     title: "Seguridad",
     subtitle: "Pensá como atacante",
-    classes: ["SQL Injection", "XSS", "CSRF", "CORS", "Hashing de Contraseñas", "JWT Inseguro", "Path Traversal"],
+    classes: ["Rate Limiting", "SQL Injection", "XSS", "CSRF", "CORS", "Hashing de Contraseñas", "JWT Inseguro", "Path Traversal"],
   },
   {
     title: "Producción",

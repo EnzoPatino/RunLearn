@@ -121,6 +121,12 @@ const { name } = Astro.props;
     <path d="M6 9v12" />
     <path d="M18 15c0-4.4-3.6-8-8-8H6" />
   </svg>
+) : name === "gauge" ? (
+  <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m12 14 4-4" />
+    <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+    <circle cx="12" cy="14" r="1.5" fill="currentColor" />
+  </svg>
 ) : (
   <svg class="tech-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect x="2" y="2" width="20" height="8" rx="2" />

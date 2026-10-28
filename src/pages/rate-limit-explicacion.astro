@@ -1,0 +1,944 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BackendErrorBanner from '../components/BackendErrorBanner.astro';
+---
+
+<Layout title="RunLearn — Rate Limiting y Token Bucket">
+  <div class="api-page">
+    <header class="topbar">
+      <div class="topbar-main">
+        <a class="brand-link" href="/" aria-label="Volver al inicio de RunLearn">
+          <span class="brand-mark">RL</span>
+          <span>RunLearn</span>
+        </a>
+        <nav class="crumbs" aria-label="Ruta actual">
+          <a href="/">Inicio</a>
+          <span class="sep">/</span>
+          <a href="/clases">Clases</a>
+          <span class="sep">/</span>
+          <span class="current">Rate Limiting</span>
+        </nav>
+      </div>
+      <div class="topbar-actions">
+        <button class="sound-btn" id="btn-toggle-sound" type="button" aria-pressed="false">
+          <span id="sound-icon" aria-hidden="true"></span>
+          <span id="sound-text">Sonido activo</span>
+        </button>
+        <a class="home-action" href="/" aria-label="Volver al inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 10.8 9-7.2 9 7.2"/>
+            <path d="M5.5 9.5V20h13V9.5"/>
+            <path d="M9.5 20v-6h5v6"/>
+          </svg>
+          Inicio
+        </a>
+        <div class="badge-live"><span class="dot"></span>módulo interactivo</div>
+      </div>
+    </header>
+
+    <section class="lesson-header">
+      <span class="badge-tag">Seguridad & Arquitectura Backend</span>
+      <h1>Rate Limiting: Token Bucket y HTTP 429</h1>
+      <p class="lede">
+        Sin un limitador de tasa, un cliente malicioso o un script descontrolado puede saturar tu base de datos mediante ataques de denegación de servicio (DoS), scraping masivo o fuerza bruta. El algoritmo <strong>Token Bucket</strong> acumula fichas a velocidad constante; cada petición consume una ficha. Cuando el balde se vacía, el servidor frena al cliente con <strong>HTTP 429 Too Many Requests</strong> y la cabecera <code>Retry-After</code>.
+      </p>
+    </section>
+
+    <!-- Banner de error si el backend está caído -->
+    <BackendErrorBanner
+      id="rate-limit-backend-error"
+      message="No se pudo conectar con el servidor backend. Usando simulación local en el navegador."
+      hint="El backend Express expone /api/rate-limit-demo/request con estado y cabeceras reales."
+    />
+
+    <!-- SIMULADOR INTERACTIVO / CANVAS -->
+    <main class="sim-container">
+      <!-- PANEL SUPERIOR: DIAGRAMA VISUAL -->
+      <div class="flow-card">
+        <div class="flow-header">
+          <span class="flow-title">Arquitectura del Limitador en Tiempo Real</span>
+          <div class="flow-status" id="flow-status">Listo para procesar</div>
+        </div>
+
+        <div class="flow-stage">
+          <!-- NODO CLIENTE -->
+          <div class="node-box" id="node-client">
+            <div class="node-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+            </div>
+            <span class="node-label">Cliente / Bot</span>
+            <span class="node-sub" id="client-req-count">0 peticiones</span>
+          </div>
+
+          <!-- CANAL 1 -->
+          <div class="flow-line">
+            <span class="packet" id="flow-packet-1"></span>
+            <span class="line-label">POST /api/v1</span>
+          </div>
+
+          <!-- NODO RATE LIMITER (EL BALDE) -->
+          <div class="node-box node-bucket" id="node-limiter">
+            <div class="bucket-visual">
+              <div class="bucket-rim"></div>
+              <div class="bucket-fill" id="bucket-fill" style="height: 100%;"></div>
+              <div class="bucket-tokens" id="bucket-tokens">
+                <span class="token token-active" data-idx="0">🪙</span>
+                <span class="token token-active" data-idx="1">🪙</span>
+                <span class="token token-active" data-idx="2">🪙</span>
+                <span class="token token-active" data-idx="3">🪙</span>
+                <span class="token token-active" data-idx="4">🪙</span>
+              </div>
+            </div>
+            <span class="node-label">Middleware Token Bucket</span>
+            <div class="bucket-meta">
+              <span id="token-counter">5 / 5 fichas</span>
+              <span class="refill-timer" id="refill-timer">Recarga: activa</span>
+            </div>
+          </div>
+
+          <!-- CANAL 2 -->
+          <div class="flow-line">
+            <span class="packet" id="flow-packet-2"></span>
+            <span class="line-label" id="channel-2-label">Pasa o 429</span>
+          </div>
+
+          <!-- NODO SERVIDOR API -->
+          <div class="node-box" id="node-server">
+            <div class="node-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" />
+                <rect x="2" y="14" width="20" height="8" rx="2" />
+                <line x1="6" y1="6" x2="6.01" y2="6" stroke-width="2.5" />
+                <line x1="6" y1="18" x2="6.01" y2="18" stroke-width="2.5" />
+              </svg>
+            </div>
+            <span class="node-label">API Protegida</span>
+            <span class="node-sub" id="server-status-label">Servidor seguro</span>
+          </div>
+        </div>
+
+        <!-- BARRA DE CONTROLES INTERACTIVOS -->
+        <div class="controls-bar">
+          <button type="button" class="btn-ctrl btn-primary" id="btn-send-one">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Enviar 1 petición
+          </button>
+          <button type="button" class="btn-ctrl btn-burst" id="btn-send-burst">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Disparar ráfaga (6 peticiones)
+          </button>
+          <button type="button" class="btn-ctrl btn-secondary" id="btn-reset-bucket">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            Reiniciar balde
+          </button>
+        </div>
+      </div>
+
+      <!-- PANELES INFERIORES: CONSOLA Y CÓDIGO -->
+      <div class="panels-grid">
+        <!-- CONSOLA DE CABECERAS HTTP -->
+        <div class="panel-box">
+          <div class="panel-head">
+            <span>Terminal de Red & Cabeceras HTTP</span>
+            <span class="badge-mini" id="last-status-badge">HTTP 200 OK</span>
+          </div>
+          <div class="terminal-body" id="terminal-body" aria-live="polite">
+            <div class="log-line info"># Listo. Probá enviar una petición o una ráfaga para ver las cabeceras.</div>
+            <div class="log-line">Capacidad: 5 tokens · Recarga: 1 token cada 2.5s · Algoritmo: Token Bucket</div>
+          </div>
+        </div>
+
+        <!-- VISUALIZADOR DE CÓDIGO EXPRESS -->
+        <div class="panel-box">
+          <div class="panel-head">
+            <span>Middleware en Node.js Express</span>
+            <span class="file-name">rateLimiter.js</span>
+          </div>
+          <pre class="code-viewer"><code><span class="kw">function</span> <span class="fn">rateLimiter</span>(req, res, next) &#123;
+  <span class="kw">const</span> bucket = <span class="fn">getBucket</span>(req.ip);
+  <span class="fn">refillTokens</span>(bucket); <span class="com">// +1 token / 2.5s</span>
+
+  <span class="kw">if</span> (bucket.tokens &gt;= <span class="num">1</span>) &#123;
+    bucket.tokens -= <span class="num">1</span>;
+    res.<span class="fn">setHeader</span>(<span class="str">'X-RateLimit-Remaining'</span>, bucket.tokens);
+    <span class="kw">return</span> <span class="fn">next</span>(); <span class="com">// 200 OK</span>
+  &#125;
+
+  <span class="com">// Balde agotado: mitigar DoS</span>
+  res.<span class="fn">setHeader</span>(<span class="str">'Retry-After'</span>, <span class="num">3</span>);
+  <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">429</span>).<span class="fn">json</span>(&#123;
+    error: <span class="str">'Too Many Requests'</span>
+  &#125;);
+&#125;</code></pre>
+        </div>
+      </div>
+
+      <!-- GUÍA PEDAGÓGICA PASO A PASO -->
+      <section class="guide-card">
+        <h2>¿Por qué Token Bucket y no un contador simple?</h2>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <span class="guide-num">1</span>
+            <h3>Soporta ráfagas legítimas (Burst)</h3>
+            <p>Un usuario real al cargar una página puede disparar 4 o 5 llamadas AJAX casi en simultáneo. El balde permite absorber la ráfaga inicial siempre que queden fichas acumuladas.</p>
+          </div>
+          <div class="guide-item">
+            <span class="guide-num">2</span>
+            <h3>Evita el problema del límite de ventana fija</h3>
+            <p>En una ventana fija de 1 minuto, si un atacante envía 100 peticiones en el segundo 59 y otras 100 en el segundo 61, el servidor recibe 200 peticiones en 2 segundos. Token Bucket suaviza el tráfico.</p>
+          </div>
+          <div class="guide-item">
+            <span class="guide-num">3</span>
+            <h3>Cabeceras estándar RFC</h3>
+            <p>Usar <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code> y <code>Retry-After</code> permite a clientes automatizados y SDKs esperar el tiempo exacto antes de reintentar (Backoff exponencial).</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import { initSoundControls } from '../lib/soundControls.js';
+  import { getApiBaseUrl, fetchWithTimeout, showBackendErrorBanner, hideBackendErrorBanner } from '../lib/apiClient.js';
+
+  const sound = initSoundControls();
+  const clientId = 'client_' + Math.random().toString(36).substring(2, 9);
+  const API_BASE = getApiBaseUrl();
+
+  let tokens = 5;
+  const CAPACITY = 5;
+  const REFILL_INTERVAL = 2500;
+  let clientReqTotal = 0;
+  let isBursting = false;
+  let simulationCompleted = false;
+
+  const btnSendOne = document.getElementById('btn-send-one');
+  const btnSendBurst = document.getElementById('btn-send-burst');
+  const btnResetBucket = document.getElementById('btn-reset-bucket');
+  const bucketTokens = document.querySelectorAll('#bucket-tokens .token');
+  const bucketFill = document.getElementById('bucket-fill');
+  const tokenCounter = document.getElementById('token-counter');
+  const terminalBody = document.getElementById('terminal-body');
+  const flowStatus = document.getElementById('flow-status');
+  const clientReqCount = document.getElementById('client-req-count');
+  const lastStatusBadge = document.getElementById('last-status-badge');
+  const serverStatusLabel = document.getElementById('server-status-label');
+  const flowPacket1 = document.getElementById('flow-packet-1');
+  const flowPacket2 = document.getElementById('flow-packet-2');
+
+  function updateBucketUI() {
+    tokens = Math.max(0, Math.min(CAPACITY, tokens));
+    if (tokenCounter) tokenCounter.textContent = `${tokens} / ${CAPACITY} fichas`;
+    if (bucketFill) bucketFill.style.height = `${(tokens / CAPACITY) * 100}%`;
+
+    bucketTokens.forEach((tok, idx) => {
+      tok.classList.toggle('token-active', idx < tokens);
+    });
+
+    if (tokens === 0) {
+      if (bucketFill) bucketFill.style.background = 'rgba(239, 68, 68, 0.4)';
+    } else {
+      if (bucketFill) bucketFill.style.background = 'linear-gradient(to top, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.25))';
+    }
+  }
+
+  function logTerminal(text, type = 'normal') {
+    if (!terminalBody) return;
+    const line = document.createElement('div');
+    line.className = `log-line ${type}`;
+    line.innerHTML = `[${new Date().toLocaleTimeString()}] ${text}`;
+    terminalBody.prepend(line);
+    // Limitar lineas
+    while (terminalBody.children.length > 20) {
+      terminalBody.removeChild(terminalBody.lastChild);
+    }
+  }
+
+  // Refill loop en background cada 2.5s
+  setInterval(() => {
+    if (tokens < CAPACITY) {
+      tokens += 1;
+      updateBucketUI();
+      logTerminal(`🪙 Se repuso 1 token en el balde (+1 ficha). Tokens: ${tokens}/${CAPACITY}`, 'info');
+    }
+  }, REFILL_INTERVAL);
+
+  async function sendRequest() {
+    clientReqTotal += 1;
+    if (clientReqCount) clientReqCount.textContent = `${clientReqTotal} peticiones`;
+
+    // Animación paquete 1
+    if (flowPacket1) {
+      flowPacket1.classList.remove('anim-travel');
+      void flowPacket1.offsetWidth;
+      flowPacket1.classList.add('anim-travel');
+    }
+
+    sound.play('playStep');
+
+    let responseData = null;
+    let is429 = false;
+
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE}/api/rate-limit-demo/request`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId }),
+        },
+        3000
+      );
+
+      hideBackendErrorBanner('rate-limit-backend-error');
+      responseData = await res.json();
+      is429 = res.status === 429;
+      tokens = responseData.remaining;
+    } catch {
+      // Fallback local simulado en navegador si el backend no está disponible
+      showBackendErrorBanner('rate-limit-backend-error', 'Backend offline. Ejecutando simulación en cliente.');
+      if (tokens >= 1) {
+        tokens -= 1;
+        is429 = false;
+        responseData = {
+          status: 200,
+          remaining: tokens,
+          retryAfter: 0,
+          message: 'Petición aprobada (simulación local).',
+        };
+      } else {
+        is429 = true;
+        responseData = {
+          status: 429,
+          remaining: 0,
+          retryAfter: 3,
+          message: '429 Too Many Requests: Balde agotado.',
+        };
+      }
+    }
+
+    updateBucketUI();
+
+    // Animación paquete 2 y estado
+    if (flowPacket2) {
+      flowPacket2.classList.remove('anim-travel', 'anim-blocked');
+      void flowPacket2.offsetWidth;
+      if (is429) {
+        flowPacket2.classList.add('anim-blocked');
+      } else {
+        flowPacket2.classList.add('anim-travel');
+      }
+    }
+
+    if (is429) {
+      sound.play('error');
+      if (lastStatusBadge) {
+        lastStatusBadge.textContent = 'HTTP 429 TOO MANY REQUESTS';
+        lastStatusBadge.className = 'badge-mini badge-error';
+      }
+      if (flowStatus) {
+        flowStatus.textContent = 'BLOQUEADO: Balde vacío';
+        flowStatus.className = 'flow-status error';
+      }
+      if (serverStatusLabel) serverStatusLabel.textContent = 'A salvo de sobrecarga';
+
+      logTerminal(
+        `<strong>HTTP/1.1 429 Too Many Requests</strong> · X-RateLimit-Remaining: 0 · <em>Retry-After: ${responseData.retryAfter || 3}s</em>`,
+        'error'
+      );
+
+      if (!simulationCompleted) {
+        simulationCompleted = true;
+        setTimeout(() => {
+          window.dispatchEvent(new Event('runlearn:simulation-complete'));
+        }, 800);
+      }
+    } else {
+      if (lastStatusBadge) {
+        lastStatusBadge.textContent = 'HTTP 200 OK';
+        lastStatusBadge.className = 'badge-mini badge-success';
+      }
+      if (flowStatus) {
+        flowStatus.textContent = `Petición procesada · Quedan ${tokens} fichas`;
+        flowStatus.className = 'flow-status ok';
+      }
+      if (serverStatusLabel) serverStatusLabel.textContent = 'Procesando respuesta 200';
+
+      logTerminal(
+        `<strong>HTTP/1.1 200 OK</strong> · X-RateLimit-Limit: ${CAPACITY} · X-RateLimit-Remaining: ${tokens}`,
+        'success'
+      );
+    }
+  }
+
+  btnSendOne?.addEventListener('click', () => {
+    if (isBursting) return;
+    sendRequest();
+  });
+
+  btnSendBurst?.addEventListener('click', async () => {
+    if (isBursting) return;
+    isBursting = true;
+    if (btnSendBurst) btnSendBurst.disabled = true;
+    if (btnSendOne) btnSendOne.disabled = true;
+
+    logTerminal('⚡ Disparando ráfaga rápida de 6 peticiones concurrentes...', 'info');
+
+    for (let i = 0; i < 6; i++) {
+      await sendRequest();
+      await new Promise((r) => setTimeout(r, 260));
+    }
+
+    isBursting = false;
+    if (btnSendBurst) btnSendBurst.disabled = false;
+    if (btnSendOne) btnSendOne.disabled = false;
+  });
+
+  btnResetBucket?.addEventListener('click', async () => {
+    tokens = CAPACITY;
+    updateBucketUI();
+    logTerminal('🔄 Balde reseteado a 5 fichas.', 'info');
+    sound.play('playStep');
+
+    try {
+      await fetchWithTimeout(
+        `${API_BASE}/api/rate-limit-demo/reset`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId }),
+        },
+        2000
+      );
+    } catch {}
+  });
+
+  updateBucketUI();
+</script>
+
+<style>
+  .api-page {
+    width: min(1200px, calc(100% - 32px));
+    margin: 24px auto 80px;
+    color: var(--text-primary);
+  }
+
+  .topbar {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 18px;
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+  }
+
+  .topbar-main, .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-white);
+    text-decoration: none;
+    font-weight: 800;
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #fb7185;
+    color: #111;
+    font: 700 11px var(--font-mono);
+  }
+
+  .crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .crumbs a { color: inherit; text-decoration: none; }
+  .crumbs a:hover, .crumbs .current { color: var(--text-primary); }
+
+  .sound-btn, .home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font: 600 12px var(--font-main);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .sound-btn:hover, .home-action:hover {
+    color: var(--text-white);
+    border-color: var(--border-hover);
+  }
+
+  .home-action svg { width: 14px; height: 14px; }
+
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(251, 113, 133, 0.12);
+    border: 1px solid rgba(251, 113, 133, 0.3);
+    border-radius: var(--radius-pill);
+    color: #fb7185;
+    font: 700 10px var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .badge-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fb7185;
+    box-shadow: 0 0 8px #fb7185;
+  }
+
+  .lesson-header {
+    margin: 32px 0 24px;
+  }
+
+  .badge-tag {
+    display: inline-block;
+    color: #fb7185;
+    font: 700 11px var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .lesson-header h1 {
+    font-size: clamp(32px, 5vw, 44px);
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: -.03em;
+  }
+
+  .lede {
+    max-width: 860px;
+    margin: 14px 0 0;
+    color: var(--text-secondary);
+    font-size: clamp(15px, 1.8vw, 17px);
+    line-height: 1.65;
+  }
+
+  .sim-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .flow-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .flow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .flow-title {
+    font: 700 13px var(--font-mono);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .flow-status {
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    font: 600 11px var(--font-mono);
+    color: var(--text-secondary);
+  }
+
+  .flow-status.ok { color: var(--color-success); border-color: rgba(16, 185, 129, 0.4); }
+  .flow-status.error { color: #fb7185; border-color: rgba(251, 113, 133, 0.4); }
+
+  .flow-stage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 0;
+    position: relative;
+  }
+
+  .node-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 170px;
+    padding: 16px 12px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    z-index: 2;
+  }
+
+  .node-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-white);
+    margin-bottom: 8px;
+  }
+
+  .node-icon svg { width: 22px; height: 22px; }
+
+  .node-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  .node-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-top: 4px;
+  }
+
+  /* BUCKET VISUAL */
+  .node-bucket {
+    width: 220px;
+    border-color: rgba(251, 113, 133, 0.3);
+    background: linear-gradient(180deg, #161b24, #0f131a);
+  }
+
+  .bucket-visual {
+    width: 130px;
+    height: 90px;
+    position: relative;
+    border: 2px solid #384252;
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .bucket-rim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #475569;
+  }
+
+  .bucket-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.25));
+    transition: height 0.3s ease, background 0.3s ease;
+  }
+
+  .bucket-tokens {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    z-index: 2;
+  }
+
+  .token {
+    font-size: 18px;
+    opacity: 0.15;
+    filter: grayscale(1);
+    transform: scale(0.85);
+    transition: transform 0.2s, opacity 0.2s, filter 0.2s;
+  }
+
+  .token.token-active {
+    opacity: 1;
+    filter: none;
+    transform: scale(1.1);
+  }
+
+  .bucket-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+  }
+
+  #token-counter { color: #fb7185; font-weight: 700; }
+  .refill-timer { color: var(--text-muted); }
+
+  /* FLOW LINES & PACKETS */
+  .flow-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border-subtle);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .line-label {
+    position: absolute;
+    top: -20px;
+    font: 600 10px var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .packet {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 10px #3b82f6;
+    left: 0;
+    opacity: 0;
+  }
+
+  .packet.anim-travel {
+    animation: moveAcross 0.45s ease-out forwards;
+  }
+
+  .packet.anim-blocked {
+    background: #ef4444;
+    box-shadow: 0 0 12px #ef4444;
+    animation: moveAndBounce 0.45s ease-out forwards;
+  }
+
+  @keyframes moveAcross {
+    0% { left: 0%; opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+
+  @keyframes moveAndBounce {
+    0% { left: 0%; opacity: 1; }
+    50% { left: 50%; opacity: 1; transform: scale(1.4); }
+    100% { left: 10%; opacity: 0; }
+  }
+
+  /* CONTROLS BAR */
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .btn-ctrl {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font: 700 13px var(--font-main);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.15s, background 0.15s, opacity 0.15s;
+  }
+
+  .btn-ctrl:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn-ctrl:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-primary {
+    background: #fb7185;
+    color: #111;
+  }
+
+  .btn-burst {
+    background: rgba(251, 113, 133, 0.15);
+    border-color: rgba(251, 113, 133, 0.4);
+    color: #fb7185;
+  }
+
+  .btn-secondary {
+    background: var(--surface-card);
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
+  }
+
+  /* PANELS GRID */
+  .panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .panel-box {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-subtle);
+    font: 700 11px var(--font-mono);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .badge-mini {
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .badge-mini.badge-success {
+    color: var(--color-success);
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+
+  .badge-mini.badge-error {
+    color: #fb7185;
+    border-color: rgba(251, 113, 133, 0.4);
+  }
+
+  .terminal-body {
+    padding: 16px;
+    height: 220px;
+    overflow-y: auto;
+    font: 500 12px/1.7 var(--font-mono);
+    background: #090c10;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .log-line {
+    color: var(--text-secondary);
+    word-break: break-all;
+  }
+
+  .log-line.info { color: #60a5fa; }
+  .log-line.success { color: #34d399; }
+  .log-line.error { color: #fb7185; }
+
+  .code-viewer {
+    margin: 0;
+    padding: 18px;
+    height: 220px;
+    overflow: auto;
+    background: #090c10;
+    font: 500 12px/1.7 var(--font-mono);
+    color: #e2e8f0;
+  }
+
+  .code-viewer .kw { color: #f43f5e; font-weight: 600; }
+  .code-viewer .fn { color: #60a5fa; }
+  .code-viewer .str { color: #34d399; }
+  .code-viewer .num { color: #fbbf24; }
+  .code-viewer .com { color: #64748b; font-style: italic; }
+
+  /* GUIDE CARD */
+  .guide-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 26px;
+  }
+
+  .guide-card h2 {
+    font-size: 20px;
+    margin: 0 0 20px;
+    letter-spacing: -.02em;
+  }
+
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .guide-item {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .guide-num {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(251, 113, 133, 0.15);
+    color: #fb7185;
+    font: 700 11px var(--font-mono);
+    margin-bottom: 12px;
+  }
+
+  .guide-item h3 {
+    font-size: 15px;
+    margin: 0 0 8px;
+  }
+
+  .guide-item p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 900px) {
+    .panels-grid { grid-template-columns: 1fr; }
+    .guide-grid { grid-template-columns: 1fr; }
+    .flow-stage { flex-direction: column; }
+    .flow-line { width: 2px; height: 30px; }
+    .node-box { width: 100%; max-width: 280px; }
+  }
+</style>

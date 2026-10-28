@@ -1,4 +1,14 @@
 export const preguntasClases = {
+  'rate-limit': {
+    question: '¿Qué cabecera HTTP estándar y código de respuesta usa el servidor para indicar que se superó el límite de peticiones y cuándo reintentar?',
+    answers: [
+      'Código 429 Too Many Requests con la cabecera Retry-After',
+      'Código 404 Not Found con la cabecera Cache-Control',
+      'Código 500 Internal Server Error con la cabecera Connection: close',
+    ],
+    correct: 0,
+    explanation: 'El estándar RFC 6585 define el estado 429 Too Many Requests, y la cabecera Retry-After le comunica al cliente cuántos segundos debe esperar antes de volver a consultar.',
+  },
   'jwt-inseguro': {
     question: '¿Qué impide que alguien cambie el rol del payload de un JWT y el servidor lo acepte?',
     answers: [
